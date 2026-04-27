@@ -1,0 +1,30 @@
+{
+  "name": "frances-experiment-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "extract:data": "tsx scripts/extract-frances-data.ts",
+    "profile:http": "node scripts/profile-http.mjs",
+    "profile:local": "tsx scripts/profile-local.ts",
+    "test": "tsx scripts/run-tests.ts",
+    "test:watch": "tsx --watch scripts/run-tests.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "next": "^15.2.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "xlsx": "^0.18.5"
+  }
+}
