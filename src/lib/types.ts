@@ -1,7 +1,8 @@
 export type YesNoAnswer = "yes" | "no";
-export type SessionStage = "created" | "instructions" | "learning" | "recall" | "matching" | "complete";
-export type MatchingRelation = "match" | "distractor";
-export type MatchingFamily = "target" | "category" | "unrelated";
+export type SessionStage = "created" | "instructions" | "learning" | "distractor" | "recall" | "matching" | "complete";
+export type MatchingCondition = "match" | "distractor" | "category" | "unrelated";
+export type MatchingRelation = MatchingCondition;
+export type MatchingFamily = "target" | "distractor" | "category" | "unrelated";
 
 export interface StudyTargetWord {
   pseudoword: string;
@@ -42,17 +43,29 @@ export interface RecallPrompt {
   meaningLabel: string;
   promptText: string;
   promptHtml: string;
+  recognitionOptions: RecognitionOption[];
+  correctOptionIndex: number;
+  distractorPseudoword: string;
+}
+
+export interface RecognitionOption {
+  optionIndex: number;
+  text: string;
+  displayText: string;
+  isCorrect: boolean;
 }
 
 export interface MatchingTrial {
   trialIndex: number;
   pictureId: string;
+  imagePath: string;
   pseudoword: string;
   displayWord: string;
   meaningCode: string;
   meaningLabel: string;
   relation: MatchingRelation;
   family: MatchingFamily;
+  condition: MatchingCondition;
   correctAnswer: YesNoAnswer;
 }
 
@@ -116,9 +129,22 @@ export interface RecallItemResponse {
   submittedAt: string;
 }
 
+export interface RecognitionResponse {
+  sessionId: string;
+  promptIndex: number;
+  pseudoword: string;
+  selectedOptionIndex: number;
+  selectedOptionText: string;
+  correct: boolean;
+  responseTimeMs: number;
+  answeredAt: string;
+}
+
 export interface MatchingResponse {
   sessionId: string;
   trialIndex: number;
+  pictureId: string;
+  condition: MatchingCondition;
   answer: YesNoAnswer;
   correct: boolean;
   responseTimeMs: number;
@@ -148,6 +174,7 @@ export interface SessionBundle {
   session: ParticipantSession;
   comprehension: ComprehensionResponse[];
   recall: RecallItemResponse[];
+  recognition: RecognitionResponse[];
   matching: MatchingResponse[];
   telemetry: ClientEvent[];
 }

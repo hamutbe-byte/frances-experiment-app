@@ -4,6 +4,7 @@ import type {
   ClientEvent,
   CreateSessionResult,
   DeviceSnapshot,
+  RecallItemResponse,
   SessionBundle,
   SessionStage,
   YesNoAnswer
@@ -60,6 +61,50 @@ export async function submitComprehensionRequest(
       body: JSON.stringify({
         trialIndex,
         answer,
+        responseTimeMs
+      })
+    })
+  );
+}
+
+export async function submitRecallRequest(
+  sessionId: string,
+  payload: {
+    promptIndex: number;
+    text: string;
+    firstKeystrokeLatencyMs: number | null;
+    totalResponseTimeMs: number;
+    editCount: number;
+    pasted: boolean;
+    pasteCount: number;
+  }
+) {
+  return readJson<{ response: RecallItemResponse }>(
+    await fetch(`/api/session/${sessionId}/recall`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+  );
+}
+
+export async function submitRecognitionRequest(
+  sessionId: string,
+  promptIndex: number,
+  selectedOptionIndex: number,
+  responseTimeMs: number
+) {
+  return readJson<{ nextPromptIndex: number; completed: boolean }>(
+    await fetch(`/api/session/${sessionId}/recognition`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        promptIndex,
+        selectedOptionIndex,
         responseTimeMs
       })
     })

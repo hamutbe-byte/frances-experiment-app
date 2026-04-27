@@ -2,7 +2,7 @@
 
 Responsive Next.js implementation of the Frances et al. (2020) contextual diversity experiment.
 
-Current scope: training phase only.
+Current scope: training phase, distractor placeholder, recall, recognition, and matching placeholder.
 
 ## Stack
 
@@ -26,10 +26,12 @@ Current scope: training phase only.
 The smoke tests verify:
 
 - the generated study seed has 4 versions with 30 training trials each
+- the generated study seed has 8 recall prompts and 32 matching trials
+- every matching picture ID has an image in `public/stimuli/matching`
 - each version keeps the expected 8 critical and 22 filler passages
 - version assignment stays balanced across participants
 - sessions persist correctly in the local file-backed store
-- the session creation and comprehension API routes behave as expected
+- the session creation, comprehension, recall, and recognition API routes behave as expected
 
 ## Data
 
@@ -42,7 +44,12 @@ The smoke tests verify:
   - participant start page
   - instructions page
   - 30 reading passages with yes/no comprehension checks
-  - completion screen for the learning phase
-- Recall, matching, researcher admin, and cloud persistence will be added later.
+  - 10-minute distractor placeholder
+  - typed recall prompts
+  - immediate four-option recognition prompts
+  - matching placeholder for the next implementation pass
+  - completion screen
+- Matching interaction, researcher admin, and cloud persistence will be added later.
 - The current implementation uses a local file-backed session store in `.runtime/session-store.json` so the training flow remains stable in local development before the Supabase layer is added.
 - Telemetry is disabled by default in local development for speed. Turn it on by setting `NEXT_PUBLIC_ENABLE_TELEMETRY=true` when you want to profile participant behavior.
+- The dev jump toolbar is disabled by default. Turn it on with `NEXT_PUBLIC_ENABLE_DEV_TOOLS=true`.

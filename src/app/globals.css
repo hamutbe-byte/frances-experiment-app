@@ -141,6 +141,78 @@ textarea {
   gap: 18px;
 }
 
+.dev-toolbar {
+  position: fixed;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 132px;
+  padding: 12px 10px;
+  border: 1px solid rgba(122, 60, 31, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 250, 242, 0.92);
+  box-shadow: 0 12px 30px rgba(43, 30, 22, 0.08);
+  font-family: "Segoe UI", sans-serif;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.dev-toolbar:not(.is-open) {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-120%, -50%);
+}
+
+.dev-toolbar-toggle {
+  position: fixed;
+  left: 18px;
+  top: 18px;
+  z-index: 11;
+  display: inline-grid;
+  gap: 4px;
+  place-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(122, 60, 31, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 250, 242, 0.96);
+  box-shadow: 0 12px 30px rgba(43, 30, 22, 0.08);
+  cursor: pointer;
+}
+
+.dev-toolbar-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent-deep);
+}
+
+.dev-toolbar span {
+  color: var(--accent-deep);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dev-toolbar button {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: white;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -224,10 +296,28 @@ textarea {
   background: linear-gradient(90deg, var(--accent), #e18855);
 }
 
+.countdown {
+  font-family: "Segoe UI", sans-serif;
+  font-size: clamp(2.4rem, 8vw, 4.6rem);
+  font-weight: 800;
+  color: var(--accent-deep);
+}
+
 .passage {
   font-size: clamp(1.1rem, 2vw, 1.28rem);
   line-height: 1.95;
   white-space: pre-wrap;
+}
+
+.recall-prompt {
+  display: grid;
+  gap: 10px;
+  font-size: clamp(1rem, 2vw, 1.16rem);
+  line-height: 1.7;
+}
+
+.recall-prompt p {
+  margin: 0;
 }
 
 .question-block {
@@ -259,6 +349,12 @@ textarea {
   gap: 12px;
 }
 
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .answer-button {
   padding: 18px 20px;
   border-radius: 18px;
@@ -281,10 +377,37 @@ textarea {
   font-size: 0.92rem;
 }
 
+.option-button {
+  justify-content: center;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.text-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  font-family: "Segoe UI", sans-serif;
+  font-size: 1.08rem;
+  outline: none;
+}
+
+.text-input:focus {
+  border-color: rgba(170, 90, 49, 0.48);
+  box-shadow: 0 0 0 4px rgba(170, 90, 49, 0.12);
+}
+
 .status {
   color: var(--muted);
   font-family: "Segoe UI", sans-serif;
   font-size: 0.95rem;
+}
+
+.error-text {
+  color: #9d2f24;
 }
 
 .completion-code {
@@ -306,7 +429,31 @@ textarea {
 
 @media (max-width: 760px) {
   .page-shell {
-    padding: 20px 12px 40px;
+    padding: 20px 12px 88px;
+  }
+
+  .dev-toolbar {
+    inset: auto 10px 64px;
+    top: auto;
+    left: 10px;
+    width: auto;
+    transform: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .dev-toolbar:not(.is-open) {
+    transform: translateY(120%);
+  }
+
+  .dev-toolbar-toggle {
+    inset: auto auto 10px 10px;
+  }
+
+  .dev-toolbar button {
+    width: auto;
+    white-space: nowrap;
   }
 
   .panel {
@@ -314,6 +461,10 @@ textarea {
   }
 
   .answer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .option-grid {
     grid-template-columns: 1fr;
   }
 }

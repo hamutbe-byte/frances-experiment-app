@@ -21,6 +21,7 @@ export function bundlesToCsv(bundles: SessionBundle[]) {
       "completed_at",
       "comprehension_count",
       "recall_count",
+      "recognition_count",
       "matching_count",
       "telemetry_count"
     ].join(",")
@@ -38,6 +39,7 @@ export function bundlesToCsv(bundles: SessionBundle[]) {
         bundle.session.completedAt,
         bundle.comprehension.length,
         bundle.recall.length,
+        bundle.recognition.length,
         bundle.matching.length,
         bundle.telemetry.length
       ]

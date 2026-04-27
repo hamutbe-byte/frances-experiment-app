@@ -2,13 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { makeCompletionCode, makeSessionId, chooseBalancedVersion } from "@/lib/assignment";
-import { getLearningTrialCount, getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
+import { getLearningTrialCount, getLearningTrialOrThrow, getRecallPromptOrThrow, getStudyOrThrow } from "@/lib/study";
 import type {
   ClientEvent,
   ComprehensionResponse,
   CreateSessionInput,
   CreateSessionResult,
   ParticipantSession,
+  RecallItemResponse,
+  RecognitionResponse,
   SessionBundle,
   SessionStage,
   YesNoAnswer
@@ -17,6 +19,22 @@ import type {
 interface ComprehensionInput {
   trialIndex: number;
   answer: YesNoAnswer;
+  responseTimeMs: number;
+}
+
+interface RecallInput {
+  promptIndex: number;
+  text: string;
+  firstKeystrokeLatencyMs: number | null;
+  totalResponseTimeMs: number;
+  editCount: number;
+  pasted: boolean;
+  pasteCount: number;
+}
+
+interface RecognitionInput {
+  promptIndex: number;
+  selectedOptionIndex: number;
   responseTimeMs: number;
 }
 
@@ -46,7 +64,15 @@ function readStore(): StoreFile {
   const storePath = getStorePath();
   ensureStoreFile();
   const raw = fs.readFileSync(storePath, "utf8");
-  return JSON.parse(raw) as StoreFile;
+  const store = JSON.parse(raw) as StoreFile;
+  for (const bundle of store.bundles) {
+    bundle.comprehension ??= [];
+    bundle.recall ??= [];
+    bundle.recognition ??= [];
+    bundle.matching ??= [];
+    bundle.telemetry ??= [];
+  }
+  return store;
 }
 
 function writeStore(store: StoreFile) {
@@ -100,6 +126,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
     session,
     comprehension: [],
     recall: [],
+    recognition: [],
     matching: [],
     telemetry: []
   };
@@ -173,11 +200,8 @@ export function saveComprehensionResponse(sessionId: string, input: Comprehensio
   };
 
   bundle.comprehension.push(response);
-  bundle.session.status = input.trialIndex >= trialCount ? "complete" : "learning";
+  bundle.session.status = input.trialIndex >= trialCount ? "distractor" : "learning";
   bundle.session.updatedAt = nowIso();
-  if (bundle.session.status === "complete") {
-    bundle.session.completedAt = bundle.session.updatedAt;
-  }
 
   writeStore(store);
 
@@ -186,6 +210,97 @@ export function saveComprehensionResponse(sessionId: string, input: Comprehensio
     response,
     nextTrialIndex: input.trialIndex + 1,
     completed: input.trialIndex >= trialCount
+  };
+}
+
+export function saveRecallResponse(sessionId: string, input: RecallInput) {
+  const store = readStore();
+  const bundle = store.bundles.find((entry) => entry.session.id === sessionId);
+  if (!bundle) {
+    throw new Error(`Session ${sessionId} was not found.`);
+  }
+
+  const prompt = getRecallPromptOrThrow(bundle.session.studySlug, input.promptIndex);
+  const existing = bundle.recall.find((entry) => entry.promptIndex === input.promptIndex);
+
+  if (existing) {
+    return {
+      bundle: cloneBundle(bundle),
+      response: existing
+    };
+  }
+
+  const text = input.text.trim();
+  const response: RecallItemResponse = {
+    sessionId,
+    promptIndex: input.promptIndex,
+    pseudoword: prompt.pseudoword,
+    text,
+    firstKeystrokeLatencyMs: input.firstKeystrokeLatencyMs,
+    totalResponseTimeMs: input.totalResponseTimeMs,
+    editCount: input.editCount,
+    isEmpty: text.length === 0,
+    pasted: input.pasted,
+    pasteCount: input.pasteCount,
+    submittedAt: nowIso()
+  };
+
+  bundle.recall.push(response);
+  bundle.session.status = "recall";
+  bundle.session.updatedAt = nowIso();
+  writeStore(store);
+
+  return {
+    bundle: cloneBundle(bundle),
+    response
+  };
+}
+
+export function saveRecognitionResponse(sessionId: string, input: RecognitionInput) {
+  const store = readStore();
+  const bundle = store.bundles.find((entry) => entry.session.id === sessionId);
+  if (!bundle) {
+    throw new Error(`Session ${sessionId} was not found.`);
+  }
+
+  const study = getStudyOrThrow(bundle.session.studySlug);
+  const prompt = getRecallPromptOrThrow(study.slug, input.promptIndex);
+  const option = prompt.recognitionOptions.find((entry) => entry.optionIndex === input.selectedOptionIndex);
+  if (!option) {
+    throw new Error(`Recognition option ${input.selectedOptionIndex} was not found.`);
+  }
+
+  const existing = bundle.recognition.find((entry) => entry.promptIndex === input.promptIndex);
+  if (existing) {
+    return {
+      bundle: cloneBundle(bundle),
+      response: existing,
+      nextPromptIndex: existing.promptIndex + 1,
+      completed: existing.promptIndex >= study.recallPrompts.length
+    };
+  }
+
+  const response: RecognitionResponse = {
+    sessionId,
+    promptIndex: input.promptIndex,
+    pseudoword: prompt.pseudoword,
+    selectedOptionIndex: input.selectedOptionIndex,
+    selectedOptionText: option.text,
+    correct: option.isCorrect,
+    responseTimeMs: input.responseTimeMs,
+    answeredAt: nowIso()
+  };
+
+  bundle.recognition.push(response);
+  bundle.session.status = input.promptIndex >= study.recallPrompts.length ? "matching" : "recall";
+  bundle.session.updatedAt = nowIso();
+  writeStore(store);
+
+  return {
+    bundle: cloneBundle(bundle),
+    response,
+    nextPromptIndex: input.promptIndex + 1,
+    completed: input.promptIndex >= study.recallPrompts.length
   };
 }
 

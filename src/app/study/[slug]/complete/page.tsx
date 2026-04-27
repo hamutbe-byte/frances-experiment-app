@@ -15,8 +15,9 @@ export default async function CompletePage({ params }: Props) {
   return (
     <StudyFrame
       eyebrow="Complete"
-      title="Reading phase finished"
-      description="You have reached the end of the training phase. Recall and matching tasks will be added in the next implementation pass."
+      title="Experiment complete"
+      description="Thank you for completing the available experiment phases."
+      studySlug={study.slug}
     >
       <CompletePhaseClient studySlug={study.slug} />
     </StudyFrame>

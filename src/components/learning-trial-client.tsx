@@ -42,7 +42,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
           const totalTrials = study.versions.find((version) => version.id === result.session.versionId)?.learningTrials.length ?? 30;
           const nextPath =
             trialIndex >= totalTrials
-              ? `/study/${studySlug}/complete?session=${resolvedSessionId}`
+              ? `/study/${studySlug}/distractor?session=${resolvedSessionId}`
               : `/study/${studySlug}/learn/${trialIndex + 1}?session=${resolvedSessionId}`;
           startTransition(() => {
             router.replace(nextPath);
@@ -71,7 +71,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
     if (nextTrial) {
       router.prefetch(`/study/${studySlug}/learn/${nextTrial.trialIndex}?session=${bundle.session.id}`);
     } else {
-      router.prefetch(`/study/${studySlug}/complete?session=${bundle.session.id}`);
+      router.prefetch(`/study/${studySlug}/distractor?session=${bundle.session.id}`);
     }
   }, [bundle, router, study, studySlug, trialIndex]);
 
@@ -100,7 +100,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
 
       if (result.completed) {
         startTransition(() => {
-          router.push(`/study/${studySlug}/complete?session=${sessionId}`);
+          router.push(`/study/${studySlug}/distractor?session=${sessionId}`);
         });
         return;
       }

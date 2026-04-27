@@ -18,6 +18,7 @@ export default async function LearningTrialPage({ params }: Props) {
       eyebrow="Learning Trial"
       title="Read and respond"
       description="Keep the passage on screen, read it at your normal pace, and then answer the comprehension check."
+      studySlug={study.slug}
     >
       <LearningTrialClient studySlug={study.slug} trialIndex={Number(trial)} />
     </StudyFrame>

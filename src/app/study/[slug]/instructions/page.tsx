@@ -17,6 +17,7 @@ export default async function InstructionsPage({ params }: Props) {
       eyebrow="Instructions"
       title="Before you begin"
       description="Please read each passage carefully and answer the short comprehension statement that follows. This build includes the training phase only."
+      studySlug={study.slug}
     >
       <InstructionsClient studySlug={study.slug} />
     </StudyFrame>

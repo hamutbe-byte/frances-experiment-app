@@ -26,7 +26,7 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
         setCode(bundle.session.completionCode);
-        setStatus("The learning phase is complete.");
+        setStatus("The available experiment phases are complete.");
       })
       .catch(() => {
         setStatus("The session finished, but the completion code could not be loaded.");

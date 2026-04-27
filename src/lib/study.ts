@@ -39,3 +39,15 @@ export function getLearningTrialOrThrow(studySlug: string, versionId: string, tr
 export function getLearningTrialCount(studySlug: string, versionId: string) {
   return getVersionOrThrow(studySlug, versionId).learningTrials.length;
 }
+
+export function getRecallPromptOrThrow(studySlug: string, promptIndex: number) {
+  const prompt = getStudyOrThrow(studySlug).recallPrompts.find((entry) => entry.promptIndex === promptIndex);
+  if (!prompt) {
+    throw new Error(`Recall prompt ${promptIndex} was not found for study ${studySlug}.`);
+  }
+  return prompt;
+}
+
+export function getRecallPromptCount(studySlug: string) {
+  return getStudyOrThrow(studySlug).recallPrompts.length;
+}

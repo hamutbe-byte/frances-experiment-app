@@ -1,11 +1,21 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 import { POST as createSessionPost } from "@/app/api/session/route";
 import { POST as submitComprehensionPost } from "@/app/api/session/[id]/comprehension/route";
+import { POST as submitRecallPost } from "@/app/api/session/[id]/recall/route";
+import { POST as submitRecognitionPost } from "@/app/api/session/[id]/recognition/route";
 import { chooseBalancedVersion } from "@/lib/assignment";
-import { __resetStoreForTests, createSession, getSessionBundle, saveComprehensionResponse } from "@/lib/store";
+import {
+  __resetStoreForTests,
+  createSession,
+  getSessionBundle,
+  saveComprehensionResponse,
+  saveRecallResponse,
+  saveRecognitionResponse
+} from "@/lib/store";
 import { getStudyOrThrow } from "@/lib/study";
 import type { ParticipantSession } from "@/lib/types";
 
@@ -65,11 +75,50 @@ async function main() {
     }
   });
 
+  await run("seeded study contains recall, recognition, and matching materials", () => {
+    const study = getStudyOrThrow("frances-2020");
+    assert.equal(study.recallPrompts.length, 8);
+    assert.equal(study.matchingTrials.length, 32);
+    for (const prompt of study.recallPrompts) {
+      assert.equal(prompt.recognitionOptions.length, 4);
+      assert.equal(prompt.recognitionOptions.filter((option) => option.isCorrect).length, 1);
+    }
+  });
+
+  await run("matching materials are balanced and all image files exist", () => {
+    const fs = require("node:fs") as typeof import("node:fs");
+    const study = getStudyOrThrow("frances-2020");
+    const counts = study.matchingTrials.reduce<Record<string, number>>((accumulator, trial) => {
+      accumulator[trial.condition] = (accumulator[trial.condition] ?? 0) + 1;
+      assert.equal(fs.existsSync(`public${trial.imagePath}`), true);
+      return accumulator;
+    }, {});
+
+    assert.deepEqual(counts, {
+      match: 8,
+      distractor: 8,
+      category: 8,
+      unrelated: 8
+    });
+  });
+
   await run("seeded study contains 8 critical and 22 filler trials per version", () => {
     const study = getStudyOrThrow("frances-2020");
     for (const version of study.versions) {
       assert.equal(version.learningTrials.filter((trial) => trial.isCritical).length, 8);
       assert.equal(version.learningTrials.filter((trial) => !trial.isCritical).length, 22);
+    }
+  });
+
+  await run("seeded learning passages contain story text for every version", () => {
+    const study = getStudyOrThrow("frances-2020");
+    for (const version of study.versions) {
+      for (const trial of version.learningTrials) {
+        assert.ok(trial.passageText.length > 80);
+        assert.doesNotMatch(trial.passageText, /^System\.Xml/);
+        assert.doesNotMatch(trial.passageText, /^[a-z]+\d*$/);
+        assert.match(trial.tokenId, /^[a-z]+\d+$/);
+      }
     }
   });
 
@@ -119,6 +168,90 @@ async function main() {
     assert.equal(result.response.correct, true);
     assert.equal(result.nextTrialIndex, 2);
     assert.equal(result.completed, false);
+  });
+
+  await run("last comprehension response advances to the distractor stage", () => {
+    setIsolatedStoreDir("last-comprehension");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const result = saveComprehensionResponse(created.session.id, {
+      trialIndex: 30,
+      answer: "yes",
+      responseTimeMs: 800
+    });
+    const bundle = getSessionBundle(created.session.id);
+
+    assert.equal(result.completed, true);
+    assert.equal(bundle?.session.status, "distractor");
+  });
+
+  await run("recall response stores timing, edit, and paste metadata", () => {
+    setIsolatedStoreDir("recall");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const result = saveRecallResponse(created.session.id, {
+      promptIndex: 1,
+      text: " nilan ",
+      firstKeystrokeLatencyMs: 120,
+      totalResponseTimeMs: 1400,
+      editCount: 5,
+      pasted: true,
+      pasteCount: 1
+    });
+
+    assert.equal(result.response.text, "nilan");
+    assert.equal(result.response.firstKeystrokeLatencyMs, 120);
+    assert.equal(result.response.editCount, 5);
+    assert.equal(result.response.pasted, true);
+    assert.equal(result.response.pasteCount, 1);
+    assert.equal(result.response.isEmpty, false);
+  });
+
+  await run("recognition response stores correctness and advances prompts", () => {
+    setIsolatedStoreDir("recognition");
+    const study = getStudyOrThrow("frances-2020");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+    const correctOption = study.recallPrompts[0].recognitionOptions.find((option) => option.isCorrect);
+    assert.ok(correctOption);
+
+    const result = saveRecognitionResponse(created.session.id, {
+      promptIndex: 1,
+      selectedOptionIndex: correctOption.optionIndex,
+      responseTimeMs: 650
+    });
+
+    assert.equal(result.response.correct, true);
+    assert.equal(result.nextPromptIndex, 2);
+    assert.equal(result.completed, false);
+  });
+
+  await run("dev toolbar is styled as a left-side navigation rail", () => {
+    const css = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "globals.css"), "utf8");
+    const toolbarRule = /\.dev-toolbar\s*\{(?<body>[^}]+)\}/.exec(css);
+    assert.ok(toolbarRule?.groups?.body);
+    assert.match(toolbarRule.groups.body, /position:\s*fixed/);
+    assert.match(toolbarRule.groups.body, /left:\s*\d+px/);
+    assert.match(toolbarRule.groups.body, /top:\s*50%/);
+    assert.match(toolbarRule.groups.body, /transform:\s*translateY\(-50%\)/);
+    assert.match(toolbarRule.groups.body, /flex-direction:\s*column/);
+  });
+
+  await run("dev toolbar is collapsible behind a hamburger button", () => {
+    const component = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "dev-toolbar.tsx"), "utf8");
+    const css = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "globals.css"), "utf8");
+    assert.match(component, /aria-label="Toggle development navigation"/);
+    assert.match(component, /aria-expanded=\{isOpen\}/);
+    assert.match(css, /\.dev-toolbar-toggle\s*\{/);
+    assert.match(css, /\.dev-toolbar:not\(\.is-open\)/);
   });
 
   await run("session creation API returns a valid response", async () => {
@@ -182,6 +315,74 @@ async function main() {
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.equal(payload.nextTrialIndex, 2);
+    assert.equal(payload.completed, false);
+  });
+
+  await run("recall and recognition APIs store post-test responses", async () => {
+    setIsolatedStoreDir("api-post-tests");
+    const study = getStudyOrThrow("frances-2020");
+    const createResponse = await createSessionPost(
+      new Request("http://localhost:3000/api/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          studySlug: "frances-2020",
+          device: sampleDevice()
+        })
+      })
+    );
+    const created = await createResponse.json();
+
+    const recallResponse = await submitRecallPost(
+      new Request(`http://localhost:3000/api/session/${created.session.id}/recall`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          promptIndex: 1,
+          text: "nilan",
+          firstKeystrokeLatencyMs: 100,
+          totalResponseTimeMs: 1200,
+          editCount: 3,
+          pasted: false,
+          pasteCount: 0
+        })
+      }),
+      {
+        params: Promise.resolve({
+          id: created.session.id
+        })
+      }
+    );
+    assert.equal(recallResponse.status, 200);
+
+    const correctOption = study.recallPrompts[0].recognitionOptions.find((option) => option.isCorrect);
+    assert.ok(correctOption);
+    const recognitionResponse = await submitRecognitionPost(
+      new Request(`http://localhost:3000/api/session/${created.session.id}/recognition`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          promptIndex: 1,
+          selectedOptionIndex: correctOption.optionIndex,
+          responseTimeMs: 500
+        })
+      }),
+      {
+        params: Promise.resolve({
+          id: created.session.id
+        })
+      }
+    );
+
+    assert.equal(recognitionResponse.status, 200);
+    const payload = await recognitionResponse.json();
+    assert.equal(payload.nextPromptIndex, 2);
     assert.equal(payload.completed, false);
   });
 

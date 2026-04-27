@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import XLSX from "xlsx";
@@ -28,27 +29,49 @@ type ColumnMap = {
 };
 
 function findWorkbookPath() {
-  const desktopRoot = path.resolve(process.cwd(), "..");
+  const directCandidates = [
+    process.env.FRANCES_WORKBOOK_PATH,
+    path.resolve(process.cwd(), ".runtime", "supplement-check", "frances-supplement.xlsx")
+  ].filter(Boolean) as string[];
 
-  for (const entry of fs.readdirSync(desktopRoot, { withFileTypes: true })) {
-    if (!entry.isDirectory()) {
-      continue;
-    }
-
-    const candidate = path.join(
-      desktopRoot,
-      entry.name,
-      "חומרי עזר",
-      "חומר עזר Frances",
-      "חומר עזר פרנסיס.xlsx"
-    );
-
+  for (const candidate of directCandidates) {
     if (fs.existsSync(candidate)) {
       return candidate;
     }
   }
 
-  throw new Error("Could not locate חומר עזר פרנסיס.xlsx next to the phd_papers folder.");
+  const searchRoots = [
+    path.resolve(process.cwd(), "..", ".."),
+    path.join(os.homedir(), "OneDrive - ac.sce.ac.il", "Desktop"),
+    path.join(os.homedir(), "Desktop")
+  ].filter((entry) => fs.existsSync(entry));
+
+  const visited = new Set<string>();
+  const stack = [...searchRoots];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current || visited.has(current)) {
+      continue;
+    }
+
+    visited.add(current);
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name.includes("Frances") || current.includes("Frances") || current.endsWith("Desktop")) {
+          stack.push(fullPath);
+        }
+        continue;
+      }
+
+      if (entry.name.toLowerCase().endsWith(".xlsx") && fullPath.includes("Frances")) {
+        return fullPath;
+      }
+    }
+  }
+
+  throw new Error("Could not locate the Frances supplementary workbook.");
 }
 
 function toRows(sheet: XLSX.WorkSheet) {
@@ -64,6 +87,14 @@ function cleanText(value: unknown) {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function cleanHtml(value: unknown) {
+  return String(value ?? "").trim();
+}
+
+function normalizePseudoword(value: unknown) {
+  return cleanText(value).toLowerCase();
 }
 
 function buildVersion(
@@ -107,6 +138,86 @@ function buildVersion(
   };
 }
 
+function buildTargets(rows: (string | number | boolean)[][]) {
+  return rows
+    .slice(1)
+    .filter((row) => row[0] && row[1])
+    .map((row) => {
+      const pseudoword = normalizePseudoword(row[0]);
+      const meaningCode = cleanText(row[1]);
+
+      return {
+        pseudoword,
+        display: pseudoword.toUpperCase(),
+        intendedMeaning: cleanText(row[2]) || meaningMap[meaningCode],
+        meaningCode
+      };
+    });
+}
+
+function buildRecallPrompts(rows: (string | number | boolean)[][]) {
+  return rows
+    .slice(1)
+    .filter((row) => row[0] && row[1] && row[2])
+    .slice(0, 8)
+    .map((row, index) => {
+      const pseudoword = normalizePseudoword(row[1]);
+      const meaningCode = cleanText(row[2]);
+      const correctOptionIndex = Number(row[7]);
+      const recognitionOptions = [3, 4, 5, 6].map((column, optionIndex) => {
+        const text = normalizePseudoword(row[column]);
+        const oneBasedIndex = optionIndex + 1;
+
+        return {
+          optionIndex: oneBasedIndex,
+          text,
+          displayText: text.toUpperCase(),
+          isCorrect: oneBasedIndex === correctOptionIndex
+        };
+      });
+
+      return {
+        promptIndex: index + 1,
+        pseudoword,
+        displayWord: pseudoword.toUpperCase(),
+        meaningCode,
+        meaningLabel: meaningMap[meaningCode],
+        promptText: cleanText(row[0]),
+        promptHtml: cleanHtml(row[0]),
+        recognitionOptions,
+        correctOptionIndex,
+        distractorPseudoword: normalizePseudoword(row[8])
+      };
+    });
+}
+
+function buildMatchingTrials(rows: (string | number | boolean)[][]) {
+  return rows
+    .slice(1)
+    .filter((row) => row[0] && row[1] && row[2] && row[4])
+    .slice(0, 32)
+    .map((row, index) => {
+      const pictureId = cleanText(row[0]);
+      const pseudoword = normalizePseudoword(row[1]);
+      const meaningCode = cleanText(row[2]);
+      const condition = cleanText(row[4]) as "match" | "distractor" | "category" | "unrelated";
+
+      return {
+        trialIndex: index + 1,
+        pictureId,
+        imagePath: `/stimuli/matching/${pictureId}.jpg`,
+        pseudoword,
+        displayWord: pseudoword.toUpperCase(),
+        meaningCode,
+        meaningLabel: meaningMap[meaningCode],
+        relation: condition,
+        family: condition === "match" ? "target" : condition,
+        condition,
+        correctAnswer: cleanText(row[6]) === "y" ? "yes" : "no"
+      };
+    });
+}
+
 function buildStudy() {
   const workbookPath = findWorkbookPath();
   const workbook = XLSX.readFile(workbookPath, { raw: false });
@@ -115,22 +226,22 @@ function buildStudy() {
     {
       sheet: "Version1 EN",
       meta: { id: "version-1", label: "Version 1", versionNumber: 1 },
-      columns: { passage: 0, pseudoword: 1, realword: 2, diversity: 3, storyNumber: 4, prompt: 5, correct: 6, token: 8 }
+      columns: { passage: 0, pseudoword: 1, realword: 2, diversity: 3, storyNumber: 4, prompt: 5, correct: 6, token: 9 }
     },
     {
       sheet: "Version2 EN",
       meta: { id: "version-2", label: "Version 2", versionNumber: 2 },
-      columns: { passage: 13, pseudoword: 14, realword: 15, diversity: 16, storyNumber: 17, prompt: 18, correct: 19, token: 9 }
+      columns: { passage: 0, pseudoword: 1, realword: 2, diversity: 3, storyNumber: 4, prompt: 5, correct: 6, token: 9 }
     },
     {
       sheet: "Version3 EN",
       meta: { id: "version-3", label: "Version 3", versionNumber: 3 },
-      columns: { passage: 13, pseudoword: 14, realword: 15, diversity: 16, storyNumber: 17, prompt: 18, correct: 19, token: 9 }
+      columns: { passage: 0, pseudoword: 1, realword: 2, diversity: 3, storyNumber: 4, prompt: 5, correct: 6, token: 9 }
     },
     {
       sheet: "Version4 EN",
       meta: { id: "version-4", label: "Version 4", versionNumber: 4 },
-      columns: { passage: 12, pseudoword: 13, realword: 14, diversity: 15, storyNumber: 16, prompt: 17, correct: 18, token: 9 }
+      columns: { passage: 0, pseudoword: 1, realword: 2, diversity: 3, storyNumber: 4, prompt: 5, correct: 6, token: 9 }
     }
   ] as const;
 
@@ -138,32 +249,16 @@ function buildStudy() {
     buildVersion(toRows(workbook.Sheets[config.sheet]), config.meta, config.columns)
   );
 
-  const targets = new Map<
-    string,
-    { pseudoword: string; display: string; intendedMeaning: string; meaningCode: string }
-  >();
-
-  for (const version of versions) {
-    for (const trial of version.learningTrials) {
-      targets.set(trial.pseudoword, {
-        pseudoword: trial.pseudoword,
-        display: trial.displayWord,
-        intendedMeaning: trial.meaningLabel,
-        meaningCode: trial.meaningCode
-      });
-    }
-  }
-
   return {
     slug: "frances-2020",
-    title: "Frances et al. (2020) Reading Phase",
+    title: "Frances et al. (2020) Contextual Diversity Experiment",
     citation: "Frances et al. (2020) The effects of contextual diversity on incidental vocabulary learning",
-    sourceWorkbook: "חומר עזר פרנסיס.xlsx",
-    summary: "Training-phase only build with 30 reading passages and one yes/no comprehension question after each passage.",
-    targetWords: [...targets.values()].sort((left, right) => left.meaningCode.localeCompare(right.meaningCode)),
+    sourceWorkbook: path.basename(workbookPath),
+    summary: "Training phase with recall, recognition, and matching post-test materials.",
+    targetWords: buildTargets(toRows(workbook.Sheets.VersionesParaCorreccion)),
     versions,
-    recallPrompts: [],
-    matchingTrials: []
+    recallPrompts: buildRecallPrompts(toRows(workbook.Sheets["Recall EN"])),
+    matchingTrials: buildMatchingTrials(toRows(workbook.Sheets.Matching))
   };
 }
 

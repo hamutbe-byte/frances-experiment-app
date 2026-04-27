@@ -17,6 +17,7 @@ export default async function StartPage({ params }: Props) {
       eyebrow="Reading Phase"
       title="Frances et al. (2020)"
       description="This first milestone includes only the learning phase: participants read 30 passages and answer one yes/no comprehension question after each passage."
+      studySlug={study.slug}
     >
       <StartPhaseClient
         studySlug={study.slug}
