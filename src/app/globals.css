@@ -320,6 +320,34 @@ textarea {
   margin: 0;
 }
 
+.matching-panel {
+  min-height: 620px;
+}
+
+.matching-stimulus {
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+  padding: 22px 0 8px;
+}
+
+.matching-image {
+  width: min(320px, 76vw);
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #050403;
+  user-select: none;
+}
+
+.matching-word {
+  font-family: "Segoe UI", sans-serif;
+  font-size: clamp(2.1rem, 8vw, 4rem);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
 .question-block {
   margin-top: 24px;
   padding-top: 22px;

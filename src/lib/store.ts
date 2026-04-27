@@ -2,12 +2,20 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { makeCompletionCode, makeSessionId, chooseBalancedVersion } from "@/lib/assignment";
-import { getLearningTrialCount, getLearningTrialOrThrow, getRecallPromptOrThrow, getStudyOrThrow } from "@/lib/study";
+import {
+  getLearningTrialCount,
+  getLearningTrialOrThrow,
+  getMatchingTrialCount,
+  getMatchingTrialOrThrow,
+  getRecallPromptOrThrow,
+  getStudyOrThrow
+} from "@/lib/study";
 import type {
   ClientEvent,
   ComprehensionResponse,
   CreateSessionInput,
   CreateSessionResult,
+  MatchingResponse,
   ParticipantSession,
   RecallItemResponse,
   RecognitionResponse,
@@ -35,6 +43,12 @@ interface RecallInput {
 interface RecognitionInput {
   promptIndex: number;
   selectedOptionIndex: number;
+  responseTimeMs: number;
+}
+
+interface MatchingInput {
+  trialIndex: number;
+  answer: YesNoAnswer;
   responseTimeMs: number;
 }
 
@@ -301,6 +315,54 @@ export function saveRecognitionResponse(sessionId: string, input: RecognitionInp
     response,
     nextPromptIndex: input.promptIndex + 1,
     completed: input.promptIndex >= study.recallPrompts.length
+  };
+}
+
+export function saveMatchingResponse(sessionId: string, input: MatchingInput) {
+  const store = readStore();
+  const bundle = store.bundles.find((entry) => entry.session.id === sessionId);
+  if (!bundle) {
+    throw new Error(`Session ${sessionId} was not found.`);
+  }
+
+  const trial = getMatchingTrialOrThrow(bundle.session.studySlug, input.trialIndex);
+  const trialCount = getMatchingTrialCount(bundle.session.studySlug);
+  const existing = bundle.matching.find((entry) => entry.trialIndex === input.trialIndex);
+
+  if (existing) {
+    return {
+      bundle: cloneBundle(bundle),
+      response: existing,
+      nextTrialIndex: existing.trialIndex + 1,
+      completed: existing.trialIndex >= trialCount
+    };
+  }
+
+  const response: MatchingResponse = {
+    sessionId,
+    trialIndex: input.trialIndex,
+    pictureId: trial.pictureId,
+    condition: trial.condition,
+    answer: input.answer,
+    correct: trial.correctAnswer === input.answer,
+    responseTimeMs: input.responseTimeMs,
+    answeredAt: nowIso()
+  };
+
+  bundle.matching.push(response);
+  bundle.session.status = input.trialIndex >= trialCount ? "complete" : "matching";
+  bundle.session.updatedAt = nowIso();
+  if (bundle.session.status === "complete") {
+    bundle.session.completedAt = bundle.session.updatedAt;
+  }
+
+  writeStore(store);
+
+  return {
+    bundle: cloneBundle(bundle),
+    response,
+    nextTrialIndex: input.trialIndex + 1,
+    completed: input.trialIndex >= trialCount
   };
 }
 

@@ -111,6 +111,27 @@ export async function submitRecognitionRequest(
   );
 }
 
+export async function submitMatchingRequest(
+  sessionId: string,
+  trialIndex: number,
+  answer: YesNoAnswer,
+  responseTimeMs: number
+) {
+  return readJson<{ nextTrialIndex: number; completed: boolean }>(
+    await fetch(`/api/session/${sessionId}/matching`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        trialIndex,
+        answer,
+        responseTimeMs
+      })
+    })
+  );
+}
+
 export async function sendTelemetryRequest(
   sessionId: string,
   event: Omit<ClientEvent, "createdAt" | "sessionId">

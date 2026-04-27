@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { POST as createSessionPost } from "@/app/api/session/route";
 import { POST as submitComprehensionPost } from "@/app/api/session/[id]/comprehension/route";
+import { POST as submitMatchingPost } from "@/app/api/session/[id]/matching/route";
 import { POST as submitRecallPost } from "@/app/api/session/[id]/recall/route";
 import { POST as submitRecognitionPost } from "@/app/api/session/[id]/recognition/route";
 import { chooseBalancedVersion } from "@/lib/assignment";
@@ -13,6 +14,7 @@ import {
   createSession,
   getSessionBundle,
   saveComprehensionResponse,
+  saveMatchingResponse,
   saveRecallResponse,
   saveRecognitionResponse
 } from "@/lib/store";
@@ -55,6 +57,31 @@ function makeSession(versionId: string, versionNumber: number, index: number): P
   };
 }
 
+function readJpegSize(filePath: string) {
+  const bytes = fs.readFileSync(filePath);
+  let offset = 2;
+
+  while (offset < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+
+    const marker = bytes[offset + 1];
+    const length = bytes.readUInt16BE(offset + 2);
+    if (marker >= 0xc0 && marker <= 0xc3) {
+      return {
+        height: bytes.readUInt16BE(offset + 5),
+        width: bytes.readUInt16BE(offset + 7)
+      };
+    }
+
+    offset += 2 + length;
+  }
+
+  throw new Error(`Could not read JPEG dimensions for ${filePath}`);
+}
+
 async function run(name: string, fn: () => void | Promise<void>) {
   try {
     await fn();
@@ -86,7 +113,6 @@ async function main() {
   });
 
   await run("matching materials are balanced and all image files exist", () => {
-    const fs = require("node:fs") as typeof import("node:fs");
     const study = getStudyOrThrow("frances-2020");
     const counts = study.matchingTrials.reduce<Record<string, number>>((accumulator, trial) => {
       accumulator[trial.condition] = (accumulator[trial.condition] ?? 0) + 1;
@@ -100,6 +126,23 @@ async function main() {
       category: 8,
       unrelated: 8
     });
+  });
+
+  await run("matching images are rotated upright", () => {
+    const expectedSizes = [
+      { fileName: "PICTURE_96.jpg", width: 521, height: 529 },
+      { fileName: "PICTURE_358.jpg", width: 521, height: 518 },
+      { fileName: "PICTURE_535.jpg", width: 521, height: 518 },
+      { fileName: "PICTURE_552.jpg", width: 521, height: 521 }
+    ];
+
+    for (const expected of expectedSizes) {
+      const actual = readJpegSize(path.resolve(process.cwd(), "public", "stimuli", "matching", expected.fileName));
+      assert.deepEqual(actual, {
+        width: expected.width,
+        height: expected.height
+      });
+    }
   });
 
   await run("seeded study contains 8 critical and 22 filler trials per version", () => {
@@ -232,6 +275,34 @@ async function main() {
     assert.equal(result.response.correct, true);
     assert.equal(result.nextPromptIndex, 2);
     assert.equal(result.completed, false);
+  });
+
+  await run("matching response stores correctness, condition, and completion", () => {
+    setIsolatedStoreDir("matching");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const first = saveMatchingResponse(created.session.id, {
+      trialIndex: 1,
+      answer: "yes",
+      responseTimeMs: 430
+    });
+    assert.equal(first.response.correct, true);
+    assert.equal(first.response.pictureId, "PICTURE_229");
+    assert.equal(first.response.condition, "match");
+    assert.equal(first.completed, false);
+
+    const last = saveMatchingResponse(created.session.id, {
+      trialIndex: 32,
+      answer: "no",
+      responseTimeMs: 530
+    });
+    const bundle = getSessionBundle(created.session.id);
+    assert.equal(last.completed, true);
+    assert.equal(bundle?.session.status, "complete");
+    assert.ok(bundle?.session.completedAt);
   });
 
   await run("dev toolbar is styled as a left-side navigation rail", () => {
@@ -383,6 +454,47 @@ async function main() {
     assert.equal(recognitionResponse.status, 200);
     const payload = await recognitionResponse.json();
     assert.equal(payload.nextPromptIndex, 2);
+    assert.equal(payload.completed, false);
+  });
+
+  await run("matching API stores responses and advances matching trials", async () => {
+    setIsolatedStoreDir("api-matching");
+    const createResponse = await createSessionPost(
+      new Request("http://localhost:3000/api/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          studySlug: "frances-2020",
+          device: sampleDevice()
+        })
+      })
+    );
+    const created = await createResponse.json();
+
+    const response = await submitMatchingPost(
+      new Request(`http://localhost:3000/api/session/${created.session.id}/matching`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          trialIndex: 1,
+          answer: "yes",
+          responseTimeMs: 700
+        })
+      }),
+      {
+        params: Promise.resolve({
+          id: created.session.id
+        })
+      }
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.nextTrialIndex, 2);
     assert.equal(payload.completed, false);
   });
 

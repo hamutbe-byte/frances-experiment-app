@@ -51,3 +51,15 @@ export function getRecallPromptOrThrow(studySlug: string, promptIndex: number) {
 export function getRecallPromptCount(studySlug: string) {
   return getStudyOrThrow(studySlug).recallPrompts.length;
 }
+
+export function getMatchingTrialOrThrow(studySlug: string, trialIndex: number) {
+  const trial = getStudyOrThrow(studySlug).matchingTrials.find((entry) => entry.trialIndex === trialIndex);
+  if (!trial) {
+    throw new Error(`Matching trial ${trialIndex} was not found for study ${studySlug}.`);
+  }
+  return trial;
+}
+
+export function getMatchingTrialCount(studySlug: string) {
+  return getStudyOrThrow(studySlug).matchingTrials.length;
+}

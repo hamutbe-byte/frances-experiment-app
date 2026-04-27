@@ -1,4 +1,4 @@
-import { MatchingPlaceholderClient } from "@/components/matching-placeholder-client";
+import { MatchingTaskClient } from "@/components/matching-task-client";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 
@@ -16,10 +16,10 @@ export default async function MatchingPage({ params }: Props) {
     <StudyFrame
       eyebrow="Matching"
       title="Picture-word matching"
-      description="This planned task will ask whether each picture and pseudoword match."
+      description="Decide as quickly and accurately as possible whether each picture and pseudoword match."
       studySlug={study.slug}
     >
-      <MatchingPlaceholderClient studySlug={study.slug} trialCount={study.matchingTrials.length} />
+      <MatchingTaskClient studySlug={study.slug} />
     </StudyFrame>
   );
 }
