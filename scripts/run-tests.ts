@@ -5,14 +5,20 @@ import path from "node:path";
 
 import { POST as createSessionPost } from "@/app/api/session/route";
 import { POST as submitComprehensionPost } from "@/app/api/session/[id]/comprehension/route";
+import { POST as submitDistractorPost } from "@/app/api/session/[id]/distractor/route";
 import { POST as submitMatchingPost } from "@/app/api/session/[id]/matching/route";
 import { POST as submitRecallPost } from "@/app/api/session/[id]/recall/route";
 import { POST as submitRecognitionPost } from "@/app/api/session/[id]/recognition/route";
+import { GET as adminExportGet } from "@/app/admin/export/route";
+import { corsiBlocks, corsiTrialList, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import { chooseBalancedVersion } from "@/lib/assignment";
+import { bundlesToResponsesCsv } from "@/lib/csv";
 import {
   __resetStoreForTests,
   createSession,
   getSessionBundle,
+  listSessionBundles,
+  saveDistractorResponse,
   saveComprehensionResponse,
   saveMatchingResponse,
   saveRecallResponse,
@@ -43,11 +49,14 @@ function setIsolatedStoreDir(name: string) {
 }
 
 function makeSession(versionId: string, versionNumber: number, index: number): ParticipantSession {
+  const study = getStudyOrThrow("frances-2020");
   return {
     id: `session-${index}`,
     studySlug: "frances-2020",
     versionId,
     versionNumber,
+    recallPromptOrder: study.recallPrompts.map((prompt) => prompt.promptIndex),
+    matchingTrialOrder: study.matchingTrials.map((trial) => trial.trialIndex),
     status: "created",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -195,6 +204,41 @@ async function main() {
     assert.equal(bundle?.session.id, created[0].session.id);
   });
 
+  await run("session creation stores stable randomized post-test orders", () => {
+    setIsolatedStoreDir("randomized-orders");
+    const study = getStudyOrThrow("frances-2020");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+    const bundle = getSessionBundle(created.session.id);
+    assert.ok(bundle);
+
+    assert.deepEqual([...bundle.session.recallPromptOrder].sort((left, right) => left - right), study.recallPrompts.map((prompt) => prompt.promptIndex));
+    assert.deepEqual([...bundle.session.matchingTrialOrder].sort((left, right) => left - right), study.matchingTrials.map((trial) => trial.trialIndex));
+    assert.equal(bundle.session.recallPromptOrder.length, 8);
+    assert.equal(bundle.session.matchingTrialOrder.length, 32);
+  });
+
+  await run("session bundles can be listed for admin views", () => {
+    setIsolatedStoreDir("admin-list");
+    const first = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+    const second = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const bundles = listSessionBundles();
+    assert.equal(bundles.length, 2);
+    assert.deepEqual(
+      bundles.map((bundle) => bundle.session.id).sort(),
+      [first.session.id, second.session.id].sort()
+    );
+  });
+
   await run("comprehension responses are stored with correctness and next trial", () => {
     setIsolatedStoreDir("comprehension");
     const created = createSession({
@@ -229,6 +273,73 @@ async function main() {
 
     assert.equal(result.completed, true);
     assert.equal(bundle?.session.status, "distractor");
+  });
+
+  await run("distractor response stores Corsi sequence accuracy", () => {
+    setIsolatedStoreDir("distractor");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const result = saveDistractorResponse(created.session.id, {
+      trialIndex: 1,
+      direction: "forward",
+      sequenceLength: 3,
+      shownSequence: [0, 4, 7],
+      responseSequence: [0, 4, 7],
+      responseTimeMs: 1800
+    });
+
+    assert.equal(result.response.correct, true);
+    assert.equal(result.response.direction, "forward");
+    assert.deepEqual(result.response.shownSequence, [0, 4, 7]);
+    assert.equal(getSessionBundle(created.session.id)?.session.status, "distractor");
+  });
+
+  await run("Corsi trials use a fixed span-style task list", () => {
+    assert.equal(corsiTrialList.length, 20);
+    assert.deepEqual(
+      corsiTrialList.slice(0, 4).map((trial) => [trial.direction, trial.sequence.length]),
+      [
+        ["forward", 2],
+        ["forward", 2],
+        ["forward", 3],
+        ["forward", 3]
+      ]
+    );
+    assert.deepEqual(
+      corsiTrialList.slice(10, 14).map((trial) => [trial.direction, trial.sequence.length]),
+      [
+        ["backward", 2],
+        ["backward", 2],
+        ["backward", 3],
+        ["backward", 3]
+      ]
+    );
+  });
+
+  await run("Corsi block coordinates stay within the board frame", () => {
+    for (const block of corsiBlocks) {
+      assert.ok(block.x >= 16 && block.x <= 82);
+      assert.ok(block.y >= 12 && block.y <= 78);
+    }
+  });
+
+  await run("backward Corsi trials expect reversed responses", () => {
+    const sessionId = "session-corsi";
+    const backwardTrial = getCorsiTrial(sessionId, 11);
+    assert.equal(backwardTrial.direction, "backward");
+    assert.deepEqual(getExpectedCorsiResponse(backwardTrial.direction, backwardTrial.sequence), [...backwardTrial.sequence].reverse());
+  });
+
+  await run("distractor client uses an explicit start button, 500ms cues, and correctness feedback", () => {
+    const distractor = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "distractor-client.tsx"), "utf8");
+    assert.match(distractor, /const cueDurationMs = 500/);
+    assert.match(distractor, /const cueGapMs = 0/);
+    assert.match(distractor, /startSequence/);
+    assert.match(distractor, /התחל\/י את הרצף הבא/);
+    assert.match(distractor, /message: result\.correct \? "נכון" : "לא נכון"/);
   });
 
   await run("recall response stores timing, edit, and paste metadata", () => {
@@ -277,6 +388,27 @@ async function main() {
     assert.equal(result.completed, false);
   });
 
+  await run("recognition completion is based on all randomized prompts, not prompt number", () => {
+    setIsolatedStoreDir("recognition-random-completion");
+    const study = getStudyOrThrow("frances-2020");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+    const prompt = study.recallPrompts[7];
+    const correctOption = prompt.recognitionOptions.find((option) => option.isCorrect);
+    assert.ok(correctOption);
+
+    const result = saveRecognitionResponse(created.session.id, {
+      promptIndex: 8,
+      selectedOptionIndex: correctOption.optionIndex,
+      responseTimeMs: 650
+    });
+
+    assert.equal(result.completed, false);
+    assert.equal(getSessionBundle(created.session.id)?.session.status, "recall");
+  });
+
   await run("matching response stores correctness, condition, and completion", () => {
     setIsolatedStoreDir("matching");
     const created = createSession({
@@ -294,6 +426,14 @@ async function main() {
     assert.equal(first.response.condition, "match");
     assert.equal(first.completed, false);
 
+    for (let trialIndex = 2; trialIndex <= 31; trialIndex += 1) {
+      saveMatchingResponse(created.session.id, {
+        trialIndex,
+        answer: "no",
+        responseTimeMs: 530
+      });
+    }
+
     const last = saveMatchingResponse(created.session.id, {
       trialIndex: 32,
       answer: "no",
@@ -303,6 +443,78 @@ async function main() {
     assert.equal(last.completed, true);
     assert.equal(bundle?.session.status, "complete");
     assert.ok(bundle?.session.completedAt);
+  });
+
+  await run("matching completion is based on all randomized trials and supports timeout responses", () => {
+    setIsolatedStoreDir("matching-random-completion");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const earlyTrial32 = saveMatchingResponse(created.session.id, {
+      trialIndex: 32,
+      answer: "timeout",
+      responseTimeMs: 2500
+    });
+    const bundle = getSessionBundle(created.session.id);
+
+    assert.equal(earlyTrial32.completed, false);
+    assert.equal(earlyTrial32.response.answer, "timeout");
+    assert.equal(earlyTrial32.response.correct, false);
+    assert.equal(bundle?.session.status, "matching");
+  });
+
+  await run("response CSV includes all implemented response phases", () => {
+    setIsolatedStoreDir("response-csv");
+    const study = getStudyOrThrow("frances-2020");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+    const correctOption = study.recallPrompts[0].recognitionOptions.find((option) => option.isCorrect);
+    assert.ok(correctOption);
+
+    saveComprehensionResponse(created.session.id, {
+      trialIndex: 1,
+      answer: "yes",
+      responseTimeMs: 750
+    });
+    saveDistractorResponse(created.session.id, {
+      trialIndex: 1,
+      direction: "forward",
+      sequenceLength: 3,
+      shownSequence: [0, 4, 7],
+      responseSequence: [0, 4, 7],
+      responseTimeMs: 1800
+    });
+    saveRecallResponse(created.session.id, {
+      promptIndex: 1,
+      text: "nilan",
+      firstKeystrokeLatencyMs: 100,
+      totalResponseTimeMs: 1200,
+      editCount: 3,
+      pasted: false,
+      pasteCount: 0
+    });
+    saveRecognitionResponse(created.session.id, {
+      promptIndex: 1,
+      selectedOptionIndex: correctOption.optionIndex,
+      responseTimeMs: 500
+    });
+    saveMatchingResponse(created.session.id, {
+      trialIndex: 1,
+      answer: "yes",
+      responseTimeMs: 430
+    });
+
+    const csv = bundlesToResponsesCsv(listSessionBundles());
+    assert.match(csv, /comprehension/);
+    assert.match(csv, /distractor/);
+    assert.match(csv, /recall/);
+    assert.match(csv, /recognition/);
+    assert.match(csv, /matching/);
+    assert.match(csv, /PICTURE_229/);
   });
 
   await run("dev toolbar is styled as a left-side navigation rail", () => {
@@ -323,6 +535,32 @@ async function main() {
     assert.match(component, /aria-expanded=\{isOpen\}/);
     assert.match(css, /\.dev-toolbar-toggle\s*\{/);
     assert.match(css, /\.dev-toolbar:not\(\.is-open\)/);
+  });
+
+  await run("dev toolbar jumps open the beginning of each phase without auto-skipping completed trials", () => {
+    const toolbar = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "dev-toolbar.tsx"), "utf8");
+    const learning = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "learning-trial-client.tsx"), "utf8");
+    const recall = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "recall-recognition-client.tsx"), "utf8");
+    const matching = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "matching-task-client.tsx"), "utf8");
+
+    assert.match(toolbar, /devJump=1/);
+    assert.match(learning, /isDevJump/);
+    assert.match(learning, /alreadyAnswered && !isDevJump/);
+    assert.match(recall, /isDevJump/);
+    assert.match(recall, /recallDone && recognitionDone && !isDevJump/);
+    assert.match(matching, /isDevJump/);
+    assert.match(matching, /trialByIndex\(order\[0\]\)/);
+  });
+
+  await run("post-test clients use stored random order without client-side matching timeout", () => {
+    const recall = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "recall-recognition-client.tsx"), "utf8");
+    const matching = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "matching-task-client.tsx"), "utf8");
+
+    assert.match(recall, /recallPromptOrder/);
+    assert.match(recall, /orderedPromptIndex/);
+    assert.match(matching, /matchingTrialOrder/);
+    assert.doesNotMatch(matching, /matchingResponseWindowMs = 2500/);
+    assert.doesNotMatch(matching, /submitAnswer\("timeout"\)/);
   });
 
   await run("session creation API returns a valid response", async () => {
@@ -457,6 +695,49 @@ async function main() {
     assert.equal(payload.completed, false);
   });
 
+  await run("distractor API stores Corsi responses", async () => {
+    setIsolatedStoreDir("api-distractor");
+    const createResponse = await createSessionPost(
+      new Request("http://localhost:3000/api/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          studySlug: "frances-2020",
+          device: sampleDevice()
+        })
+      })
+    );
+    const created = await createResponse.json();
+
+    const response = await submitDistractorPost(
+      new Request(`http://localhost:3000/api/session/${created.session.id}/distractor`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          trialIndex: 1,
+          direction: "backward",
+          sequenceLength: 3,
+          shownSequence: [7, 4, 0],
+          responseSequence: [7, 4, 0],
+          responseTimeMs: 1500
+        })
+      }),
+      {
+        params: Promise.resolve({
+          id: created.session.id
+        })
+      }
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.correct, true);
+  });
+
   await run("matching API stores responses and advances matching trials", async () => {
     setIsolatedStoreDir("api-matching");
     const createResponse = await createSessionPost(
@@ -494,8 +775,36 @@ async function main() {
 
     assert.equal(response.status, 200);
     const payload = await response.json();
-    assert.equal(payload.nextTrialIndex, 2);
+    const bundle = getSessionBundle(created.session.id);
+    const expectedNextTrialIndex = bundle?.session.matchingTrialOrder.find((trialIndex) => trialIndex !== 1);
+    assert.equal(payload.nextTrialIndex, expectedNextTrialIndex);
     assert.equal(payload.completed, false);
+  });
+
+  await run("admin export API returns JSON and CSV datasets", async () => {
+    setIsolatedStoreDir("api-admin-export");
+    createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice()
+    });
+
+    const jsonResponse = await adminExportGet(new Request("http://localhost:3000/admin/export?format=json"));
+    assert.equal(jsonResponse.status, 200);
+    const jsonPayload = await jsonResponse.json();
+    assert.equal(jsonPayload.sessions.length, 1);
+
+    const csvResponse = await adminExportGet(new Request("http://localhost:3000/admin/export?format=csv&type=responses"));
+    assert.equal(csvResponse.status, 200);
+    assert.match(csvResponse.headers.get("Content-Type") ?? "", /text\/csv/);
+    assert.match(await csvResponse.text(), /session_id,version_id,phase/);
+  });
+
+  await run("admin list pages are dynamic so session counts stay fresh", () => {
+    const studiesPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "admin", "studies", "page.tsx"), "utf8");
+    const sessionsPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "admin", "sessions", "page.tsx"), "utf8");
+
+    assert.match(studiesPage, /export const dynamic = "force-dynamic"/);
+    assert.match(sessionsPage, /export const dynamic = "force-dynamic"/);
   });
 
   log("All smoke tests passed.");

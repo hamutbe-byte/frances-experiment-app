@@ -11,7 +11,7 @@ import {
 } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
-import type { MatchingTrial, YesNoAnswer } from "@/lib/types";
+import type { MatchingTrial } from "@/lib/types";
 
 interface MatchingTaskClientProps {
   studySlug: string;
@@ -22,6 +22,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   const searchParams = useSearchParams();
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [trial, setTrial] = useState<MatchingTrial | null>(null);
+  const [matchingOrder, setMatchingOrder] = useState<number[]>([]);
   const [answeredTrialIndexes, setAnsweredTrialIndexes] = useState<Set<number>>(new Set());
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -30,11 +31,16 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
 
   useStageTelemetry(sessionId, "matching");
 
-  function firstUnansweredTrial(answered: Set<number>) {
-    return study.matchingTrials.find((entry) => !answered.has(entry.trialIndex)) ?? null;
+  function trialByIndex(trialIndex: number) {
+    return study.matchingTrials.find((entry) => entry.trialIndex === trialIndex) ?? null;
   }
 
-  function showTrial(nextTrial: MatchingTrial | null) {
+  function firstUnansweredTrial(answered: Set<number>, order = matchingOrder) {
+    const nextTrialIndex = order.find((trialIndex) => !answered.has(trialIndex));
+    return nextTrialIndex ? trialByIndex(nextTrialIndex) : null;
+  }
+
+  function showTrial(nextTrial: MatchingTrial | null, order = matchingOrder) {
     if (!nextTrial) {
       setTrial(null);
       return;
@@ -42,7 +48,9 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
 
     setTrial(nextTrial);
     setStartedAt(performance.now());
-    const followingTrial = study.matchingTrials.find((entry) => entry.trialIndex === nextTrial.trialIndex + 1);
+    const nextOrderPosition = order.indexOf(nextTrial.trialIndex) + 1;
+    const followingTrialIndex = order[nextOrderPosition];
+    const followingTrial = followingTrialIndex ? trialByIndex(followingTrialIndex) : null;
     if (followingTrial) {
       const image = new window.Image();
       image.src = followingTrial.imagePath;
@@ -50,6 +58,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   }
 
   useEffect(() => {
+    const isDevJump = searchParams.get("devJump") === "1";
     const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
       router.replace(`/study/${studySlug}/start`);
@@ -60,21 +69,23 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     void updateSessionStatusRequest(resolvedSessionId, "matching").catch(() => undefined);
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
+        const order = bundle.session.matchingTrialOrder.length > 0 ? bundle.session.matchingTrialOrder : study.matchingTrials.map((entry) => entry.trialIndex);
         const answered = new Set(bundle.matching.map((entry) => entry.trialIndex));
+        setMatchingOrder(order);
         setAnsweredTrialIndexes(answered);
-        const nextTrial = firstUnansweredTrial(answered);
+        const nextTrial = isDevJump ? trialByIndex(order[0]) : firstUnansweredTrial(answered, order);
         if (!nextTrial) {
           router.replace(`/study/${studySlug}/complete?session=${resolvedSessionId}`);
           return;
         }
-        showTrial(nextTrial);
+        showTrial(nextTrial, order);
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load matching task.");
+        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את משימת ההתאמה.");
       });
   }, [router, searchParams, studySlug]);
 
-  async function submitAnswer(answer: YesNoAnswer) {
+  async function submitAnswer(answer: "yes" | "no") {
     if (!sessionId || !trial || startedAt === null || isPending) {
       return;
     }
@@ -97,7 +108,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
         return next;
       });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Failed to save matching response.");
+      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את תגובת ההתאמה.");
     } finally {
       setIsPending(false);
     }
@@ -131,18 +142,18 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   if (!trial) {
     return (
       <section className="panel">
-        <p className="status">Loading matching trial...</p>
+        <p className="status">טוען את ניסוי ההתאמה...</p>
       </section>
     );
   }
 
-  const progress = Math.round((trial.trialIndex / study.matchingTrials.length) * 100);
+  const progress = Math.round(((answeredTrialIndexes.size + 1) / study.matchingTrials.length) * 100);
 
   return (
     <section className="panel matching-panel">
       <div className="trial-header">
         <span className="pill">
-          Matching {trial.trialIndex} of {study.matchingTrials.length}
+          התאמה {answeredTrialIndexes.size + 1} מתוך {study.matchingTrials.length}
         </span>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
@@ -151,19 +162,21 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
 
       <div className="matching-stimulus">
         <img src={trial.imagePath} alt="" className="matching-image" draggable={false} />
-        <div className="matching-word">{trial.displayWord}</div>
+        <div className="matching-word" dir="ltr">
+          {trial.displayWord}
+        </div>
       </div>
 
       <section className="question-block">
-        <span className="question-label">Do the picture and word match?</span>
+        <span className="question-label">האם התמונה והמילה מתאימות זו לזו?</span>
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <span>Press F</span>
+            <span>לחצו F</span>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <span>Press J</span>
+            <span>לחצו J</span>
           </button>
         </div>
       </section>

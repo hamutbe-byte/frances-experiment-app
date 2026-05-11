@@ -17,12 +17,14 @@
 }
 
 html {
+  min-height: 100%;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   color: var(--ink);
   background:
     radial-gradient(circle at top, rgba(255, 235, 205, 0.7), transparent 35%),
@@ -134,6 +136,49 @@ textarea {
 .meta-value {
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.admin-panel {
+  overflow-x: auto;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.admin-table {
+  width: 100%;
+  min-width: 720px;
+  margin-top: 24px;
+  border-collapse: collapse;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 0.92rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: var(--accent-deep);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.admin-table a {
+  color: var(--accent-deep);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .stack {
@@ -301,6 +346,128 @@ textarea {
   font-size: clamp(2.4rem, 8vw, 4.6rem);
   font-weight: 800;
   color: var(--accent-deep);
+}
+
+.corsi-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.corsi-instructions {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(122, 60, 31, 0.12);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.corsi-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.corsi-lab-frame {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 28px;
+  border: 1px solid rgba(122, 60, 31, 0.14);
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(245, 238, 228, 0.92));
+}
+
+.corsi-status-strip {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.corsi-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(122, 60, 31, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(122, 60, 31, 0.1);
+}
+
+.corsi-status-dot.is-on {
+  background: var(--accent);
+  box-shadow: 0 0 0 6px rgba(170, 90, 49, 0.12);
+}
+
+.corsi-board {
+  position: relative;
+  min-height: 420px;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(252, 247, 239, 0.96), rgba(242, 233, 220, 0.92));
+  overflow: hidden;
+}
+
+.corsi-board::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(122, 60, 31, 0.12);
+  pointer-events: none;
+}
+
+.corsi-block {
+  position: absolute;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  border: 1px solid rgba(122, 60, 31, 0.18);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 236, 225, 0.95));
+  box-shadow: 0 12px 24px rgba(43, 30, 22, 0.08), inset 0 -6px 12px rgba(122, 60, 31, 0.06);
+  transform: translate(-50%, -50%);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  cursor: pointer;
+}
+
+.corsi-block.is-active {
+  background: linear-gradient(180deg, #c97445, var(--accent));
+  box-shadow: 0 0 0 6px rgba(170, 90, 49, 0.16), 0 18px 30px rgba(170, 90, 49, 0.28);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.corsi-block.is-selected:not(.is-active) {
+  background: linear-gradient(180deg, rgba(221, 167, 132, 0.96), rgba(203, 141, 102, 0.88));
+}
+
+.corsi-block:disabled {
+  cursor: default;
+}
+
+.corsi-mode-status {
+  min-height: 1.5em;
+}
+
+.corsi-feedback {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 30;
+  min-width: 180px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  transform: translateX(-50%);
+  text-align: center;
+  color: white;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 18px 32px rgba(43, 30, 22, 0.18);
+}
+
+.corsi-feedback.is-correct {
+  background: linear-gradient(180deg, #4b8a5b, #326a41);
+}
+
+.corsi-feedback.is-incorrect {
+  background: linear-gradient(180deg, #c6664b, #9f452d);
 }
 
 .passage {
@@ -486,6 +653,24 @@ textarea {
 
   .panel {
     padding: 22px 18px;
+  }
+
+  .matching-stimulus {
+    justify-items: center;
+  }
+
+  .corsi-board {
+    min-height: 320px;
+  }
+
+  .corsi-block {
+    width: 58px;
+    height: 58px;
+  }
+
+  .matching-image {
+    width: min(320px, 100%);
+    max-width: min(320px, 76vw);
   }
 
   .answer-grid {

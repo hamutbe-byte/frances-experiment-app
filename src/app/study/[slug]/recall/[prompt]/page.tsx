@@ -15,10 +15,11 @@ export default async function RecallPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="Memory Questions"
-      title="Complete the blanks"
-      description="Type the pseudoword you remember, then choose it from the options shown next."
+      eyebrow="שלב הזיכרון"
+      title="השלימו את החסר"
+      description="השאלה עצמה מוצגת באנגלית. תחילה הקלידו את מילת הפסאודו שאתם זוכרים, ואז בחרו אותה מבין האפשרויות."
       studySlug={study.slug}
+      dir="rtl"
     >
       <RecallRecognitionClient studySlug={study.slug} promptIndex={Number(prompt)} />
     </StudyFrame>

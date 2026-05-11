@@ -37,7 +37,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
         return updateSessionStatusRequest(resolvedSessionId, "instructions");
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load the session.");
+        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את ההשתתפות.");
       });
   }, [router, searchParams, studySlug]);
 
@@ -53,7 +53,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
         router.push(`/study/${studySlug}/learn/1?session=${sessionId}`);
       });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Failed to continue.");
+      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה להמשיך לשלב הבא.");
       setIsPending(false);
     }
   }
@@ -62,22 +62,22 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
     <section className={`panel${error ? " error-card" : ""}`}>
       <div className="stack">
         <div>
-          <span className="pill">{versionNumber ? `Assigned version ${versionNumber}` : "Loading version..."}</span>
+          <span className="pill">{versionNumber ? `שובצתם לגרסה ${versionNumber}` : "טוען את פרטי הגרסה..."}</span>
         </div>
 
         <ol className="list">
-          <li>Read each passage carefully on its own screen.</li>
-          <li>After each passage, answer one yes/no comprehension question.</li>
-          <li>Try to complete the phase in one sitting without switching tabs or apps.</li>
-          <li>The reading phase ends after the 30th passage.</li>
+          <li>קראו כל קטע באנגלית בעיון, במסך נפרד.</li>
+          <li>לאחר כל קטע, ענו על שאלת הבנת הנקרא כפי שהיא מופיעה באנגלית.</li>
+          <li>בהמשך תתבקשו להשלים משימות זיכרון והתאמה; גם התכנים של משימות אלה יופיעו באנגלית.</li>
+          <li>נסו להשלים את כל הניסוי ברצף, בלי לעבור בין לשוניות או אפליקציות אחרות.</li>
         </ol>
 
         <div className="actions">
           <button type="button" className="button" onClick={beginLearning} disabled={isPending || !sessionId}>
-            {isPending ? "Opening first passage..." : "Begin reading"}
+            {isPending ? "פותח את הקטע הראשון..." : "התחילו בקריאה"}
           </button>
           <button type="button" className="button button-secondary" onClick={() => router.push(`/study/${studySlug}/start`)}>
-            Back
+            חזרה
           </button>
         </div>
 

@@ -13,7 +13,7 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [code, setCode] = useState<string | null>(null);
-  const [status, setStatus] = useState("Loading completion details...");
+  const [status, setStatus] = useState("טוען את פרטי הסיום...");
 
   useEffect(() => {
     const fromUrl = searchParams.get("session");
@@ -26,10 +26,10 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
         setCode(bundle.session.completionCode);
-        setStatus("The available experiment phases are complete.");
+        setStatus("השלמתם את כל שלבי הניסוי הזמינים.");
       })
       .catch(() => {
-        setStatus("The session finished, but the completion code could not be loaded.");
+        setStatus("ההשתתפות הסתיימה, אך לא ניתן היה לטעון את קוד הסיום.");
       });
   }, [router, searchParams, studySlug]);
 
@@ -39,7 +39,7 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
       {code ? <div className="completion-code">{code}</div> : null}
       <div className="actions">
         <button type="button" className="button button-secondary" onClick={() => router.push(`/study/${studySlug}/start`)}>
-          Return to start
+          חזרה להתחלה
         </button>
       </div>
     </section>

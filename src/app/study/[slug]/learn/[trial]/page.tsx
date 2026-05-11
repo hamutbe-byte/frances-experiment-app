@@ -15,10 +15,11 @@ export default async function LearningTrialPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="Learning Trial"
-      title="Read and respond"
-      description="Keep the passage on screen, read it at your normal pace, and then answer the comprehension check."
+      eyebrow="שלב הקריאה"
+      title="קראו והשיבו"
+      description="הקטע עצמו והשאלה שמופיעה אחריו מוצגים באנגלית. קראו בקצב הרגיל שלכם ואז בחרו תשובה."
       studySlug={study.slug}
+      dir="rtl"
     >
       <LearningTrialClient studySlug={study.slug} trialIndex={Number(trial)} />
     </StudyFrame>

@@ -14,10 +14,11 @@ export default async function DistractorPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="Break"
-      title="Short distractor break"
-      description="The original experiment included a timed distractor task before the memory questions."
+      eyebrow="משימת הסחה"
+      title="משימת קורסי"
+      description="השלימו רצפים חזותיים קדימה ואחורה במשך 10 דקות לפני תחילת שאלות הזיכרון."
       studySlug={study.slug}
+      dir="rtl"
     >
       <DistractorClient studySlug={study.slug} />
     </StudyFrame>

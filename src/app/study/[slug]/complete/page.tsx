@@ -14,10 +14,11 @@ export default async function CompletePage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="Complete"
-      title="Experiment complete"
-      description="Thank you for completing the available experiment phases."
+      eyebrow="סיום"
+      title="הניסוי הושלם"
+      description="תודה על השלמת כל שלבי הניסוי."
       studySlug={study.slug}
+      dir="rtl"
     >
       <CompletePhaseClient studySlug={study.slug} />
     </StudyFrame>

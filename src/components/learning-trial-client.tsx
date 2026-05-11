@@ -27,6 +27,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
 
   useEffect(() => {
     const fromUrl = searchParams.get("session");
+    const isDevJump = searchParams.get("devJump") === "1";
     const resolvedSessionId = fromUrl ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
       router.replace(`/study/${studySlug}/start`);
@@ -38,7 +39,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
     void getSessionBundleRequest(resolvedSessionId)
       .then((result) => {
         const alreadyAnswered = result.comprehension.some((entry) => entry.trialIndex === trialIndex);
-        if (alreadyAnswered) {
+        if (alreadyAnswered && !isDevJump) {
           const totalTrials = study.versions.find((version) => version.id === result.session.versionId)?.learningTrials.length ?? 30;
           const nextPath =
             trialIndex >= totalTrials
@@ -53,7 +54,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
         setStartedAt(performance.now());
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load the learning trial.");
+        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את קטע הקריאה.");
       });
   }, [router, searchParams, studySlug, trialIndex]);
 
@@ -109,7 +110,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
         router.push(`/study/${studySlug}/learn/${result.nextTrialIndex}?session=${sessionId}`);
       });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Failed to save the response.");
+      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את התגובה.");
       setIsPending(false);
     }
   }
@@ -125,7 +126,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   if (!bundle || !trial) {
     return (
       <section className="panel">
-        <p className="status">Loading your passage...</p>
+        <p className="status">טוען את קטע הקריאה...</p>
       </section>
     );
   }
@@ -135,26 +136,30 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   return (
     <section className="panel">
       <div className="trial-header">
-        <div className="pill">Passage {trial.trialIndex} of {study.versions[0].learningTrials.length}</div>
+        <div className="pill">קטע {trial.trialIndex} מתוך {study.versions[0].learningTrials.length}</div>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      <article className="passage">{trial.passageText}</article>
+      <article className="passage" dir="ltr">
+        {trial.passageText}
+      </article>
 
       <section className="question-block">
-        <span className="question-label">Comprehension check</span>
-        <p className="question-text">{trial.comprehensionPromptText}</p>
+        <span className="question-label">בדיקת הבנה</span>
+        <p className="question-text" dir="ltr">
+          {trial.comprehensionPromptText}
+        </p>
 
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <span>The statement is correct.</span>
+            <span>המשפט נכון.</span>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <span>The statement is incorrect.</span>
+            <span>המשפט אינו נכון.</span>
           </button>
         </div>
       </section>

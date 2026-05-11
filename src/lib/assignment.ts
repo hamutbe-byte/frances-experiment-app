@@ -32,3 +32,45 @@ export function makeSessionId(): string {
   const entropy = Math.random().toString(36).slice(2, 10);
   return `${Date.now().toString(36)}${entropy}`;
 }
+
+function hashSeed(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function makeRandom(seed: number) {
+  let state = seed || 1;
+  return () => {
+    state = Math.imul(1664525, state) + 1013904223;
+    return (state >>> 0) / 4294967296;
+  };
+}
+
+export function seededShuffle(values: number[], seedText: string) {
+  const random = makeRandom(hashSeed(seedText));
+  const shuffled = [...values];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
+export function makeParticipantOrders(study: StudyData, sessionId: string) {
+  return {
+    recallPromptOrder: seededShuffle(
+      study.recallPrompts.map((prompt) => prompt.promptIndex),
+      `${sessionId}:recall`
+    ),
+    matchingTrialOrder: seededShuffle(
+      study.matchingTrials.map((trial) => trial.trialIndex),
+      `${sessionId}:matching`
+    )
+  };
+}

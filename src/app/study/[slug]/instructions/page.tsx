@@ -14,10 +14,11 @@ export default async function InstructionsPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="Instructions"
-      title="Before you begin"
-      description="Please read each passage carefully and answer the short comprehension statement that follows. This build includes the training phase only."
+      eyebrow="הוראות"
+      title="לפני שמתחילים"
+      description="קראו כל קטע באנגלית וענו על שאלת ההבנה שאחריו. לאחר שלב הקריאה תמשיכו למשימות זיכרון והתאמה, שגם התוכן שלהן יופיע באנגלית."
       studySlug={study.slug}
+      dir="rtl"
     >
       <InstructionsClient studySlug={study.slug} />
     </StudyFrame>

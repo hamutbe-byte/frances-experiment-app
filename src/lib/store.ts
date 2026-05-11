@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { makeCompletionCode, makeSessionId, chooseBalancedVersion } from "@/lib/assignment";
+import { makeCompletionCode, makeParticipantOrders, makeSessionId, chooseBalancedVersion } from "@/lib/assignment";
 import {
   getLearningTrialCount,
   getLearningTrialOrThrow,
@@ -15,7 +15,9 @@ import type {
   ComprehensionResponse,
   CreateSessionInput,
   CreateSessionResult,
+  DistractorResponse,
   MatchingResponse,
+  MatchingAnswer,
   ParticipantSession,
   RecallItemResponse,
   RecognitionResponse,
@@ -40,6 +42,15 @@ interface RecallInput {
   pasteCount: number;
 }
 
+interface DistractorInput {
+  trialIndex: number;
+  direction: "forward" | "backward";
+  sequenceLength: number;
+  shownSequence: number[];
+  responseSequence: number[];
+  responseTimeMs: number;
+}
+
 interface RecognitionInput {
   promptIndex: number;
   selectedOptionIndex: number;
@@ -48,7 +59,7 @@ interface RecognitionInput {
 
 interface MatchingInput {
   trialIndex: number;
-  answer: YesNoAnswer;
+  answer: MatchingAnswer;
   responseTimeMs: number;
 }
 
@@ -81,10 +92,14 @@ function readStore(): StoreFile {
   const store = JSON.parse(raw) as StoreFile;
   for (const bundle of store.bundles) {
     bundle.comprehension ??= [];
+    bundle.distractor ??= [];
     bundle.recall ??= [];
     bundle.recognition ??= [];
     bundle.matching ??= [];
     bundle.telemetry ??= [];
+    const study = getStudyOrThrow(bundle.session.studySlug);
+    bundle.session.recallPromptOrder ??= study.recallPrompts.map((prompt) => prompt.promptIndex);
+    bundle.session.matchingTrialOrder ??= study.matchingTrials.map((trial) => trial.trialIndex);
   }
   return store;
 }
@@ -121,6 +136,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
   const sessions = store.bundles.map((bundle) => bundle.session);
   const version = chooseBalancedVersion(study, sessions);
   const sessionId = makeSessionId();
+  const participantOrders = makeParticipantOrders(study, sessionId);
   const timestamp = nowIso();
 
   const session: ParticipantSession = {
@@ -128,6 +144,8 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
     studySlug: study.slug,
     versionId: version.id,
     versionNumber: version.versionNumber,
+    recallPromptOrder: participantOrders.recallPromptOrder,
+    matchingTrialOrder: participantOrders.matchingTrialOrder,
     status: "created",
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -139,6 +157,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
   const bundle: SessionBundle = {
     session,
     comprehension: [],
+    distractor: [],
     recall: [],
     recognition: [],
     matching: [],
@@ -158,6 +177,11 @@ export function getSessionBundle(sessionId: string): SessionBundle | null {
   const store = readStore();
   const bundle = store.bundles.find((entry) => entry.session.id === sessionId);
   return bundle ? cloneBundle(bundle) : null;
+}
+
+export function listSessionBundles(): SessionBundle[] {
+  const store = readStore();
+  return store.bundles.map(cloneBundle).sort((left, right) => right.session.createdAt.localeCompare(left.session.createdAt));
 }
 
 export function updateSessionStatus(sessionId: string, status: SessionStage) {
@@ -270,6 +294,46 @@ export function saveRecallResponse(sessionId: string, input: RecallInput) {
   };
 }
 
+export function saveDistractorResponse(sessionId: string, input: DistractorInput) {
+  const store = readStore();
+  const bundle = store.bundles.find((entry) => entry.session.id === sessionId);
+  if (!bundle) {
+    throw new Error(`Session ${sessionId} was not found.`);
+  }
+
+  const existing = bundle.distractor.find((entry) => entry.trialIndex === input.trialIndex);
+  if (existing) {
+    return {
+      bundle: cloneBundle(bundle),
+      response: existing
+    };
+  }
+
+  const response: DistractorResponse = {
+    sessionId,
+    trialIndex: input.trialIndex,
+    direction: input.direction,
+    sequenceLength: input.sequenceLength,
+    shownSequence: input.shownSequence,
+    responseSequence: input.responseSequence,
+    correct:
+      input.shownSequence.length === input.responseSequence.length &&
+      input.shownSequence.every((value, index) => value === input.responseSequence[index]),
+    responseTimeMs: input.responseTimeMs,
+    answeredAt: nowIso()
+  };
+
+  bundle.distractor.push(response);
+  bundle.session.status = "distractor";
+  bundle.session.updatedAt = nowIso();
+  writeStore(store);
+
+  return {
+    bundle: cloneBundle(bundle),
+    response
+  };
+}
+
 export function saveRecognitionResponse(sessionId: string, input: RecognitionInput) {
   const store = readStore();
   const bundle = store.bundles.find((entry) => entry.session.id === sessionId);
@@ -286,11 +350,12 @@ export function saveRecognitionResponse(sessionId: string, input: RecognitionInp
 
   const existing = bundle.recognition.find((entry) => entry.promptIndex === input.promptIndex);
   if (existing) {
+    const answeredPromptIndexes = new Set(bundle.recognition.map((entry) => entry.promptIndex));
     return {
       bundle: cloneBundle(bundle),
       response: existing,
       nextPromptIndex: existing.promptIndex + 1,
-      completed: existing.promptIndex >= study.recallPrompts.length
+      completed: answeredPromptIndexes.size >= study.recallPrompts.length
     };
   }
 
@@ -306,7 +371,9 @@ export function saveRecognitionResponse(sessionId: string, input: RecognitionInp
   };
 
   bundle.recognition.push(response);
-  bundle.session.status = input.promptIndex >= study.recallPrompts.length ? "matching" : "recall";
+  const answeredPromptIndexes = new Set(bundle.recognition.map((entry) => entry.promptIndex));
+  const completed = answeredPromptIndexes.size >= study.recallPrompts.length;
+  bundle.session.status = completed ? "matching" : "recall";
   bundle.session.updatedAt = nowIso();
   writeStore(store);
 
@@ -314,7 +381,7 @@ export function saveRecognitionResponse(sessionId: string, input: RecognitionInp
     bundle: cloneBundle(bundle),
     response,
     nextPromptIndex: input.promptIndex + 1,
-    completed: input.promptIndex >= study.recallPrompts.length
+    completed
   };
 }
 
@@ -330,11 +397,13 @@ export function saveMatchingResponse(sessionId: string, input: MatchingInput) {
   const existing = bundle.matching.find((entry) => entry.trialIndex === input.trialIndex);
 
   if (existing) {
+    const answeredTrialIndexes = new Set(bundle.matching.map((entry) => entry.trialIndex));
+    const nextTrialIndex = bundle.session.matchingTrialOrder.find((trialIndex) => !answeredTrialIndexes.has(trialIndex)) ?? trialCount + 1;
     return {
       bundle: cloneBundle(bundle),
       response: existing,
-      nextTrialIndex: existing.trialIndex + 1,
-      completed: existing.trialIndex >= trialCount
+      nextTrialIndex,
+      completed: answeredTrialIndexes.size >= trialCount
     };
   }
 
@@ -350,9 +419,12 @@ export function saveMatchingResponse(sessionId: string, input: MatchingInput) {
   };
 
   bundle.matching.push(response);
-  bundle.session.status = input.trialIndex >= trialCount ? "complete" : "matching";
+  const answeredTrialIndexes = new Set(bundle.matching.map((entry) => entry.trialIndex));
+  const completed = answeredTrialIndexes.size >= trialCount;
+  const nextTrialIndex = bundle.session.matchingTrialOrder.find((trialIndex) => !answeredTrialIndexes.has(trialIndex)) ?? trialCount + 1;
+  bundle.session.status = completed ? "complete" : "matching";
   bundle.session.updatedAt = nowIso();
-  if (bundle.session.status === "complete") {
+  if (completed) {
     bundle.session.completedAt = bundle.session.updatedAt;
   }
 
@@ -361,8 +433,8 @@ export function saveMatchingResponse(sessionId: string, input: MatchingInput) {
   return {
     bundle: cloneBundle(bundle),
     response,
-    nextTrialIndex: input.trialIndex + 1,
-    completed: input.trialIndex >= trialCount
+    nextTrialIndex,
+    completed
   };
 }
 

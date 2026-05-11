@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { saveMatchingResponse } from "@/lib/store";
-import type { YesNoAnswer } from "@/lib/types";
+import type { MatchingAnswer } from "@/lib/types";
 
 interface Params {
   params: Promise<{
@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: Params) {
     const { id } = await params;
     const body = (await request.json()) as {
       trialIndex: number;
-      answer: YesNoAnswer;
+      answer: MatchingAnswer;
       responseTimeMs: number;
     };
 

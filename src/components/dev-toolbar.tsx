@@ -16,7 +16,7 @@ const sections = [
   { label: "Instructions", path: "instructions" },
   { label: "Learn", path: "learn/1" },
   { label: "Distractor", path: "distractor" },
-  { label: "Recall", path: "recall/1" },
+  { label: "Recall+Recognition", path: "recall/1" },
   { label: "Matching", path: "matching" },
   { label: "Complete", path: "complete" }
 ];
@@ -36,8 +36,9 @@ export function DevToolbar({ studySlug }: DevToolbarProps) {
   }
 
   function jump(path: string) {
-    const query = sessionId ? `?session=${sessionId}` : "";
-    router.push(`/study/${studySlug}/${path}${query}`);
+    const resolvedSessionId = searchParams.get("session") ?? sessionId ?? getCurrentSessionId(studySlug);
+    const query = resolvedSessionId ? `?session=${encodeURIComponent(resolvedSessionId)}&devJump=1` : "?devJump=1";
+    router.replace(`/study/${studySlug}/${path}${query}`);
     setIsOpen(false);
   }
 

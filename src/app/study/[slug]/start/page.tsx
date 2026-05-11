@@ -14,10 +14,11 @@ export default async function StartPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="Reading Phase"
+      eyebrow="תחילת הניסוי"
       title="Frances et al. (2020)"
-      description="This first milestone includes only the learning phase: participants read 30 passages and answer one yes/no comprehension question after each passage."
+      description="כל ההוראות בממשק מוצגות בעברית. קטעי הקריאה, משימות הזיכרון והתאמת תמונה-מילה נשארים באנגלית בהתאם לחומרי הניסוי המקוריים."
       studySlug={study.slug}
+      dir="rtl"
     >
       <StartPhaseClient
         studySlug={study.slug}

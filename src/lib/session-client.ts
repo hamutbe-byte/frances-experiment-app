@@ -4,6 +4,8 @@ import type {
   ClientEvent,
   CreateSessionResult,
   DeviceSnapshot,
+  DistractorDirection,
+  MatchingAnswer,
   RecallItemResponse,
   SessionBundle,
   SessionStage,
@@ -90,6 +92,28 @@ export async function submitRecallRequest(
   );
 }
 
+export async function submitDistractorRequest(
+  sessionId: string,
+  payload: {
+    trialIndex: number;
+    direction: DistractorDirection;
+    sequenceLength: number;
+    shownSequence: number[];
+    responseSequence: number[];
+    responseTimeMs: number;
+  }
+) {
+  return readJson<{ correct: boolean }>(
+    await fetch(`/api/session/${sessionId}/distractor`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+  );
+}
+
 export async function submitRecognitionRequest(
   sessionId: string,
   promptIndex: number,
@@ -114,7 +138,7 @@ export async function submitRecognitionRequest(
 export async function submitMatchingRequest(
   sessionId: string,
   trialIndex: number,
-  answer: YesNoAnswer,
+  answer: MatchingAnswer,
   responseTimeMs: number
 ) {
   return readJson<{ nextTrialIndex: number; completed: boolean }>(

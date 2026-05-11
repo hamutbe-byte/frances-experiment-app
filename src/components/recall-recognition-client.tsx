@@ -28,6 +28,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   const searchParams = useSearchParams();
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [prompt, setPrompt] = useState<RecallPrompt | null>(null);
+  const [actualPromptIndex, setActualPromptIndex] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("recall");
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   useStageTelemetry(sessionId, "recall");
 
   useEffect(() => {
+    const isDevJump = searchParams.get("devJump") === "1";
     const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
       router.replace(`/study/${studySlug}/start`);
@@ -49,14 +51,23 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
     }
 
     setSessionId(resolvedSessionId);
-    const resolvedPrompt = getRecallPromptOrThrow(studySlug, promptIndex);
-    setPrompt(resolvedPrompt);
 
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
-        const recallDone = bundle.recall.some((entry) => entry.promptIndex === promptIndex);
-        const recognitionDone = bundle.recognition.some((entry) => entry.promptIndex === promptIndex);
-        if (recallDone && recognitionDone) {
+        const order = bundle.session.recallPromptOrder.length > 0 ? bundle.session.recallPromptOrder : study.recallPrompts.map((entry) => entry.promptIndex);
+        const orderedPromptIndex = order[promptIndex - 1];
+        if (!orderedPromptIndex) {
+          router.replace(`/study/${studySlug}/matching?session=${resolvedSessionId}`);
+          return;
+        }
+
+        setActualPromptIndex(orderedPromptIndex);
+        setPrompt(getRecallPromptOrThrow(studySlug, orderedPromptIndex));
+
+        const recallDone = bundle.recall.some((entry) => entry.promptIndex === orderedPromptIndex);
+        const recognitionDone = bundle.recognition.some((entry) => entry.promptIndex === orderedPromptIndex);
+
+        if (recallDone && recognitionDone && !isDevJump) {
           const nextPath =
             promptIndex >= study.recallPrompts.length
               ? `/study/${studySlug}/matching?session=${resolvedSessionId}`
@@ -65,17 +76,17 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
           return;
         }
 
-        setStep(recallDone ? "recognition" : "recall");
+        setStep(isDevJump ? "recall" : recallDone ? "recognition" : "recall");
         setStartedAt(performance.now());
-        setRecognitionStartedAt(recallDone ? performance.now() : null);
+        setRecognitionStartedAt(!isDevJump && recallDone ? performance.now() : null);
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load recall prompt.");
+        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את שאלת הזיכרון.");
       });
   }, [promptIndex, router, searchParams, study.recallPrompts.length, studySlug]);
 
   function logRecallEvent(eventType: "paste" | "copy" | "cut" | "clipboard_shortcut" | "beforeinput_paste") {
-    if (!telemetryEnabled || !sessionId) {
+    if (!telemetryEnabled || !sessionId || actualPromptIndex === null) {
       return;
     }
 
@@ -83,7 +94,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       stage: "recall",
       eventType,
       payload: {
-        promptIndex
+        promptIndex: actualPromptIndex
       }
     });
   }
@@ -97,7 +108,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   }
 
   async function submitRecall() {
-    if (!sessionId || !prompt || startedAt === null) {
+    if (!sessionId || !prompt || actualPromptIndex === null || startedAt === null) {
       return;
     }
 
@@ -105,7 +116,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       setIsPending(true);
       setError(null);
       await submitRecallRequest(sessionId, {
-        promptIndex,
+        promptIndex: actualPromptIndex,
         text,
         firstKeystrokeLatencyMs: firstKeyAt === null ? null : Math.max(1, Math.round(firstKeyAt - startedAt)),
         totalResponseTimeMs: Math.max(1, Math.round(performance.now() - startedAt)),
@@ -116,14 +127,14 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       setStep("recognition");
       setRecognitionStartedAt(performance.now());
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Failed to save recall response.");
+      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את תשובת הזיכרון.");
     } finally {
       setIsPending(false);
     }
   }
 
   async function submitRecognition(optionIndex: number) {
-    if (!sessionId || recognitionStartedAt === null) {
+    if (!sessionId || actualPromptIndex === null || recognitionStartedAt === null) {
       return;
     }
 
@@ -131,14 +142,14 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       setIsPending(true);
       setError(null);
       const responseTimeMs = Math.max(1, Math.round(performance.now() - recognitionStartedAt));
-      const result = await submitRecognitionRequest(sessionId, promptIndex, optionIndex, responseTimeMs);
-      if (result.completed) {
+      const result = await submitRecognitionRequest(sessionId, actualPromptIndex, optionIndex, responseTimeMs);
+      if (result.completed || promptIndex >= study.recallPrompts.length) {
         router.push(`/study/${studySlug}/matching?session=${sessionId}`);
         return;
       }
-      router.push(`/study/${studySlug}/recall/${result.nextPromptIndex}?session=${sessionId}`);
+      router.push(`/study/${studySlug}/recall/${promptIndex + 1}?session=${sessionId}`);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Failed to save recognition response.");
+      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את בחירת הזיהוי.");
       setIsPending(false);
     }
   }
@@ -154,7 +165,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   if (!prompt) {
     return (
       <section className="panel">
-        <p className="status">Loading memory question...</p>
+        <p className="status">טוען את שאלת הזיכרון...</p>
       </section>
     );
   }
@@ -165,24 +176,25 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
     <section className="panel">
       <div className="trial-header">
         <span className="pill">
-          {step === "recall" ? "Recall" : "Recognition"} {promptIndex} of {study.recallPrompts.length}
+          {step === "recall" ? "שליפה" : "זיהוי"} {promptIndex} מתוך {study.recallPrompts.length}
         </span>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      <div className="recall-prompt" dangerouslySetInnerHTML={{ __html: prompt.promptHtml }} />
+      <div className="recall-prompt" dir="ltr" dangerouslySetInnerHTML={{ __html: prompt.promptHtml }} />
 
       {step === "recall" ? (
         <section className="question-block">
           <label className="question-label" htmlFor="recall-answer">
-            Type the pseudoword that completes all blanks
+            הקלידו את מילת הפסאודו באנגלית שמשלימה את כל החסר
           </label>
           <input
             id="recall-answer"
             className="text-input"
             value={text}
+            dir="ltr"
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
@@ -206,13 +218,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
           />
           <div className="actions">
             <button type="button" className="button" onClick={submitRecall} disabled={isPending}>
-              Continue
+              המשיכו
             </button>
           </div>
         </section>
       ) : (
         <section className="question-block">
-          <span className="question-label">Choose the pseudoword you remember</span>
+          <span className="question-label">בחרו את מילת הפסאודו שאתם זוכרים</span>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (
               <button

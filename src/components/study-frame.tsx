@@ -7,12 +7,13 @@ interface StudyFrameProps {
   title: string;
   description: string;
   studySlug?: string;
+  dir?: "ltr" | "rtl";
   children: ReactNode;
 }
 
-export function StudyFrame({ eyebrow, title, description, studySlug, children }: StudyFrameProps) {
+export function StudyFrame({ eyebrow, title, description, studySlug, dir = "ltr", children }: StudyFrameProps) {
   return (
-    <main className="page-shell">
+    <main className="page-shell" dir={dir}>
       <div className="page-inner stack">
         {studySlug ? <DevToolbar studySlug={studySlug} /> : null}
         <section className="hero">

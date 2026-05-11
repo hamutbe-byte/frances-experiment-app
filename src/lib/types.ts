@@ -1,5 +1,7 @@
 export type YesNoAnswer = "yes" | "no";
+export type MatchingAnswer = YesNoAnswer | "timeout";
 export type SessionStage = "created" | "instructions" | "learning" | "distractor" | "recall" | "matching" | "complete";
+export type DistractorDirection = "forward" | "backward";
 export type MatchingCondition = "match" | "distractor" | "category" | "unrelated";
 export type MatchingRelation = MatchingCondition;
 export type MatchingFamily = "target" | "distractor" | "category" | "unrelated";
@@ -96,6 +98,8 @@ export interface ParticipantSession {
   studySlug: string;
   versionId: string;
   versionNumber: number;
+  recallPromptOrder: number[];
+  matchingTrialOrder: number[];
   status: SessionStage;
   createdAt: string;
   updatedAt: string;
@@ -129,6 +133,18 @@ export interface RecallItemResponse {
   submittedAt: string;
 }
 
+export interface DistractorResponse {
+  sessionId: string;
+  trialIndex: number;
+  direction: DistractorDirection;
+  sequenceLength: number;
+  shownSequence: number[];
+  responseSequence: number[];
+  correct: boolean;
+  responseTimeMs: number;
+  answeredAt: string;
+}
+
 export interface RecognitionResponse {
   sessionId: string;
   promptIndex: number;
@@ -145,7 +161,7 @@ export interface MatchingResponse {
   trialIndex: number;
   pictureId: string;
   condition: MatchingCondition;
-  answer: YesNoAnswer;
+  answer: MatchingAnswer;
   correct: boolean;
   responseTimeMs: number;
   answeredAt: string;
@@ -173,6 +189,7 @@ export interface ClientEvent {
 export interface SessionBundle {
   session: ParticipantSession;
   comprehension: ComprehensionResponse[];
+  distractor: DistractorResponse[];
   recall: RecallItemResponse[];
   recognition: RecognitionResponse[];
   matching: MatchingResponse[];
