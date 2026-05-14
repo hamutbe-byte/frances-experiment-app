@@ -35,6 +35,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [trialIndex, setTrialIndex] = useState(1);
   const [answeredCount, setAnsweredCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
   const [endsAt, setEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [mode, setMode] = useState<Mode>("ready");
@@ -43,6 +44,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   const [responseStartedAt, setResponseStartedAt] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true);
   const timeoutsRef = useRef<number[]>([]);
   const feedbackTimeoutRef = useRef<number | null>(null);
 
@@ -78,12 +80,14 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
         setAnsweredCount(bundle.distractor.length);
+        setCorrectCount(bundle.distractor.filter((entry) => entry.correct).length);
         setTrialIndex(bundle.distractor.length + 1);
 
         const savedEndsAt = window.localStorage.getItem(distractorEndsAtKey(resolvedSessionId));
         const nextEndsAt = savedEndsAt ? Number(savedEndsAt) : Date.now() + durationMs;
         window.localStorage.setItem(distractorEndsAtKey(resolvedSessionId), String(nextEndsAt));
         setEndsAt(nextEndsAt);
+        setShowInstructions(bundle.distractor.length === 0);
       })
       .catch((caughtError) => {
         setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את ההתקדמות במשימת ההסחה.");
@@ -134,6 +138,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
       feedbackTimeoutRef.current = null;
     }
 
+    setShowInstructions(false);
     setFeedback(null);
     setMode("showing");
     setResponseSequence([]);
@@ -187,6 +192,9 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
         kind: result.correct ? "correct" : "incorrect",
         message: result.correct ? "נכון" : "לא נכון"
       });
+      if (result.correct) {
+        setCorrectCount((count) => count + 1);
+      }
       feedbackTimeoutRef.current = window.setTimeout(() => {
         setFeedback(null);
         feedbackTimeoutRef.current = null;
@@ -225,70 +233,78 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   return (
     <section className="panel corsi-panel">
       <div className="trial-header">
-        <span className="pill">ניסיון {trialIndex} במשימת קורסי</span>
         <span className="countdown">{remainingLabel}</span>
       </div>
 
-      <section className="corsi-instructions" aria-label="הוראות למשימת קורסי">
-        <p className="status">
-          בכל ניסיון יוצג רצף של ריבועים מודגשים. לאחר שהרצף יסתיים, לחצו על הריבועים לפי הסדר המתאים.
-        </p>
-        <ol className="list">
-          <li>כאשר מוצג ניסיון <strong>קדימה</strong>, לחצו על הריבועים באותו הסדר שבו הם הופיעו.</li>
-          <li>כאשר מוצג ניסיון <strong>אחורה</strong>, לחצו על הריבועים בסדר הפוך.</li>
-          <li>כל ריבוע יואר למשך חצי שנייה לפני שהרצף יעבור לריבוע הבא.</li>
-          <li>המשיכו לבצע ניסיונות עד שתסתיים הפסקת 10 הדקות.</li>
-        </ol>
-        <div className="actions">
-          <button type="button" className="button" onClick={startSequence} disabled={!trial || mode !== "ready" || remainingMs <= 0}>
-            התחילו את הרצף הבא
-          </button>
+      {showInstructions ? (
+        <section className="corsi-instructions" aria-label="הוראות למשימת קורסי">
+          <p className="status">
+            בכל ניסיון יוצג רצף של ריבועים מודגשים. לאחר שהרצף יסתיים, לחצו על הריבועים לפי הסדר המתאים.
+          </p>
+          <ol className="list">
+            <li>כאשר מוצג ניסיון <strong>קדימה</strong>, לחצו על הריבועים באותו הסדר שבו הם הופיעו.</li>
+            <li>כאשר מוצג ניסיון <strong>אחורה</strong>, לחצו על הריבועים בסדר הפוך.</li>
+            <li>כל ריבוע יואר למשך חצי שנייה לפני שהרצף יעבור לריבוע הבא.</li>
+            <li>המשיכו לבצע ניסיונות עד שתסתיים הפסקת 10 הדקות.</li>
+          </ol>
+          <div className="actions">
+            <button type="button" className="button" onClick={startSequence} disabled={!trial || mode !== "ready" || remainingMs <= 0}>
+              התחילו את הרצף הבא
+            </button>
+          </div>
+        </section>
+      ) : (
+        <div className="corsi-stage-layout">
+          <div className="corsi-lab-frame">
+            <div className="corsi-status-strip" aria-hidden="true">
+              <span className={`corsi-status-dot ${mode === "showing" ? "is-on" : ""}`} />
+              <span className={`corsi-status-dot ${mode === "responding" ? "is-on" : ""}`} />
+              <span className={`corsi-status-dot ${mode === "saving" ? "is-on" : ""}`} />
+            </div>
+
+            <div className="corsi-board" aria-label="לוח משימת קורסי" dir="ltr">
+              {corsiBlocks.map((block) => (
+                <button
+                  key={block.blockIndex}
+                  type="button"
+                  className={`corsi-block ${activeBlockIndex === block.blockIndex ? "is-active" : ""} ${
+                    responseSequence.includes(block.blockIndex) ? "is-selected" : ""
+                  }`}
+                  style={{ left: `${block.x}%`, top: `${block.y}%` }}
+                  onClick={() => handleBlockPress(block.blockIndex)}
+                  disabled={mode !== "responding"}
+                  aria-label={`ריבוע ${block.blockIndex + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <aside className="corsi-sidecar">
+            <div className="corsi-sidecar-meta">
+              <span className="pill">ניסיון {trialIndex}</span>
+              {trial ? <span className="pill">{trial.direction === "forward" ? "קדימה" : "אחורה"}</span> : null}
+              <span className="pill">ציון: {correctCount}</span>
+            </div>
+
+            {mode === "ready" ? (
+              <div className="actions corsi-actions">
+                <button type="button" className="button" onClick={startSequence} disabled={!trial || remainingMs <= 0}>
+                  הרצף הבא
+                </button>
+              </div>
+            ) : null}
+
+            <p className="status corsi-mode-status">
+              {mode === "showing" && "התבוננו ברצף הריבועים המודגשים."}
+              {mode === "responding" && `כעת לחצו על הריבועים ${trial?.direction === "backward" ? "בסדר הפוך." : "באותו הסדר."}`}
+              {mode === "saving" && "שומר את התגובה..."}
+              {mode === "ready" && "לחצו על הכפתור כדי להתחיל את הרצף הבא."}
+            </p>
+
+            {trial && mode === "responding" ? <p className="status">נבחרו {responseSequence.length} מתוך {trial.sequenceLength} ריבועים.</p> : null}
+          </aside>
         </div>
-      </section>
-
-      {trial ? (
-        <div className="corsi-meta">
-          <span className="pill">{trial.direction === "forward" ? "קדימה" : "אחורה"}</span>
-          <span className="pill">אורך רצף: {trial.sequenceLength}</span>
-          <span className="pill">ניסיונות שהושלמו: {answeredCount}</span>
-          <span className="pill">סט {trial.cycleIndex + 1} מתוך 20</span>
-        </div>
-      ) : null}
-
-      <div className="corsi-lab-frame">
-        <div className="corsi-status-strip" aria-hidden="true">
-          <span className={`corsi-status-dot ${mode === "showing" ? "is-on" : ""}`} />
-          <span className={`corsi-status-dot ${mode === "responding" ? "is-on" : ""}`} />
-          <span className={`corsi-status-dot ${mode === "saving" ? "is-on" : ""}`} />
-        </div>
-
-        <div className="corsi-board" aria-label="לוח משימת קורסי" dir="ltr">
-          {corsiBlocks.map((block) => (
-            <button
-              key={block.blockIndex}
-              type="button"
-              className={`corsi-block ${activeBlockIndex === block.blockIndex ? "is-active" : ""} ${
-                responseSequence.includes(block.blockIndex) ? "is-selected" : ""
-              }`}
-              style={{ left: `${block.x}%`, top: `${block.y}%` }}
-              onClick={() => handleBlockPress(block.blockIndex)}
-              disabled={mode !== "responding"}
-              aria-label={`ריבוע ${block.blockIndex + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <p className="status corsi-mode-status">
-        {mode === "showing" && "התבוננו ברצף הריבועים המודגשים."}
-        {mode === "responding" && `כעת לחצו על הריבועים ${trial?.direction === "backward" ? "בסדר הפוך." : "באותו הסדר."}`}
-        {mode === "saving" && "שומר את התגובה..."}
-        {mode === "ready" && "לחצו על הכפתור כדי להתחיל את הרצף הבא."}
-      </p>
-
-      {trial && mode === "responding" ? (
-        <p className="status">נבחרו {responseSequence.length} מתוך {trial.sequenceLength} ריבועים.</p>
-      ) : null}
+      )}
 
       {feedback ? <div className={`corsi-feedback is-${feedback.kind}`}>{feedback.message}</div> : null}
       {error ? <p className="status error-text">{error}</p> : null}

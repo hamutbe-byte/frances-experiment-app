@@ -14,8 +14,7 @@ export default async function InstructionsPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="הוראות"
-      title="לפני שמתחילים"
+      title="הוראות"
       description="קראו כל קטע באנגלית וענו על שאלת ההבנה שאחריו. לאחר שלב הקריאה תמשיכו למשימות זיכרון והתאמה, שגם התוכן שלהן יופיע באנגלית."
       studySlug={study.slug}
       dir="rtl"

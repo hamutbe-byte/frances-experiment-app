@@ -15,9 +15,7 @@ export default async function RecallPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="שלב הזיכרון"
-      title="השלימו את החסר"
-      description="השאלה עצמה מוצגת באנגלית. תחילה הקלידו את מילת הפסאודו שאתם זוכרים, ואז בחרו אותה מבין האפשרויות."
+      title="שלב הזיכרון"
       studySlug={study.slug}
       dir="rtl"
     >

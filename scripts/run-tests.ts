@@ -24,6 +24,7 @@ import {
   saveRecallResponse,
   saveRecognitionResponse
 } from "@/lib/store";
+import { getAllNvltLevels, getConfiguredNvltLevelIds } from "@/lib/nvlt";
 import { getStudyOrThrow } from "@/lib/study";
 import type { ParticipantSession } from "@/lib/types";
 
@@ -172,6 +173,28 @@ async function main() {
         assert.match(trial.tokenId, /^[a-z]+\d+$/);
       }
     }
+  });
+
+  await run("NVLT seed contains all 1000-5000 levels in source order", () => {
+    const levels = getAllNvltLevels();
+    assert.deepEqual(
+      levels.map((level) => level.id),
+      ["1000", "2000", "3000", "4000", "5000"]
+    );
+
+    for (const level of levels) {
+      assert.equal(level.questions.length, 10);
+      for (const question of level.questions) {
+        assert.equal(question.words.length, 6);
+        assert.equal(question.prompts.length, 3);
+      }
+    }
+  });
+
+  await run("NVLT configuration defaults to 1000 and 2000 and ignores unknown levels", () => {
+    assert.deepEqual(getConfiguredNvltLevelIds(undefined), ["1000", "2000"]);
+    assert.deepEqual(getConfiguredNvltLevelIds("1000,2000,4000"), ["1000", "2000", "4000"]);
+    assert.deepEqual(getConfiguredNvltLevelIds("9000,banana"), ["1000", "2000"]);
   });
 
   await run("balanced assignment prefers the least-used version", () => {
@@ -338,7 +361,7 @@ async function main() {
     assert.match(distractor, /const cueDurationMs = 500/);
     assert.match(distractor, /const cueGapMs = 0/);
     assert.match(distractor, /startSequence/);
-    assert.match(distractor, /התחל\/י את הרצף הבא/);
+    assert.match(distractor, /התחיל[וו] את הרצף הבא/);
     assert.match(distractor, /message: result\.correct \? "נכון" : "לא נכון"/);
   });
 
@@ -805,6 +828,11 @@ async function main() {
 
     assert.match(studiesPage, /export const dynamic = "force-dynamic"/);
     assert.match(sessionsPage, /export const dynamic = "force-dynamic"/);
+  });
+
+  await run("home page links to the NVLT route", () => {
+    const homePage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "page.tsx"), "utf8");
+    assert.match(homePage, /href="\/nvlt"/);
   });
 
   log("All smoke tests passed.");

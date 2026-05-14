@@ -14,9 +14,7 @@ export default async function MatchingPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="שלב ההתאמה"
-      title="התאמת תמונה-מילה"
-      description="החליטו במהירות ובדיוק ככל האפשר אם כל תמונה ומילת פסאודו באנגלית מתאימות זו לזו."
+      title="שלב ההתאמה"
       studySlug={study.slug}
       dir="rtl"
     >

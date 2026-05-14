@@ -14,9 +14,7 @@ export default async function StartPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="תחילת הניסוי"
-      title="Frances et al. (2020)"
-      description="כל ההוראות בממשק מוצגות בעברית. קטעי הקריאה, משימות הזיכרון והתאמת תמונה-מילה נשארים באנגלית בהתאם לחומרי הניסוי המקוריים."
+      title="תחילת הניסוי"
       studySlug={study.slug}
       dir="rtl"
     >

@@ -15,9 +15,6 @@ export default async function LearningTrialPage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="שלב הקריאה"
-      title="קראו והשיבו"
-      description="הקטע עצמו והשאלה שמופיעה אחריו מוצגים באנגלית. קראו בקצב הרגיל שלכם ואז בחרו תשובה."
       studySlug={study.slug}
       dir="rtl"
     >

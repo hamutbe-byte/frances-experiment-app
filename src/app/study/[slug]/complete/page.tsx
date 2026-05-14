@@ -14,9 +14,7 @@ export default async function CompletePage({ params }: Props) {
 
   return (
     <StudyFrame
-      eyebrow="סיום"
-      title="הניסוי הושלם"
-      description="תודה על השלמת כל שלבי הניסוי."
+      title="סיום"
       studySlug={study.slug}
       dir="rtl"
     >
