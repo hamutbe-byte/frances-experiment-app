@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { appText } from "@/content/app-text";
+import { instructionText } from "@/content/instruction-text";
 import {
   getCurrentSessionId,
   getSessionBundleRequest,
@@ -81,7 +83,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
         setRecognitionStartedAt(!isDevJump && recallDone ? performance.now() : null);
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את שאלת הזיכרון.");
+        setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.loadError);
       });
   }, [promptIndex, router, searchParams, study.recallPrompts.length, studySlug]);
 
@@ -127,7 +129,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       setStep("recognition");
       setRecognitionStartedAt(performance.now());
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את תשובת הזיכרון.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.saveRecallError);
     } finally {
       setIsPending(false);
     }
@@ -149,7 +151,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       }
       router.push(`/study/${studySlug}/recall/${promptIndex + 1}?session=${sessionId}`);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את בחירת הזיהוי.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.saveRecognitionError);
       setIsPending(false);
     }
   }
@@ -165,7 +167,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   if (!prompt) {
     return (
       <section className="panel">
-        <p className="status">טוען את שאלת הזיכרון...</p>
+        <p className="status">{appText.study.recall.loading}</p>
       </section>
     );
   }
@@ -175,9 +177,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   return (
     <section className="panel">
       <div className="trial-header">
-        <span className="pill">
-          {step === "recall" ? "שליפה" : "זיהוי"} {promptIndex} מתוך {study.recallPrompts.length}
-        </span>
+        <span className="pill">{appText.study.recall.progressLabel(step, promptIndex, study.recallPrompts.length)}</span>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -188,7 +188,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       {step === "recall" ? (
         <section className="question-block">
           <label className="question-label" htmlFor="recall-answer">
-            הקלידו את מילת הפסאודו באנגלית שמשלימה את כל החסר
+            {instructionText.study.recall.recallInputLabel}
           </label>
           <input
             id="recall-answer"
@@ -218,13 +218,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
           />
           <div className="actions">
             <button type="button" className="button" onClick={submitRecall} disabled={isPending}>
-              המשיכו
+              {instructionText.study.recall.continueButton}
             </button>
           </div>
         </section>
       ) : (
         <section className="question-block">
-          <span className="question-label">בחרו את מילת הפסאודו שאתם זוכרים</span>
+          <span className="question-label">{instructionText.study.recall.recognitionLabel}</span>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (
               <button

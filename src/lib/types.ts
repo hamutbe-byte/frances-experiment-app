@@ -93,6 +93,78 @@ export interface DeviceSnapshot {
   timezone: string;
 }
 
+export interface QuestionnairePercentageEntryInput {
+  language: string;
+  percentage: string;
+}
+
+export interface QuestionnaireCultureEntryInput {
+  culture: string;
+  identificationLevel: number | null;
+}
+
+export interface ParticipantLanguageProfileInput {
+  language: string;
+  languageStatus: string;
+  ageBeganAcquiring: number | null;
+  ageBecameFluent: number | null;
+  ageBeganReading: number | null;
+  ageBecameFluentReading: number | null;
+  countryYears: number | null;
+  countryMonths: number | null;
+  familyYears: number | null;
+  familyMonths: number | null;
+  schoolWorkYears: number | null;
+  schoolWorkMonths: number | null;
+  speakingProficiency: number | null;
+  understandingSpokenLanguageProficiency: number | null;
+  readingProficiency: number | null;
+  learningByFriends: number | null;
+  learningByFamily: number | null;
+  learningByReading: number | null;
+  learningByLanguageTapesSelfInstruction: number | null;
+  learningByWatchingTv: number | null;
+  learningByListeningToRadio: number | null;
+  exposureToFriends: number | null;
+  exposureToFamily: number | null;
+  exposureToWatchingTv: number | null;
+  exposureToRadioMusic: number | null;
+  exposureToReading: number | null;
+  exposureToLanguageLabSelfInstruction: number | null;
+  foreignAccent: number | null;
+  nonNativeIdentificationByAccent: number | null;
+}
+
+export interface ParticipantQuestionnaireInput {
+  lastName: string;
+  firstName: string;
+  todayDate: string;
+  age: number | null;
+  dateOfBirth: string;
+  gender: string;
+  languagesByDominance: string[];
+  languagesByAcquisition: string[];
+  currentExposure: QuestionnairePercentageEntryInput[];
+  readingPreference: QuestionnairePercentageEntryInput[];
+  speakingPreference: QuestionnairePercentageEntryInput[];
+  cultures: QuestionnaireCultureEntryInput[];
+  yearsOfEducation: number | null;
+  educationLevel: string;
+  educationLevelOther: string;
+  usaImmigrationDate: string;
+  otherImmigrationDetails: string;
+  hasVisionProblem: boolean;
+  hasHearingImpairment: boolean;
+  hasLanguageDisability: boolean;
+  hasLearningDisability: boolean;
+  disabilityExplanation: string;
+  languageProfiles: ParticipantLanguageProfileInput[];
+}
+
+export interface ParticipantQuestionnaire extends ParticipantQuestionnaireInput {
+  submittedAt: string;
+}
+
 export interface ParticipantSession {
   id: string;
   studySlug: string;
@@ -188,6 +260,7 @@ export interface ClientEvent {
 
 export interface SessionBundle {
   session: ParticipantSession;
+  questionnaire: ParticipantQuestionnaire | null;
   comprehension: ComprehensionResponse[];
   distractor: DistractorResponse[];
   recall: RecallItemResponse[];
@@ -199,6 +272,7 @@ export interface SessionBundle {
 export interface CreateSessionInput {
   studySlug: string;
   device: DeviceSnapshot;
+  questionnaire?: ParticipantQuestionnaireInput | null;
 }
 
 export interface CreateSessionResult {

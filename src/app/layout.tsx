@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import "@/app/globals.css";
+import { getUiCssVariables } from "@/content/ui-config";
 
 export const metadata: Metadata = {
   title: "Frances 2020 Reading Phase",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body style={getUiCssVariables()}>{children}</body>
     </html>
   );
 }

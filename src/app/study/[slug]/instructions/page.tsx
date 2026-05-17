@@ -1,4 +1,5 @@
 import { InstructionsClient } from "@/components/instructions-client";
+import { instructionText } from "@/content/instruction-text";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 
@@ -14,8 +15,8 @@ export default async function InstructionsPage({ params }: Props) {
 
   return (
     <StudyFrame
-      title="הוראות"
-      description="קראו כל קטע באנגלית וענו על שאלת ההבנה שאחריו. לאחר שלב הקריאה תמשיכו למשימות זיכרון והתאמה, שגם התוכן שלהן יופיע באנגלית."
+      title={instructionText.study.instructionsPage.title}
+      description={instructionText.study.instructionsPage.subtitle}
       studySlug={study.slug}
       dir="rtl"
     >

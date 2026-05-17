@@ -3,6 +3,8 @@
 import { startTransition, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { appText } from "@/content/app-text";
+import { instructionText } from "@/content/instruction-text";
 import { getCurrentSessionId, getSessionBundleRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { useStageTelemetry } from "@/lib/telemetry";
 
@@ -33,7 +35,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
     void getSessionBundleRequest(resolvedSessionId)
       .then(() => updateSessionStatusRequest(resolvedSessionId, "instructions"))
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את ההשתתפות.");
+        setError(caughtError instanceof Error ? caughtError.message : appText.study.instructions.loadError);
       });
   }, [router, searchParams, studySlug]);
 
@@ -49,7 +51,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
         router.push(`/study/${studySlug}/learn/1?session=${sessionId}`);
       });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה להמשיך לשלב הבא.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.instructions.continueError);
       setIsPending(false);
     }
   }
@@ -58,7 +60,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
     <section className={`panel${error ? " error-card" : ""}`}>
       <div className="actions">
         <button type="button" className="button" onClick={beginLearning} disabled={isPending || !sessionId}>
-          {isPending ? "פותח את הקטע הראשון..." : "התחילו בקריאה"}
+          {isPending ? appText.study.instructions.openingFirstPassage : instructionText.study.instructionsPage.startReadingButton}
         </button>
       </div>
 

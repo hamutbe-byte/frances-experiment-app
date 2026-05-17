@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { DevToolbar } from "@/components/dev-toolbar";
 
@@ -17,7 +17,11 @@ export function StudyFrame({ eyebrow, title, description, studySlug, dir = "ltr"
   return (
     <main className="page-shell" dir={dir}>
       <div className="page-inner stack">
-        {studySlug ? <DevToolbar studySlug={studySlug} /> : null}
+        {studySlug ? (
+          <Suspense fallback={null}>
+            <DevToolbar studySlug={studySlug} />
+          </Suspense>
+        ) : null}
         {hasHeroContent ? (
           <section className="hero">
             {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}

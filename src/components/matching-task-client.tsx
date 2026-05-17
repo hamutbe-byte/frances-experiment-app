@@ -3,12 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import {
-  getCurrentSessionId,
-  getSessionBundleRequest,
-  submitMatchingRequest,
-  updateSessionStatusRequest
-} from "@/lib/session-client";
+import { appText } from "@/content/app-text";
+import { instructionText } from "@/content/instruction-text";
+import { getCurrentSessionId, getSessionBundleRequest, submitMatchingRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
 import type { MatchingTrial } from "@/lib/types";
@@ -81,9 +78,9 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
         showTrial(nextTrial, order);
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את משימת ההתאמה.");
+        setError(caughtError instanceof Error ? caughtError.message : appText.study.matching.loadError);
       });
-  }, [router, searchParams, studySlug]);
+  }, [router, searchParams, study, studySlug]);
 
   async function submitAnswer(answer: "yes" | "no") {
     if (!sessionId || !trial || startedAt === null || isPending) {
@@ -108,7 +105,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
         return next;
       });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את תגובת ההתאמה.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.matching.saveError);
     } finally {
       setIsPending(false);
     }
@@ -142,7 +139,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   if (!trial) {
     return (
       <section className="panel">
-        <p className="status">טוען את ניסוי ההתאמה...</p>
+        <p className="status">{appText.study.matching.loading}</p>
       </section>
     );
   }
@@ -152,9 +149,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   return (
     <section className="panel matching-panel">
       <div className="trial-header">
-        <span className="pill">
-          התאמה {answeredTrialIndexes.size + 1} מתוך {study.matchingTrials.length}
-        </span>
+        <span className="pill">{appText.study.matching.progressLabel(answeredTrialIndexes.size + 1, study.matchingTrials.length)}</span>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -168,15 +163,15 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
       </div>
 
       <section className="question-block">
-        <span className="question-label">האם התמונה והמילה מתאימות זו לזו?</span>
+        <span className="question-label">{instructionText.study.matching.questionLabel}</span>
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <span>לחצו F</span>
+            <span>{instructionText.study.matching.noKeyHint}</span>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <span>לחצו J</span>
+            <span>{instructionText.study.matching.yesKeyHint}</span>
           </button>
         </div>
       </section>

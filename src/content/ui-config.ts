@@ -1,0 +1,83 @@
+import type { CSSProperties } from "react";
+
+export const uiConfig = {
+  fontSizes: {
+    eyebrow: "0.78rem",
+    heroTitle: "clamp(2.2rem, 5vw, 4rem)",
+    heroSubtitle: "1.04rem",
+    metaLabel: "0.78rem",
+    metaValue: "1.1rem",
+    sectionTitle: "1.2rem",
+    fieldLabel: "0.9rem",
+    formInput: "1rem",
+    homeCardTitle: "1.6rem",
+    adminTable: "0.92rem",
+    adminTableHeader: "0.74rem",
+    toolbarLabel: "0.74rem",
+    toolbarButton: "0.78rem",
+    button: "0.98rem",
+    pill: "0.84rem",
+    countdown: "clamp(2rem, 5vw, 3.4rem)",
+    feedback: "1rem",
+    passage: "clamp(1.1rem, 2vw, 1.28rem)",
+    recallPrompt: "clamp(1rem, 2vw, 1.16rem)",
+    matchingWord: "clamp(2.1rem, 8vw, 4rem)",
+    questionLabel: "0.82rem",
+    questionText: "1.08rem",
+    answerTitle: "1.02rem",
+    answerHint: "0.92rem",
+    textInput: "1.08rem",
+    status: "0.95rem",
+    nvltPageTitle: "1.2rem",
+    nvltSheetTitle: "clamp(2rem, 4vw, 2.8rem)",
+    nvltWordChip: "clamp(1.6rem, 2vw, 2.1rem)",
+    nvltNumberInput: "1rem",
+    nvltPromptText: "clamp(1.45rem, 2vw, 2.1rem)",
+    nvltChoiceButton: "1.1rem",
+    completionCode: "1.1rem",
+    mobileNvltWordChip: "1.3rem",
+    mobileNvltPromptText: "1.2rem"
+  }
+} as const;
+
+export function getUiCssVariables() {
+  const { fontSizes } = uiConfig;
+
+  return {
+    "--font-size-eyebrow": fontSizes.eyebrow,
+    "--font-size-hero-title": fontSizes.heroTitle,
+    "--font-size-hero-subtitle": fontSizes.heroSubtitle,
+    "--font-size-meta-label": fontSizes.metaLabel,
+    "--font-size-meta-value": fontSizes.metaValue,
+    "--font-size-section-title": fontSizes.sectionTitle,
+    "--font-size-field-label": fontSizes.fieldLabel,
+    "--font-size-form-input": fontSizes.formInput,
+    "--font-size-home-card-title": fontSizes.homeCardTitle,
+    "--font-size-admin-table": fontSizes.adminTable,
+    "--font-size-admin-table-header": fontSizes.adminTableHeader,
+    "--font-size-toolbar-label": fontSizes.toolbarLabel,
+    "--font-size-toolbar-button": fontSizes.toolbarButton,
+    "--font-size-button": fontSizes.button,
+    "--font-size-pill": fontSizes.pill,
+    "--font-size-countdown": fontSizes.countdown,
+    "--font-size-feedback": fontSizes.feedback,
+    "--font-size-passage": fontSizes.passage,
+    "--font-size-recall-prompt": fontSizes.recallPrompt,
+    "--font-size-matching-word": fontSizes.matchingWord,
+    "--font-size-question-label": fontSizes.questionLabel,
+    "--font-size-question-text": fontSizes.questionText,
+    "--font-size-answer-title": fontSizes.answerTitle,
+    "--font-size-answer-hint": fontSizes.answerHint,
+    "--font-size-text-input": fontSizes.textInput,
+    "--font-size-status": fontSizes.status,
+    "--font-size-nvlt-page-title": fontSizes.nvltPageTitle,
+    "--font-size-nvlt-sheet-title": fontSizes.nvltSheetTitle,
+    "--font-size-nvlt-word-chip": fontSizes.nvltWordChip,
+    "--font-size-nvlt-number-input": fontSizes.nvltNumberInput,
+    "--font-size-nvlt-prompt-text": fontSizes.nvltPromptText,
+    "--font-size-nvlt-choice-button": fontSizes.nvltChoiceButton,
+    "--font-size-completion-code": fontSizes.completionCode,
+    "--font-size-mobile-nvlt-word-chip": fontSizes.mobileNvltWordChip,
+    "--font-size-mobile-nvlt-prompt-text": fontSizes.mobileNvltPromptText
+  } as CSSProperties;
+}

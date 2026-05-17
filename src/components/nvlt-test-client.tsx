@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { appText } from "@/content/app-text";
+import { instructionText } from "@/content/instruction-text";
 import type { NvltLevel, NvltQuestion } from "@/lib/nvlt";
 
 interface NvltTestClientProps {
@@ -21,6 +24,8 @@ function makeAnswerKey(levelId: string, questionOrder: number, promptIndex: numb
 }
 
 export function NvltTestClient({ levels }: NvltTestClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
 
@@ -40,12 +45,14 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
   if (!activeEntry) {
     return (
       <section className="panel">
-        <p className="status">No NVLT levels are currently enabled.</p>
+        <p className="status">{appText.nvlt.emptyState}</p>
       </section>
     );
   }
 
   const { levelId, question: activeQuestion, sequenceNumber } = activeEntry;
+  const nextPath = searchParams.get("next");
+  const isLastQuestion = questionIndex >= questions.length - 1;
 
   function updateAssignment(promptIndex: number, nextWordIndex: number | null) {
     setAnswers((current) => {
@@ -73,9 +80,7 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
     <section className="stack">
       <div className="panel nvlt-sheet-panel">
         <div className="trial-header">
-          <strong className="nvlt-page-title">
-            Question {sequenceNumber} of {questions.length}
-          </strong>
+          <strong className="nvlt-page-title">{appText.nvlt.progressTitle(sequenceNumber, questions.length)}</strong>
           <div className="nvlt-page-controls">
             <button
               type="button"
@@ -83,27 +88,35 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
               onClick={() => setQuestionIndex((current) => Math.max(0, current - 1))}
               disabled={questionIndex === 0}
             >
-              Previous
+              {appText.nvlt.previousButton}
             </button>
             <button
               type="button"
               className="button button-secondary"
-              onClick={() => setQuestionIndex((current) => Math.min(questions.length - 1, current + 1))}
-              disabled={questionIndex >= questions.length - 1}
+              onClick={() => {
+                if (isLastQuestion) {
+                  if (nextPath) {
+                    router.push(nextPath);
+                  }
+                  return;
+                }
+
+                setQuestionIndex((current) => Math.min(questions.length - 1, current + 1));
+              }}
+              disabled={isLastQuestion && !nextPath}
             >
-              Next
+              {isLastQuestion
+                ? nextPath
+                  ? appText.nvlt.continueToExperimentButton
+                  : appText.nvlt.finishButton
+                : appText.nvlt.nextButton}
             </button>
           </div>
         </div>
 
         <div className="nvlt-sheet nvlt-drag-sheet" dir="ltr">
-          <div className="nvlt-sheet-header">
-            <h2>({sequenceNumber})</h2>
-            <p>Choose the number of the word that matches each meaning.</p>
-          </div>
-
           <div className="nvlt-worksheet">
-            <div className="nvlt-word-bank" aria-label="Available words">
+            <div className="nvlt-word-bank" aria-label={instructionText.nvlt.wordBankAriaLabel}>
               {activeQuestion.words.map((word, wordIndex) => (
                 <div key={word} className="nvlt-word-chip">
                   <span className="nvlt-word-number">{wordIndex + 1}.</span>
@@ -120,7 +133,7 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
                 return (
                   <div key={`${activeQuestion.order}-${promptIndex}`} className="nvlt-prompt-row">
                     <label className="nvlt-select-wrap">
-                      <span className="sr-only">Write word number for {prompt}</span>
+                      <span className="sr-only">{instructionText.nvlt.inputSrLabel(prompt)}</span>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -140,8 +153,7 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
                             updateAssignment(promptIndex, numericValue - 1);
                           }
                         }}
-                        aria-label={`Write word number for ${prompt}`}
-                        placeholder="#"
+                        aria-label={instructionText.nvlt.inputAriaLabel(prompt)}
                       />
                     </label>
                     <p className="nvlt-prompt-text">{prompt}</p>

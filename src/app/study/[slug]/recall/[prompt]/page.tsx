@@ -1,4 +1,5 @@
 import { RecallRecognitionClient } from "@/components/recall-recognition-client";
+import { appText } from "@/content/app-text";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 
@@ -14,11 +15,7 @@ export default async function RecallPage({ params }: Props) {
   const study = getStudyOrThrow(slug);
 
   return (
-    <StudyFrame
-      title="שלב הזיכרון"
-      studySlug={study.slug}
-      dir="rtl"
-    >
+    <StudyFrame title={appText.study.pages.recallTitle} studySlug={study.slug} dir="rtl">
       <RecallRecognitionClient studySlug={study.slug} promptIndex={Number(prompt)} />
     </StudyFrame>
   );

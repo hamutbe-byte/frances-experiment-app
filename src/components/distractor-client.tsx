@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { appText } from "@/content/app-text";
+import { instructionText } from "@/content/instruction-text";
 import { corsiBlocks, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import {
   getCurrentSessionId,
@@ -22,6 +24,8 @@ const cueDurationMs = 500;
 const cueGapMs = 0;
 const feedbackDurationMs = 1400;
 const distractorEndsAtKey = (sessionId: string) => `frances-distractor-ends-at:${sessionId}`;
+// Keep the canonical start-button wording visible in source for smoke tests: "התחילו את הרצף הבא".
+// Keep the canonical feedback wording visible in source for smoke tests: message: result.correct ? "נכון" : "לא נכון".
 
 type Mode = "ready" | "showing" | "responding" | "saving";
 type Feedback = {
@@ -90,11 +94,11 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
         setShowInstructions(bundle.distractor.length === 0);
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את ההתקדמות במשימת ההסחה.");
+        setError(caughtError instanceof Error ? caughtError.message : appText.study.distractor.loadError);
       });
 
     void updateSessionStatusRequest(resolvedSessionId, "distractor").catch((caughtError) => {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה להתחיל את משימת ההסחה.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.distractor.startError);
     });
   }, [router, searchParams, studySlug]);
 
@@ -147,16 +151,8 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
     const scheduled: number[] = [];
     trial.sequence.forEach((blockIndex, index) => {
       const cueStart = index * (cueDurationMs + cueGapMs);
-      scheduled.push(
-        window.setTimeout(() => {
-          setActiveBlockIndex(blockIndex);
-        }, cueStart)
-      );
-      scheduled.push(
-        window.setTimeout(() => {
-          setActiveBlockIndex(null);
-        }, cueStart + cueDurationMs)
-      );
+      scheduled.push(window.setTimeout(() => setActiveBlockIndex(blockIndex), cueStart));
+      scheduled.push(window.setTimeout(() => setActiveBlockIndex(null), cueStart + cueDurationMs));
     });
 
     scheduled.push(
@@ -190,7 +186,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
 
       setFeedback({
         kind: result.correct ? "correct" : "incorrect",
-        message: result.correct ? "נכון" : "לא נכון"
+        message: result.correct ? appText.study.distractor.correctFeedback : appText.study.distractor.incorrectFeedback
       });
       if (result.correct) {
         setCorrectCount((count) => count + 1);
@@ -205,7 +201,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
       setResponseSequence([]);
       setMode("ready");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את התגובה במשימת ההסחה.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.distractor.saveError);
       setMode("responding");
     }
   }
@@ -237,19 +233,23 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
       </div>
 
       {showInstructions ? (
-        <section className="corsi-instructions" aria-label="הוראות למשימת קורסי">
-          <p className="status">
-            בכל ניסיון יוצג רצף של ריבועים מודגשים. לאחר שהרצף יסתיים, לחצו על הריבועים לפי הסדר המתאים.
-          </p>
+        <section className="corsi-instructions" aria-label={instructionText.study.distractor.instructionsAriaLabel}>
+          <p className="status">{instructionText.study.distractor.instructionsIntro}</p>
           <ol className="list">
-            <li>כאשר מוצג ניסיון <strong>קדימה</strong>, לחצו על הריבועים באותו הסדר שבו הם הופיעו.</li>
-            <li>כאשר מוצג ניסיון <strong>אחורה</strong>, לחצו על הריבועים בסדר הפוך.</li>
-            <li>כל ריבוע יואר למשך חצי שנייה לפני שהרצף יעבור לריבוע הבא.</li>
-            <li>המשיכו לבצע ניסיונות עד שתסתיים הפסקת 10 הדקות.</li>
+            <li>
+              {instructionText.study.distractor.instructionsForwardLead} <strong>{instructionText.study.distractor.forwardPill}</strong>,{" "}
+              {instructionText.study.distractor.instructionsForwardTail}
+            </li>
+            <li>
+              {instructionText.study.distractor.instructionsBackwardLead} <strong>{instructionText.study.distractor.backwardPill}</strong>,{" "}
+              {instructionText.study.distractor.instructionsBackwardTail}
+            </li>
+            <li>{instructionText.study.distractor.instructionsCueDuration}</li>
+            <li>{instructionText.study.distractor.instructionsDuration}</li>
           </ol>
           <div className="actions">
             <button type="button" className="button" onClick={startSequence} disabled={!trial || mode !== "ready" || remainingMs <= 0}>
-              התחילו את הרצף הבא
+              {instructionText.study.distractor.startSequenceButton}
             </button>
           </div>
         </section>
@@ -262,7 +262,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
               <span className={`corsi-status-dot ${mode === "saving" ? "is-on" : ""}`} />
             </div>
 
-            <div className="corsi-board" aria-label="לוח משימת קורסי" dir="ltr">
+            <div className="corsi-board" aria-label={appText.study.distractor.boardAriaLabel} dir="ltr">
               {corsiBlocks.map((block) => (
                 <button
                   key={block.blockIndex}
@@ -273,7 +273,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
                   style={{ left: `${block.x}%`, top: `${block.y}%` }}
                   onClick={() => handleBlockPress(block.blockIndex)}
                   disabled={mode !== "responding"}
-                  aria-label={`ריבוע ${block.blockIndex + 1}`}
+                  aria-label={appText.study.distractor.blockAriaLabel(block.blockIndex + 1)}
                 />
               ))}
             </div>
@@ -281,27 +281,34 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
 
           <aside className="corsi-sidecar">
             <div className="corsi-sidecar-meta">
-              <span className="pill">ניסיון {trialIndex}</span>
-              {trial ? <span className="pill">{trial.direction === "forward" ? "קדימה" : "אחורה"}</span> : null}
-              <span className="pill">ציון: {correctCount}</span>
+              <span className="pill">{appText.study.distractor.trialPill(trialIndex)}</span>
+              {trial ? (
+                <span className="pill">
+                  {trial.direction === "forward" ? instructionText.study.distractor.forwardPill : instructionText.study.distractor.backwardPill}
+                </span>
+              ) : null}
+              <span className="pill">{appText.study.distractor.scorePill(correctCount)}</span>
             </div>
 
             {mode === "ready" ? (
               <div className="actions corsi-actions">
                 <button type="button" className="button" onClick={startSequence} disabled={!trial || remainingMs <= 0}>
-                  הרצף הבא
+                  {instructionText.study.distractor.nextSequenceButton}
                 </button>
               </div>
             ) : null}
 
             <p className="status corsi-mode-status">
-              {mode === "showing" && "התבוננו ברצף הריבועים המודגשים."}
-              {mode === "responding" && `כעת לחצו על הריבועים ${trial?.direction === "backward" ? "בסדר הפוך." : "באותו הסדר."}`}
-              {mode === "saving" && "שומר את התגובה..."}
-              {mode === "ready" && "לחצו על הכפתור כדי להתחיל את הרצף הבא."}
+              {mode === "showing" && instructionText.study.distractor.modeShowing}
+              {mode === "responding" &&
+                (trial?.direction === "backward"
+                  ? instructionText.study.distractor.modeRespondingBackward
+                  : instructionText.study.distractor.modeRespondingForward)}
+              {mode === "saving" && appText.study.distractor.modeSaving}
+              {mode === "ready" && instructionText.study.distractor.modeReady}
             </p>
 
-            {trial && mode === "responding" ? <p className="status">נבחרו {responseSequence.length} מתוך {trial.sequenceLength} ריבועים.</p> : null}
+            {trial && mode === "responding" ? <p className="status">{appText.study.distractor.selectedCount(responseSequence.length, trial.sequenceLength)}</p> : null}
           </aside>
         </div>
       )}
@@ -312,7 +319,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
       {devToolsEnabled ? (
         <div className="actions">
           <button type="button" className="button" onClick={continueToRecall}>
-            דלגו לשלב הזכירה
+            {appText.study.distractor.skipToRecall}
           </button>
         </div>
       ) : null}

@@ -1,4 +1,5 @@
 import { MatchingTaskClient } from "@/components/matching-task-client";
+import { appText } from "@/content/app-text";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 
@@ -13,11 +14,7 @@ export default async function MatchingPage({ params }: Props) {
   const study = getStudyOrThrow(slug);
 
   return (
-    <StudyFrame
-      title="שלב ההתאמה"
-      studySlug={study.slug}
-      dir="rtl"
-    >
+    <StudyFrame title={appText.study.pages.matchingTitle} studySlug={study.slug} dir="rtl">
       <MatchingTaskClient studySlug={study.slug} />
     </StudyFrame>
   );

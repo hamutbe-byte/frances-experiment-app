@@ -11,14 +11,21 @@ interface DevToolbarProps {
   studySlug: string;
 }
 
-const sections = [
-  { label: "Start", path: "start" },
-  { label: "Instructions", path: "instructions" },
-  { label: "Learn", path: "learn/1" },
-  { label: "Distractor", path: "distractor" },
-  { label: "Recall+Recognition", path: "recall/1" },
-  { label: "Matching", path: "matching" },
-  { label: "Complete", path: "complete" }
+type ToolbarSection =
+  | { label: string; kind: "home" }
+  | { label: string; kind: "nvlt" }
+  | { label: string; kind: "study"; path: string };
+
+const sections: ToolbarSection[] = [
+  { label: "Home", kind: "home" },
+  { label: "Questionnaire", kind: "study", path: "start" },
+  { label: "NVLT", kind: "nvlt" },
+  { label: "Instructions", kind: "study", path: "instructions" },
+  { label: "Learn", kind: "study", path: "learn/1" },
+  { label: "Distractor", kind: "study", path: "distractor" },
+  { label: "Recall+Recognition", kind: "study", path: "recall/1" },
+  { label: "Matching", kind: "study", path: "matching" },
+  { label: "Complete", kind: "study", path: "complete" }
 ];
 
 export function DevToolbar({ studySlug }: DevToolbarProps) {
@@ -35,10 +42,24 @@ export function DevToolbar({ studySlug }: DevToolbarProps) {
     return null;
   }
 
-  function jump(path: string) {
+  function jump(section: ToolbarSection) {
     const resolvedSessionId = searchParams.get("session") ?? sessionId ?? getCurrentSessionId(studySlug);
+
+    if (section.kind === "home") {
+      router.replace("/");
+      setIsOpen(false);
+      return;
+    }
+
+    if (section.kind === "nvlt") {
+      const nextPath = resolvedSessionId ? `/study/${studySlug}/instructions?session=${encodeURIComponent(resolvedSessionId)}` : `/study/${studySlug}/instructions`;
+      router.replace(`/nvlt?next=${encodeURIComponent(nextPath)}`);
+      setIsOpen(false);
+      return;
+    }
+
     const query = resolvedSessionId ? `?session=${encodeURIComponent(resolvedSessionId)}&devJump=1` : "?devJump=1";
-    router.replace(`/study/${studySlug}/${path}${query}`);
+    router.replace(`/study/${studySlug}/${section.path}${query}`);
     setIsOpen(false);
   }
 
@@ -58,7 +79,7 @@ export function DevToolbar({ studySlug }: DevToolbarProps) {
       <nav className={`dev-toolbar ${isOpen ? "is-open" : ""}`} aria-label="Development experiment navigation">
         <span>Dev</span>
         {sections.map((section) => (
-          <button key={section.path} type="button" onClick={() => jump(section.path)}>
+          <button key={`${section.kind}-${section.label}`} type="button" onClick={() => jump(section)}>
             {section.label}
           </button>
         ))}

@@ -3,6 +3,8 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { appText } from "@/content/app-text";
+import { instructionText } from "@/content/instruction-text";
 import { getCurrentSessionId, getSessionBundleRequest, submitComprehensionRequest } from "@/lib/session-client";
 import { getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
@@ -54,9 +56,9 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
         setStartedAt(performance.now());
       })
       .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לטעון את קטע הקריאה.");
+        setError(caughtError instanceof Error ? caughtError.message : appText.study.learning.loadError);
       });
-  }, [router, searchParams, studySlug, trialIndex]);
+  }, [router, searchParams, studySlug, trialIndex, study.versions]);
 
   useEffect(() => {
     if (!bundle) {
@@ -64,9 +66,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
     }
 
     const nextTrial = bundle.session.versionId
-      ? study.versions
-          .find((version) => version.id === bundle.session.versionId)
-          ?.learningTrials.find((entry) => entry.trialIndex === trialIndex + 1)
+      ? study.versions.find((version) => version.id === bundle.session.versionId)?.learningTrials.find((entry) => entry.trialIndex === trialIndex + 1)
       : null;
 
     if (nextTrial) {
@@ -110,7 +110,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
         router.push(`/study/${studySlug}/learn/${result.nextTrialIndex}?session=${sessionId}`);
       });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את התגובה.");
+      setError(caughtError instanceof Error ? caughtError.message : appText.study.learning.saveError);
       setIsPending(false);
     }
   }
@@ -126,7 +126,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   if (!bundle || !trial) {
     return (
       <section className="panel">
-        <p className="status">טוען את קטע הקריאה...</p>
+        <p className="status">{appText.study.learning.loading}</p>
       </section>
     );
   }
@@ -136,7 +136,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   return (
     <section className="panel">
       <div className="trial-header">
-        <div className="pill">קטע {trial.trialIndex} מתוך {study.versions[0].learningTrials.length}</div>
+        <div className="pill">{appText.study.learning.progressLabel(trial.trialIndex, study.versions[0].learningTrials.length)}</div>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -147,7 +147,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
       </article>
 
       <section className="question-block">
-        <span className="question-label">בדיקת הבנה</span>
+        <span className="question-label">{instructionText.study.learning.comprehensionLabel}</span>
         <p className="question-text" dir="ltr">
           {trial.comprehensionPromptText}
         </p>
@@ -155,11 +155,11 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <span>המשפט נכון.</span>
+            <span>{instructionText.study.learning.yesExplanation}</span>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <span>המשפט אינו נכון.</span>
+            <span>{instructionText.study.learning.noExplanation}</span>
           </button>
         </div>
       </section>

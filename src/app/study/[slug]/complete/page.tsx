@@ -1,4 +1,5 @@
 import { CompletePhaseClient } from "@/components/complete-phase-client";
+import { appText } from "@/content/app-text";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 
@@ -13,11 +14,7 @@ export default async function CompletePage({ params }: Props) {
   const study = getStudyOrThrow(slug);
 
   return (
-    <StudyFrame
-      title="סיום"
-      studySlug={study.slug}
-      dir="rtl"
-    >
+    <StudyFrame title={appText.study.pages.completeTitle} studySlug={study.slug} dir="rtl">
       <CompletePhaseClient studySlug={study.slug} />
     </StudyFrame>
   );

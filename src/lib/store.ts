@@ -18,6 +18,9 @@ import type {
   DistractorResponse,
   MatchingResponse,
   MatchingAnswer,
+  ParticipantLanguageProfileInput,
+  ParticipantQuestionnaire,
+  ParticipantQuestionnaireInput,
   ParticipantSession,
   RecallItemResponse,
   RecognitionResponse,
@@ -91,6 +94,7 @@ function readStore(): StoreFile {
   const raw = fs.readFileSync(storePath, "utf8");
   const store = JSON.parse(raw) as StoreFile;
   for (const bundle of store.bundles) {
+    bundle.questionnaire ??= null;
     bundle.comprehension ??= [];
     bundle.distractor ??= [];
     bundle.recall ??= [];
@@ -112,6 +116,161 @@ function writeStore(store: StoreFile) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function normaliseText(value: string | null | undefined) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normaliseNumber(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function normaliseBoolean(value: boolean | null | undefined) {
+  return value === true;
+}
+
+function normalisePercentageEntry(input: { language: string; percentage: string }) {
+  return {
+    language: normaliseText(input.language),
+    percentage: normaliseText(input.percentage)
+  };
+}
+
+function normaliseCultureEntry(input: { culture: string; identificationLevel: number | null }) {
+  return {
+    culture: normaliseText(input.culture),
+    identificationLevel: normaliseNumber(input.identificationLevel)
+  };
+}
+
+function normaliseLanguageProfile(input: ParticipantLanguageProfileInput): ParticipantLanguageProfileInput {
+  return {
+    language: normaliseText(input.language),
+    languageStatus: normaliseText(input.languageStatus),
+    ageBeganAcquiring: normaliseNumber(input.ageBeganAcquiring),
+    ageBecameFluent: normaliseNumber(input.ageBecameFluent),
+    ageBeganReading: normaliseNumber(input.ageBeganReading),
+    ageBecameFluentReading: normaliseNumber(input.ageBecameFluentReading),
+    countryYears: normaliseNumber(input.countryYears),
+    countryMonths: normaliseNumber(input.countryMonths),
+    familyYears: normaliseNumber(input.familyYears),
+    familyMonths: normaliseNumber(input.familyMonths),
+    schoolWorkYears: normaliseNumber(input.schoolWorkYears),
+    schoolWorkMonths: normaliseNumber(input.schoolWorkMonths),
+    speakingProficiency: normaliseNumber(input.speakingProficiency),
+    understandingSpokenLanguageProficiency: normaliseNumber(input.understandingSpokenLanguageProficiency),
+    readingProficiency: normaliseNumber(input.readingProficiency),
+    learningByFriends: normaliseNumber(input.learningByFriends),
+    learningByFamily: normaliseNumber(input.learningByFamily),
+    learningByReading: normaliseNumber(input.learningByReading),
+    learningByLanguageTapesSelfInstruction: normaliseNumber(input.learningByLanguageTapesSelfInstruction),
+    learningByWatchingTv: normaliseNumber(input.learningByWatchingTv),
+    learningByListeningToRadio: normaliseNumber(input.learningByListeningToRadio),
+    exposureToFriends: normaliseNumber(input.exposureToFriends),
+    exposureToFamily: normaliseNumber(input.exposureToFamily),
+    exposureToWatchingTv: normaliseNumber(input.exposureToWatchingTv),
+    exposureToRadioMusic: normaliseNumber(input.exposureToRadioMusic),
+    exposureToReading: normaliseNumber(input.exposureToReading),
+    exposureToLanguageLabSelfInstruction: normaliseNumber(input.exposureToLanguageLabSelfInstruction),
+    foreignAccent: normaliseNumber(input.foreignAccent),
+    nonNativeIdentificationByAccent: normaliseNumber(input.nonNativeIdentificationByAccent)
+  };
+}
+
+function hasLanguageProfileContent(profile: ParticipantLanguageProfileInput) {
+  return Boolean(
+    profile.language ||
+      profile.languageStatus ||
+      profile.ageBeganAcquiring !== null ||
+      profile.ageBecameFluent !== null ||
+      profile.ageBeganReading !== null ||
+      profile.ageBecameFluentReading !== null ||
+      profile.countryYears !== null ||
+      profile.countryMonths !== null ||
+      profile.familyYears !== null ||
+      profile.familyMonths !== null ||
+      profile.schoolWorkYears !== null ||
+      profile.schoolWorkMonths !== null ||
+      profile.speakingProficiency !== null ||
+      profile.understandingSpokenLanguageProficiency !== null ||
+      profile.readingProficiency !== null ||
+      profile.learningByFriends !== null ||
+      profile.learningByFamily !== null ||
+      profile.learningByReading !== null ||
+      profile.learningByLanguageTapesSelfInstruction !== null ||
+      profile.learningByWatchingTv !== null ||
+      profile.learningByListeningToRadio !== null ||
+      profile.exposureToFriends !== null ||
+      profile.exposureToFamily !== null ||
+      profile.exposureToWatchingTv !== null ||
+      profile.exposureToRadioMusic !== null ||
+      profile.exposureToReading !== null ||
+      profile.exposureToLanguageLabSelfInstruction !== null ||
+      profile.foreignAccent !== null ||
+      profile.nonNativeIdentificationByAccent !== null
+  );
+}
+
+function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): ParticipantQuestionnaire | null {
+  if (!input) {
+    return null;
+  }
+
+  const questionnaire: ParticipantQuestionnaire = {
+    lastName: normaliseText(input.lastName),
+    firstName: normaliseText(input.firstName),
+    todayDate: normaliseText(input.todayDate),
+    age: normaliseNumber(input.age),
+    dateOfBirth: normaliseText(input.dateOfBirth),
+    gender: normaliseText(input.gender),
+    languagesByDominance: (input.languagesByDominance ?? []).map((entry) => normaliseText(entry)),
+    languagesByAcquisition: (input.languagesByAcquisition ?? []).map((entry) => normaliseText(entry)),
+    currentExposure: (input.currentExposure ?? []).map(normalisePercentageEntry),
+    readingPreference: (input.readingPreference ?? []).map(normalisePercentageEntry),
+    speakingPreference: (input.speakingPreference ?? []).map(normalisePercentageEntry),
+    cultures: (input.cultures ?? []).map(normaliseCultureEntry),
+    yearsOfEducation: normaliseNumber(input.yearsOfEducation),
+    educationLevel: normaliseText(input.educationLevel),
+    educationLevelOther: normaliseText(input.educationLevelOther),
+    usaImmigrationDate: normaliseText(input.usaImmigrationDate),
+    otherImmigrationDetails: normaliseText(input.otherImmigrationDetails),
+    hasVisionProblem: normaliseBoolean(input.hasVisionProblem),
+    hasHearingImpairment: normaliseBoolean(input.hasHearingImpairment),
+    hasLanguageDisability: normaliseBoolean(input.hasLanguageDisability),
+    hasLearningDisability: normaliseBoolean(input.hasLearningDisability),
+    disabilityExplanation: normaliseText(input.disabilityExplanation),
+    languageProfiles: (input.languageProfiles ?? []).map(normaliseLanguageProfile),
+    submittedAt: nowIso()
+  };
+
+  const hasContent = Boolean(
+    questionnaire.lastName ||
+      questionnaire.firstName ||
+      questionnaire.todayDate ||
+    questionnaire.age !== null ||
+      questionnaire.dateOfBirth ||
+      questionnaire.gender ||
+      questionnaire.languagesByDominance.some(Boolean) ||
+      questionnaire.languagesByAcquisition.some(Boolean) ||
+      questionnaire.currentExposure.some((entry) => entry.language || entry.percentage) ||
+      questionnaire.readingPreference.some((entry) => entry.language || entry.percentage) ||
+      questionnaire.speakingPreference.some((entry) => entry.language || entry.percentage) ||
+      questionnaire.cultures.some((entry) => entry.culture || entry.identificationLevel !== null) ||
+      questionnaire.yearsOfEducation !== null ||
+      questionnaire.educationLevel ||
+      questionnaire.educationLevelOther ||
+      questionnaire.usaImmigrationDate ||
+      questionnaire.otherImmigrationDetails ||
+      questionnaire.hasVisionProblem ||
+      questionnaire.hasHearingImpairment ||
+      questionnaire.hasLanguageDisability ||
+      questionnaire.hasLearningDisability ||
+      questionnaire.disabilityExplanation ||
+      questionnaire.languageProfiles.some(hasLanguageProfileContent)
+  );
+
+  return hasContent ? questionnaire : null;
 }
 
 function cloneBundle(bundle: SessionBundle): SessionBundle {
@@ -156,6 +315,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
 
   const bundle: SessionBundle = {
     session,
+    questionnaire: normaliseQuestionnaire(input.questionnaire),
     comprehension: [],
     distractor: [],
     recall: [],

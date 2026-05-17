@@ -26,7 +26,7 @@ import {
 } from "@/lib/store";
 import { getAllNvltLevels, getConfiguredNvltLevelIds } from "@/lib/nvlt";
 import { getStudyOrThrow } from "@/lib/study";
-import type { ParticipantSession } from "@/lib/types";
+import type { ParticipantQuestionnaireInput, ParticipantSession } from "@/lib/types";
 
 function log(message: string) {
   process.stdout.write(`${message}\n`);
@@ -41,6 +41,90 @@ function sampleDevice() {
     platform: "Win32",
     deviceType: "desktop" as const,
     timezone: "Asia/Jerusalem"
+  };
+}
+
+function sampleQuestionnaire(): ParticipantQuestionnaireInput {
+  return {
+    lastName: "כהן",
+    firstName: "נועה",
+    todayDate: "2026-05-16",
+    age: 29,
+    dateOfBirth: "1997-08-21",
+    gender: "female",
+    languagesByDominance: ["עברית", "אנגלית", "", "", ""],
+    languagesByAcquisition: ["עברית", "אנגלית", "", "", ""],
+    currentExposure: [
+      { language: "עברית", percentage: "70%" },
+      { language: "אנגלית", percentage: "30%" },
+      { language: "", percentage: "" },
+      { language: "", percentage: "" },
+      { language: "", percentage: "" }
+    ],
+    readingPreference: [
+      { language: "אנגלית", percentage: "60%" },
+      { language: "עברית", percentage: "40%" },
+      { language: "", percentage: "" },
+      { language: "", percentage: "" },
+      { language: "", percentage: "" }
+    ],
+    speakingPreference: [
+      { language: "עברית", percentage: "80%" },
+      { language: "אנגלית", percentage: "20%" },
+      { language: "", percentage: "" },
+      { language: "", percentage: "" },
+      { language: "", percentage: "" }
+    ],
+    cultures: [
+      { culture: "ישראלית", identificationLevel: 10 },
+      { culture: "יהודית", identificationLevel: 9 },
+      { culture: "", identificationLevel: null },
+      { culture: "", identificationLevel: null },
+      { culture: "", identificationLevel: null }
+    ],
+    yearsOfEducation: 16,
+    educationLevel: "college",
+    educationLevelOther: "",
+    usaImmigrationDate: "",
+    otherImmigrationDetails: "",
+    hasVisionProblem: false,
+    hasHearingImpairment: false,
+    hasLanguageDisability: false,
+    hasLearningDisability: false,
+    disabilityExplanation: "",
+    languageProfiles: [
+      {
+        language: "עברית",
+        languageStatus: "native",
+        ageBeganAcquiring: 0,
+        ageBecameFluent: 3,
+        ageBeganReading: 6,
+        ageBecameFluentReading: 8,
+        countryYears: 29,
+        countryMonths: 0,
+        familyYears: 29,
+        familyMonths: 0,
+        schoolWorkYears: 20,
+        schoolWorkMonths: 0,
+        speakingProficiency: 10,
+        understandingSpokenLanguageProficiency: 10,
+        readingProficiency: 10,
+        learningByFriends: 8,
+        learningByFamily: 10,
+        learningByReading: 9,
+        learningByLanguageTapesSelfInstruction: 2,
+        learningByWatchingTv: 6,
+        learningByListeningToRadio: 5,
+        exposureToFriends: 8,
+        exposureToFamily: 10,
+        exposureToWatchingTv: 6,
+        exposureToRadioMusic: 5,
+        exposureToReading: 9,
+        exposureToLanguageLabSelfInstruction: 1,
+        foreignAccent: 0,
+        nonNativeIdentificationByAccent: 0
+      }
+    ]
   };
 }
 
@@ -241,6 +325,23 @@ async function main() {
     assert.deepEqual([...bundle.session.matchingTrialOrder].sort((left, right) => left - right), study.matchingTrials.map((trial) => trial.trialIndex));
     assert.equal(bundle.session.recallPromptOrder.length, 8);
     assert.equal(bundle.session.matchingTrialOrder.length, 32);
+  });
+
+  await run("session creation stores the pre-experiment questionnaire", () => {
+    setIsolatedStoreDir("questionnaire");
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice(),
+      questionnaire: sampleQuestionnaire()
+    });
+    const bundle = getSessionBundle(created.session.id);
+    assert.ok(bundle?.questionnaire);
+    assert.equal(bundle?.questionnaire?.age, 29);
+    assert.equal(bundle?.questionnaire?.firstName, "נועה");
+    assert.equal(bundle?.questionnaire?.gender, "female");
+    assert.deepEqual(bundle?.questionnaire?.languagesByDominance.slice(0, 2), ["עברית", "אנגלית"]);
+    assert.equal(bundle?.questionnaire?.currentExposure[0]?.percentage, "70%");
+    assert.equal(bundle?.questionnaire?.languageProfiles[0]?.language, "עברית");
   });
 
   await run("session bundles can be listed for admin views", () => {
@@ -567,6 +668,8 @@ async function main() {
     const matching = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "matching-task-client.tsx"), "utf8");
 
     assert.match(toolbar, /devJump=1/);
+    assert.match(toolbar, /Home/);
+    assert.match(toolbar, /NVLT/);
     assert.match(learning, /isDevJump/);
     assert.match(learning, /alreadyAnswered && !isDevJump/);
     assert.match(recall, /isDevJump/);
@@ -597,7 +700,8 @@ async function main() {
         },
         body: JSON.stringify({
           studySlug: "frances-2020",
-          device: sampleDevice()
+          device: sampleDevice(),
+          questionnaire: sampleQuestionnaire()
         })
       })
     );
@@ -606,6 +710,7 @@ async function main() {
     const payload = await response.json();
     assert.equal(payload.session.studySlug, "frances-2020");
     assert.match(payload.nextPath, /instructions\?session=/);
+    assert.equal(getSessionBundle(payload.session.id)?.questionnaire?.gender, "female");
   });
 
   await run("comprehension API advances the flow to the next trial", async () => {
@@ -830,9 +935,17 @@ async function main() {
     assert.match(sessionsPage, /export const dynamic = "force-dynamic"/);
   });
 
-  await run("home page links to the NVLT route", () => {
+  await run("home page redirects straight into the full participant flow", () => {
     const homePage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "page.tsx"), "utf8");
-    assert.match(homePage, /href="\/nvlt"/);
+    assert.match(homePage, /import \{ redirect \} from "next\/navigation"/);
+    assert.match(homePage, /redirect\(fullFlowPath\)/);
+    assert.match(homePage, /\/study\/\$\{studySlug\}\/start\?next=/);
+    assert.match(homePage, /\/nvlt\?next=/);
+  });
+
+  await run("NVLT page includes the shared navigation toolbar", () => {
+    const nvltPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "nvlt", "page.tsx"), "utf8");
+    assert.match(nvltPage, /studySlug=\{getDefaultStudySlug\(\)\}/);
   });
 
   log("All smoke tests passed.");

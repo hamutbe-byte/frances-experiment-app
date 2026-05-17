@@ -39,7 +39,8 @@ a {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -67,7 +68,7 @@ textarea {
   border: 1px solid rgba(122, 60, 31, 0.12);
   color: var(--accent-deep);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--font-size-eyebrow);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -75,7 +76,7 @@ textarea {
 
 .hero h1 {
   margin: 18px 0 12px;
-  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-size: var(--font-size-hero-title);
   line-height: 0.94;
   letter-spacing: -0.03em;
 }
@@ -85,7 +86,7 @@ textarea {
   margin: 0;
   color: var(--muted);
   font-family: "Segoe UI", sans-serif;
-  font-size: 1.04rem;
+  font-size: var(--font-size-hero-subtitle);
   line-height: 1.7;
 }
 
@@ -128,13 +129,272 @@ textarea {
   margin-bottom: 6px;
   color: var(--muted);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--font-size-meta-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .meta-value {
-  font-size: 1.1rem;
+  font-size: var(--font-size-meta-value);
+  font-weight: 700;
+}
+
+.form-section {
+  display: grid;
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.form-section h2,
+.profile-card h3 {
+  margin: 0;
+  font-size: var(--font-size-section-title);
+}
+
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.form-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.form-field span {
+  color: var(--muted);
+  font-size: var(--font-size-field-label);
+  line-height: 1.5;
+}
+
+.select-input,
+.textarea-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  font-family: "Segoe UI", sans-serif;
+  font-size: var(--font-size-form-input);
+  outline: none;
+}
+
+.textarea-input {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.select-input:focus,
+.textarea-input:focus {
+  border-color: rgba(170, 90, 49, 0.48);
+  box-shadow: 0 0 0 4px rgba(170, 90, 49, 0.12);
+}
+
+.profile-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.profile-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(122, 60, 31, 0.12);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.questionnaire-panel {
+  gap: 20px;
+}
+
+.questionnaire-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.questionnaire-tab {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  text-align: right;
+  cursor: pointer;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.questionnaire-tab span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.questionnaire-tab strong {
+  font-size: 1rem;
+}
+
+.questionnaire-tab.is-active {
+  border-color: rgba(170, 90, 49, 0.38);
+  background: rgba(255, 248, 240, 0.96);
+  box-shadow: 0 10px 22px rgba(170, 90, 49, 0.12);
+}
+
+.questionnaire-step-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.questionnaire-step-heading h2,
+.questionnaire-step-heading p {
+  margin: 0;
+}
+
+.questionnaire-step-heading p {
+  color: var(--muted);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.questionnaire-header {
+  display: grid;
+  gap: 10px;
+}
+
+.questionnaire-header h1,
+.questionnaire-header p {
+  margin: 0;
+}
+
+.questionnaire-header p {
+  color: var(--muted);
+  font-family: "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+
+.questionnaire-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.questionnaire-paired-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.questionnaire-paired-card {
+  gap: 12px;
+}
+
+.questionnaire-note {
+  margin: 0;
+  color: var(--muted);
+  font-family: "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+
+.questionnaire-language-header {
+  display: grid;
+  gap: 6px;
+}
+
+.questionnaire-language-header h2,
+.questionnaire-language-header p {
+  margin: 0;
+}
+
+.questionnaire-language-header p {
+  color: var(--muted);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.questionnaire-table-wrap {
+  overflow-x: auto;
+}
+
+.questionnaire-matrix-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.questionnaire-matrix-table th,
+.questionnaire-matrix-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.questionnaire-matrix-table th {
+  width: 190px;
+  color: var(--accent-deep);
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 700;
+  text-align: right;
+}
+
+.questionnaire-matrix-table td {
+  min-width: 140px;
+}
+
+.questionnaire-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.questionnaire-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.questionnaire-choice-inline {
+  justify-content: flex-start;
+  min-height: 56px;
+}
+
+.questionnaire-choice input {
+  margin: 0;
+}
+
+.questionnaire-table-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.questionnaire-environment-grid {
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(120px, 1fr));
+}
+
+.questionnaire-table-cell {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.questionnaire-table-header {
+  color: var(--accent-deep);
   font-weight: 700;
 }
 
@@ -152,7 +412,7 @@ textarea {
 
 .home-card h2 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: var(--font-size-home-card-title);
 }
 
 .home-card p {
@@ -179,7 +439,7 @@ textarea {
   margin-top: 24px;
   border-collapse: collapse;
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.92rem;
+  font-size: var(--font-size-admin-table);
 }
 
 .admin-table th,
@@ -192,7 +452,7 @@ textarea {
 
 .admin-table th {
   color: var(--accent-deep);
-  font-size: 0.74rem;
+  font-size: var(--font-size-admin-table-header);
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -275,7 +535,7 @@ textarea {
 
 .dev-toolbar span {
   color: var(--accent-deep);
-  font-size: 0.74rem;
+  font-size: var(--font-size-toolbar-label);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -290,7 +550,7 @@ textarea {
   color: var(--ink);
   cursor: pointer;
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--font-size-toolbar-button);
   font-weight: 700;
 }
 
@@ -312,7 +572,7 @@ textarea {
   transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
   box-shadow: 0 16px 30px rgba(170, 90, 49, 0.22);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.98rem;
+  font-size: var(--font-size-button);
   font-weight: 700;
 }
 
@@ -367,7 +627,7 @@ textarea {
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.84rem;
+  font-size: var(--font-size-pill);
   font-weight: 700;
 }
 
@@ -387,7 +647,7 @@ textarea {
 
 .countdown {
   font-family: "Segoe UI", sans-serif;
-  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-size: var(--font-size-countdown);
   font-weight: 800;
   color: var(--accent-deep);
   line-height: 1;
@@ -519,7 +779,7 @@ textarea {
   text-align: center;
   color: white;
   font-family: "Segoe UI", sans-serif;
-  font-size: 1rem;
+  font-size: var(--font-size-feedback);
   font-weight: 800;
   box-shadow: 0 18px 32px rgba(43, 30, 22, 0.18);
 }
@@ -533,7 +793,7 @@ textarea {
 }
 
 .passage {
-  font-size: clamp(1.1rem, 2vw, 1.28rem);
+  font-size: var(--font-size-passage);
   line-height: 1.95;
   white-space: pre-wrap;
 }
@@ -541,7 +801,7 @@ textarea {
 .recall-prompt {
   display: grid;
   gap: 10px;
-  font-size: clamp(1rem, 2vw, 1.16rem);
+  font-size: var(--font-size-recall-prompt);
   line-height: 1.7;
 }
 
@@ -571,7 +831,7 @@ textarea {
 
 .matching-word {
   font-family: "Segoe UI", sans-serif;
-  font-size: clamp(2.1rem, 8vw, 4rem);
+  font-size: var(--font-size-matching-word);
   font-weight: 800;
   color: var(--ink);
   letter-spacing: 0;
@@ -588,7 +848,7 @@ textarea {
   margin-bottom: 10px;
   color: var(--muted);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--font-size-question-label);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -596,7 +856,7 @@ textarea {
 .question-text {
   margin: 0 0 18px;
   font-family: "Segoe UI", sans-serif;
-  font-size: 1.08rem;
+  font-size: var(--font-size-question-text);
   line-height: 1.65;
 }
 
@@ -625,13 +885,13 @@ textarea {
 .answer-button strong {
   display: block;
   margin-bottom: 4px;
-  font-size: 1.02rem;
+  font-size: var(--font-size-answer-title);
 }
 
 .answer-button span {
   color: var(--muted);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.92rem;
+  font-size: var(--font-size-answer-hint);
 }
 
 .option-button {
@@ -648,7 +908,7 @@ textarea {
   background: rgba(255, 255, 255, 0.82);
   color: var(--ink);
   font-family: "Segoe UI", sans-serif;
-  font-size: 1.08rem;
+  font-size: var(--font-size-text-input);
   outline: none;
 }
 
@@ -660,7 +920,7 @@ textarea {
 .status {
   color: var(--muted);
   font-family: "Segoe UI", sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--font-size-status);
 }
 
 .nvlt-summary {
@@ -673,7 +933,7 @@ textarea {
 }
 
 .nvlt-page-title {
-  font-size: 1.2rem;
+  font-size: var(--font-size-nvlt-page-title);
 }
 
 .nvlt-page-controls {
@@ -703,7 +963,7 @@ textarea {
 
 .nvlt-sheet-header h2 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-size: var(--font-size-nvlt-sheet-title);
 }
 
 .nvlt-sheet-header p {
@@ -732,7 +992,7 @@ textarea {
   padding: 10px 0;
   color: var(--ink);
   text-align: left;
-  font-size: clamp(1.6rem, 2vw, 2.1rem);
+  font-size: var(--font-size-nvlt-word-chip);
   line-height: 1.2;
 }
 
@@ -768,7 +1028,7 @@ textarea {
   background: rgba(255, 255, 255, 0.88);
   color: var(--ink);
   font-family: "Segoe UI", sans-serif;
-  font-size: 1rem;
+  font-size: var(--font-size-nvlt-number-input);
   font-weight: 700;
   text-align: center;
 }
@@ -781,7 +1041,7 @@ textarea {
 
 .nvlt-prompt-text {
   margin: 0;
-  font-size: clamp(1.45rem, 2vw, 2.1rem);
+  font-size: var(--font-size-nvlt-prompt-text);
   line-height: 1.45;
 }
 
@@ -793,7 +1053,7 @@ textarea {
   background: white;
   color: transparent;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: var(--font-size-nvlt-choice-button);
   font-weight: 900;
 }
 
@@ -816,7 +1076,7 @@ textarea {
   background: rgba(255, 255, 255, 0.75);
   border: 1px dashed rgba(122, 60, 31, 0.22);
   font-family: "Segoe UI", sans-serif;
-  font-size: 1.1rem;
+  font-size: var(--font-size-completion-code);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -862,6 +1122,17 @@ textarea {
 
   .panel {
     padding: 22px 18px;
+  }
+
+  .form-grid-two,
+  .form-grid-three {
+    grid-template-columns: 1fr;
+  }
+
+  .questionnaire-slot-grid,
+  .questionnaire-environment-grid,
+  .questionnaire-tabs {
+    grid-template-columns: 1fr;
   }
 
   .corsi-stage-layout {
@@ -918,11 +1189,11 @@ textarea {
   }
 
   .nvlt-word-chip {
-    font-size: 1.3rem;
+    font-size: var(--font-size-mobile-nvlt-word-chip);
   }
 
   .nvlt-prompt-text {
-    font-size: 1.2rem;
+    font-size: var(--font-size-mobile-nvlt-prompt-text);
   }
 
   .nvlt-page-controls {

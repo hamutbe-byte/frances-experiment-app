@@ -6,6 +6,7 @@ import type {
   DeviceSnapshot,
   DistractorDirection,
   MatchingAnswer,
+  ParticipantQuestionnaireInput,
   RecallItemResponse,
   SessionBundle,
   SessionStage,
@@ -20,14 +21,14 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function createSessionRequest(studySlug: string, device: DeviceSnapshot) {
+export async function createSessionRequest(studySlug: string, device: DeviceSnapshot, questionnaire?: ParticipantQuestionnaireInput | null) {
   return readJson<CreateSessionResult>(
     await fetch("/api/session", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ studySlug, device })
+      body: JSON.stringify({ studySlug, device, questionnaire })
     })
   );
 }

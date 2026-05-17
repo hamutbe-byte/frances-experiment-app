@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { appText } from "@/content/app-text";
 import { getCurrentSessionId, getSessionBundleRequest } from "@/lib/session-client";
 
 interface CompletePhaseClientProps {
@@ -13,7 +14,7 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [code, setCode] = useState<string | null>(null);
-  const [status, setStatus] = useState("טוען את פרטי הסיום...");
+  const [status, setStatus] = useState<string>(appText.study.complete.loading);
 
   useEffect(() => {
     const fromUrl = searchParams.get("session");
@@ -26,10 +27,10 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
         setCode(bundle.session.completionCode);
-        setStatus("השלמתם את כל שלבי הניסוי הזמינים.");
+        setStatus(appText.study.complete.success);
       })
       .catch(() => {
-        setStatus("ההשתתפות הסתיימה, אך לא ניתן היה לטעון את קוד הסיום.");
+        setStatus(appText.study.complete.fallback);
       });
   }, [router, searchParams, studySlug]);
 
@@ -39,7 +40,7 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
       {code ? <div className="completion-code">{code}</div> : null}
       <div className="actions">
         <button type="button" className="button button-secondary" onClick={() => router.push(`/study/${studySlug}/start`)}>
-          חזרה להתחלה
+          {appText.study.complete.backToStartButton}
         </button>
       </div>
     </section>
