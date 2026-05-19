@@ -16,6 +16,7 @@ export default async function LearningTrialPage({ params }: Props) {
   return (
     <StudyFrame
       studySlug={study.slug}
+      screen="learning"
       dir="rtl"
     >
       <LearningTrialClient studySlug={study.slug} trialIndex={Number(trial)} />

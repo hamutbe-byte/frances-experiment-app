@@ -44,8 +44,11 @@ export const instructionText = {
   nvlt: {
     pageTitle: "מבחן אוצר מילים באנגלית",
     pageSubtitle: "בחרו את מספר המילה המתאימה לכל משמעות.",
+    exampleTitle: "דוגמה פתורה",
+    exampleSubtitle: "לפני המבחן עצמו, כך נראה מילוי נכון של שאלה בדוגמה.",
+    exampleAnswerLabel: "תשובה",
     wordBankAriaLabel: "רשימת המילים הזמינות",
-    inputAriaLabel: (prompt: string) => `הקלידו את מספר המילה המתאימה עבור ${prompt}`,
-    inputSrLabel: (prompt: string) => `הקלידו את מספר המילה המתאימה עבור ${prompt}`
+    inputAriaLabel: "הקלידו את מספר המילה המתאימה עבור {prompt}",
+    inputSrLabel: "הקלידו את מספר המילה המתאימה עבור {prompt}"
   }
 } as const;

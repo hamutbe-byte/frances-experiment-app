@@ -13,7 +13,7 @@ export default async function DistractorPage({ params }: Props) {
   const study = getStudyOrThrow(slug);
 
   return (
-    <StudyFrame studySlug={study.slug} dir="rtl">
+    <StudyFrame studySlug={study.slug} screen="distractor" dir="rtl">
       <DistractorClient studySlug={study.slug} />
     </StudyFrame>
   );

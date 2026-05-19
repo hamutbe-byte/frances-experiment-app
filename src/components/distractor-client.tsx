@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { appText } from "@/content/app-text";
-import { instructionText } from "@/content/instruction-text";
+import { useResolvedContent } from "@/components/content-provider";
+import { formatContent } from "@/lib/content";
 import { corsiBlocks, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import {
   getCurrentSessionId,
@@ -36,6 +36,9 @@ type Feedback = {
 export function DistractorClient({ studySlug }: DistractorClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { snapshot } = useResolvedContent();
+  const appText = snapshot.appText as typeof import("@/content/app-text").appText;
+  const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [trialIndex, setTrialIndex] = useState(1);
   const [answeredCount, setAnsweredCount] = useState(0);
@@ -227,7 +230,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   }
 
   return (
-    <section className="panel corsi-panel">
+    <section className="panel corsi-panel screen-panel">
       <div className="trial-header">
         <span className="countdown">{remainingLabel}</span>
       </div>
@@ -273,7 +276,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
                   style={{ left: `${block.x}%`, top: `${block.y}%` }}
                   onClick={() => handleBlockPress(block.blockIndex)}
                   disabled={mode !== "responding"}
-                  aria-label={appText.study.distractor.blockAriaLabel(block.blockIndex + 1)}
+                  aria-label={formatContent(appText.study.distractor.blockAriaLabel, { index: block.blockIndex + 1 })}
                 />
               ))}
             </div>
@@ -281,13 +284,13 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
 
           <aside className="corsi-sidecar">
             <div className="corsi-sidecar-meta">
-              <span className="pill">{appText.study.distractor.trialPill(trialIndex)}</span>
+              <span className="pill">{formatContent(appText.study.distractor.trialPill, { trialIndex })}</span>
               {trial ? (
                 <span className="pill">
                   {trial.direction === "forward" ? instructionText.study.distractor.forwardPill : instructionText.study.distractor.backwardPill}
                 </span>
               ) : null}
-              <span className="pill">{appText.study.distractor.scorePill(correctCount)}</span>
+              <span className="pill">{formatContent(appText.study.distractor.scorePill, { score: correctCount })}</span>
             </div>
 
             {mode === "ready" ? (
@@ -308,10 +311,12 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
               {mode === "ready" && instructionText.study.distractor.modeReady}
             </p>
 
-            {trial && mode === "responding" ? <p className="status">{appText.study.distractor.selectedCount(responseSequence.length, trial.sequenceLength)}</p> : null}
+            {trial && mode === "responding" ? (
+              <p className="status">{formatContent(appText.study.distractor.selectedCount, { selected: responseSequence.length, total: trial.sequenceLength })}</p>
+            ) : null}
           </aside>
         </div>
-      )}
+      )} 
 
       {feedback ? <div className={`corsi-feedback is-${feedback.kind}`}>{feedback.message}</div> : null}
       {error ? <p className="status error-text">{error}</p> : null}

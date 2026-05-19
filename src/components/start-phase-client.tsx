@@ -3,7 +3,7 @@
 import { startTransition, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { questionnaireText } from "@/content/questionnaire-text";
+import { useResolvedContent } from "@/components/content-provider";
 import { getDeviceSnapshot } from "@/lib/browser";
 import { createSessionRequest, saveCurrentSessionId } from "@/lib/session-client";
 import type { ParticipantQuestionnaireInput } from "@/lib/types";
@@ -82,9 +82,8 @@ interface QuestionnaireFormState {
 
 type PercentageField = "currentExposure" | "readingPreference" | "speakingPreference";
 
-const rankedSlotCount = questionnaireText.rankingSlots.length;
+const rankedSlotCount = 5;
 const languageProfileCount = 2;
-const questionnaireStepCount = questionnaireText.steps.length;
 
 function makeRankedLanguageList() {
   return Array.from({ length: rankedSlotCount }, () => "");
@@ -163,6 +162,7 @@ function formatValidationMessage(template: string, label: string) {
 function LanguageSelect(props: {
   value: string;
   onChange: (value: string) => void;
+  options: ReadonlyArray<{ value: string; label: string }>;
   blankLabel?: string;
 }) {
   const { value, onChange, blankLabel = "בחרו שפה" } = props;
@@ -170,7 +170,7 @@ function LanguageSelect(props: {
   return (
     <select className="select-input" value={value} onChange={(event) => onChange(event.target.value)}>
       <option value="">{blankLabel}</option>
-      {questionnaireText.languageOptions.map((option) => (
+      {props.options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>
@@ -202,13 +202,14 @@ function ScaleSelect(props: {
 function PercentageSelect(props: {
   value: string;
   onChange: (value: string) => void;
+  options: ReadonlyArray<{ value: string; label: string }>;
 }) {
   const { value, onChange } = props;
 
   return (
     <select className="select-input" value={value} onChange={(event) => onChange(event.target.value)}>
       <option value="">בחרו אחוז</option>
-      {questionnaireText.percentageOptions.map((option) => (
+      {props.options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>
@@ -220,7 +221,8 @@ function PercentageSelect(props: {
 export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [currentStep, setCurrentStep] = useState(0);
+  const { snapshot } = useResolvedContent();
+  const questionnaireText = snapshot.questionnaireText as typeof import("@/content/questionnaire-text").questionnaireText;
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<QuestionnaireFormState>({
@@ -349,46 +351,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
     return null;
   }
 
-  function validateQuestionnaireStep(stepIndex: number) {
-    if (stepIndex !== 0) {
-      return null;
-    }
-
-    return validateForm();
-  }
-
-  function validateAllSteps() {
-    for (let stepIndex = 0; stepIndex < questionnaireStepCount; stepIndex += 1) {
-      const validationError = validateQuestionnaireStep(stepIndex);
-      if (validationError) {
-        return { stepIndex, validationError };
-      }
-    }
-
-    return null;
-  }
-
-  function goToStep(stepIndex: number) {
-    setError(null);
-    setCurrentStep(Math.max(0, Math.min(stepIndex, questionnaireStepCount - 1)));
-  }
-
-  function goToNextStep() {
-    const validationError = validateQuestionnaireStep(currentStep);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setError(null);
-    setCurrentStep((value) => Math.min(value + 1, questionnaireStepCount - 1));
-  }
-
-  function goToPreviousStep() {
-    setError(null);
-    setCurrentStep((value) => Math.max(value - 1, 0));
-  }
-
   function buildQuestionnairePayload(): ParticipantQuestionnaireInput {
     return {
       lastName: form.lastName.trim(),
@@ -460,10 +422,9 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
   }
 
   async function startStudy() {
-    const validationResult = validateAllSteps();
-    if (validationResult) {
-      setCurrentStep(validationResult.stepIndex);
-      setError(validationResult.validationError);
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -482,34 +443,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
     }
   }
 
-  const currentStepMeta = questionnaireText.steps[currentStep];
-  const isLastStep = currentStep === questionnaireStepCount - 1;
-
   return (
     <section className="panel stack questionnaire-panel">
-      <div className="questionnaire-tabs" role="tablist" aria-label="חלקי השאלון">
-        {questionnaireText.steps.map((step, index) => (
-          <button
-            key={step.tabLabel}
-            type="button"
-            role="tab"
-            aria-selected={currentStep === index}
-            className={`questionnaire-tab${currentStep === index ? " is-active" : ""}`}
-            onClick={() => goToStep(index)}
-          >
-            <span>{step.tabLabel}</span>
-            <strong>{step.title}</strong>
-          </button>
-        ))}
-      </div>
-
-      <section className="questionnaire-step-heading">
-        <p>{currentStepMeta.tabLabel}</p>
-        <h2>{currentStepMeta.title}</h2>
+      <section className="questionnaire-section-break is-first">
+        <h2>{questionnaireText.steps[0].title}</h2>
       </section>
 
-      {currentStep === 0 ? (
-        <>
       <section className="form-section">
         <div className="form-grid form-grid-three">
           <label className="form-field">
@@ -558,7 +497,11 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
           {questionnaireText.rankingSlots.map((slotLabel, index) => (
             <label key={`dominance-${slotLabel}`} className="form-field">
               <span>{slotLabel}</span>
-              <LanguageSelect value={form.languagesByDominance[index]} onChange={(value) => updateRankedLanguages("languagesByDominance", index, value)} />
+              <LanguageSelect
+                value={form.languagesByDominance[index]}
+                options={questionnaireText.languageOptions}
+                onChange={(value) => updateRankedLanguages("languagesByDominance", index, value)}
+              />
             </label>
           ))}
         </div>
@@ -570,7 +513,11 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
           {questionnaireText.rankingSlots.map((slotLabel, index) => (
             <label key={`acquisition-${slotLabel}`} className="form-field">
               <span>{slotLabel}</span>
-              <LanguageSelect value={form.languagesByAcquisition[index]} onChange={(value) => updateRankedLanguages("languagesByAcquisition", index, value)} />
+              <LanguageSelect
+                value={form.languagesByAcquisition[index]}
+                options={questionnaireText.languageOptions}
+                onChange={(value) => updateRankedLanguages("languagesByAcquisition", index, value)}
+              />
             </label>
           ))}
         </div>
@@ -593,7 +540,11 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                   <th>{questionnaireText.tableLabels.listLanguageHere}</th>
                   {form[field].map((entry, index) => (
                     <td key={`${field}-language-${index}`}>
-                      <LanguageSelect value={entry.language} onChange={(value) => updatePercentageEntries(field, index, "language", value)} />
+                      <LanguageSelect
+                        value={entry.language}
+                        options={questionnaireText.languageOptions}
+                        onChange={(value) => updatePercentageEntries(field, index, "language", value)}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -601,7 +552,11 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                   <th>{questionnaireText.tableLabels.listPercentageHere}</th>
                   {form[field].map((entry, index) => (
                     <td key={`${field}-percentage-${index}`}>
-                      <PercentageSelect value={entry.percentage} onChange={(value) => updatePercentageEntries(field, index, "percentage", value)} />
+                      <PercentageSelect
+                        value={entry.percentage}
+                        options={questionnaireText.percentageOptions}
+                        onChange={(value) => updatePercentageEntries(field, index, "percentage", value)}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -646,11 +601,10 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         </div>
       </section>
 
-        </>
-      ) : null}
+      <section className="questionnaire-section-break">
+        <h2>{questionnaireText.steps[1].title}</h2>
+      </section>
 
-      {currentStep === 1 ? (
-        <>
       <section className="form-section">
         <label className="form-field">
           <span>{questionnaireText.prompts.yearsOfEducation}</span>
@@ -744,11 +698,11 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         </label>
       </section>
 
-        </>
-      ) : null}
+      <section className="questionnaire-section-break">
+        <h2>{questionnaireText.steps[2].title}</h2>
+      </section>
 
-      {currentStep === 2
-        ? form.languageProfiles.map((profile, index) => {
+      {form.languageProfiles.map((profile, index) => {
         const languageName = profile.language || "שפה זו";
         const profileHeading = questionnaireText.languageSection.profileHeading.replace("{number}", String(index + 1));
         const exposurePrompt = questionnaireText.languageSection.exposurePrompt.replace("{language}", languageName);
@@ -765,7 +719,11 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             <div className="form-grid form-grid-two">
               <label className="form-field">
                 <span>{questionnaireText.languageSection.heading}</span>
-                <LanguageSelect value={profile.language} onChange={(value) => updateLanguageProfile(index, "language", value)} />
+                <LanguageSelect
+                  value={profile.language}
+                  options={questionnaireText.languageOptions}
+                  onChange={(value) => updateLanguageProfile(index, "language", value)}
+                />
               </label>
 
               <label className="form-field">
@@ -1080,25 +1038,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             </label>
           </section>
         );
-      })
-        : null}
+      })}
 
-      <div className="actions questionnaire-step-actions">
-        {currentStep > 0 ? (
-          <button type="button" className="button button-secondary" onClick={goToPreviousStep} disabled={isPending}>
-            {questionnaireText.stepButtons.previous}
-          </button>
-        ) : null}
-
-        {isLastStep ? (
-          <button type="button" className="button" onClick={startStudy} disabled={isPending}>
-            {isPending ? questionnaireText.buttons.submitting : questionnaireText.buttons.submit}
-          </button>
-        ) : (
-          <button type="button" className="button" onClick={goToNextStep} disabled={isPending}>
-            {questionnaireText.stepButtons.next}
-          </button>
-        )}
+      <div className="actions">
+        <button type="button" className="button" onClick={startStudy} disabled={isPending}>
+          {isPending ? questionnaireText.buttons.submitting : questionnaireText.buttons.submit}
+        </button>
       </div>
 
       {error ? <p className="status">{error}</p> : null}

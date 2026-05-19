@@ -3,8 +3,8 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { appText } from "@/content/app-text";
-import { instructionText } from "@/content/instruction-text";
+import { useResolvedContent } from "@/components/content-provider";
+import { formatContent } from "@/lib/content";
 import { getCurrentSessionId, getSessionBundleRequest, submitComprehensionRequest } from "@/lib/session-client";
 import { getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
@@ -18,6 +18,9 @@ interface LearningTrialClientProps {
 export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { snapshot } = useResolvedContent();
+  const appText = snapshot.appText as typeof import("@/content/app-text").appText;
+  const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [bundle, setBundle] = useState<SessionBundle | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,9 +137,9 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   const progress = Math.round((trial.trialIndex / study.versions[0].learningTrials.length) * 100);
 
   return (
-    <section className="panel">
+    <section className="panel screen-panel">
       <div className="trial-header">
-        <div className="pill">{appText.study.learning.progressLabel(trial.trialIndex, study.versions[0].learningTrials.length)}</div>
+        <div className="pill">{formatContent(appText.study.learning.progressLabel, { current: trial.trialIndex, total: study.versions[0].learningTrials.length })}</div>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>

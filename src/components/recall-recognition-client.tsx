@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { appText } from "@/content/app-text";
-import { instructionText } from "@/content/instruction-text";
+import { useResolvedContent } from "@/components/content-provider";
+import { formatContent } from "@/lib/content";
 import {
   getCurrentSessionId,
   getSessionBundleRequest,
@@ -28,6 +28,9 @@ const telemetryEnabled = process.env.NEXT_PUBLIC_ENABLE_TELEMETRY === "true";
 export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecognitionClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { snapshot } = useResolvedContent();
+  const appText = snapshot.appText as typeof import("@/content/app-text").appText;
+  const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [prompt, setPrompt] = useState<RecallPrompt | null>(null);
   const [actualPromptIndex, setActualPromptIndex] = useState<number | null>(null);
@@ -175,9 +178,15 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   const progress = Math.round((promptIndex / study.recallPrompts.length) * 100);
 
   return (
-    <section className="panel">
+    <section className="panel screen-panel">
       <div className="trial-header">
-        <span className="pill">{appText.study.recall.progressLabel(step, promptIndex, study.recallPrompts.length)}</span>
+        <span className="pill">
+          {formatContent(appText.study.recall.progressLabel, {
+            stepLabel: step === "recall" ? "שליפה" : "זיהוי",
+            current: promptIndex,
+            total: study.recallPrompts.length
+          })}
+        </span>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>

@@ -1,17 +1,20 @@
 import { Suspense, type ReactNode } from "react";
 
 import { DevToolbar } from "@/components/dev-toolbar";
+import { InlineContentEditor } from "@/components/inline-content-editor";
+import type { EditableContentScreen } from "@/lib/types";
 
 interface StudyFrameProps {
   eyebrow?: string;
   title?: string;
   description?: string;
   studySlug?: string;
+  screen?: EditableContentScreen;
   dir?: "ltr" | "rtl";
   children: ReactNode;
 }
 
-export function StudyFrame({ eyebrow, title, description, studySlug, dir = "ltr", children }: StudyFrameProps) {
+export function StudyFrame({ eyebrow, title, description, studySlug, screen, dir = "ltr", children }: StudyFrameProps) {
   const hasHeroContent = Boolean(eyebrow || title || description);
 
   return (
@@ -22,6 +25,7 @@ export function StudyFrame({ eyebrow, title, description, studySlug, dir = "ltr"
             <DevToolbar studySlug={studySlug} />
           </Suspense>
         ) : null}
+        {screen ? <InlineContentEditor screen={screen} /> : null}
         {hasHeroContent ? (
           <section className="hero">
             {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}

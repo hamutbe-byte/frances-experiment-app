@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { appText } from "@/content/app-text";
-import { instructionText } from "@/content/instruction-text";
+import { useResolvedContent } from "@/components/content-provider";
+import { formatContent } from "@/lib/content";
 import { getCurrentSessionId, getSessionBundleRequest, submitMatchingRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
@@ -17,6 +17,9 @@ interface MatchingTaskClientProps {
 export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { snapshot } = useResolvedContent();
+  const appText = snapshot.appText as typeof import("@/content/app-text").appText;
+  const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [trial, setTrial] = useState<MatchingTrial | null>(null);
   const [matchingOrder, setMatchingOrder] = useState<number[]>([]);
@@ -147,9 +150,14 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   const progress = Math.round(((answeredTrialIndexes.size + 1) / study.matchingTrials.length) * 100);
 
   return (
-    <section className="panel matching-panel">
+    <section className="panel matching-panel screen-panel">
       <div className="trial-header">
-        <span className="pill">{appText.study.matching.progressLabel(answeredTrialIndexes.size + 1, study.matchingTrials.length)}</span>
+        <span className="pill">
+          {formatContent(appText.study.matching.progressLabel, {
+            current: answeredTrialIndexes.size + 1,
+            total: study.matchingTrials.length
+          })}
+        </span>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>

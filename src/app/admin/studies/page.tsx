@@ -36,6 +36,9 @@ export default function AdminStudiesPage() {
             <Link className="button button-secondary" href="/admin/export?format=json">
               JSON export
             </Link>
+            <Link className="button button-secondary" href="/admin/content">
+              Content editor
+            </Link>
           </div>
 
           <div className="meta-grid">

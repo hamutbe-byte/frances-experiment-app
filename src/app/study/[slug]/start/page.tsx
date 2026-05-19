@@ -13,7 +13,7 @@ export default async function StartPage({ params }: Props) {
   const study = getStudyOrThrow(slug);
 
   return (
-    <StudyFrame studySlug={study.slug} dir="rtl">
+    <StudyFrame studySlug={study.slug} screen="questionnaire" dir="rtl">
       <StartPhaseClient studySlug={study.slug} />
     </StudyFrame>
   );

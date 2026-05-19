@@ -3,8 +3,7 @@
 import { startTransition, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { appText } from "@/content/app-text";
-import { instructionText } from "@/content/instruction-text";
+import { useResolvedContent } from "@/components/content-provider";
 import { getCurrentSessionId, getSessionBundleRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { useStageTelemetry } from "@/lib/telemetry";
 
@@ -15,6 +14,9 @@ interface InstructionsClientProps {
 export function InstructionsClient({ studySlug }: InstructionsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { snapshot } = useResolvedContent();
+  const appText = snapshot.appText as typeof import("@/content/app-text").appText;
+  const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -57,7 +59,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
   }
 
   return (
-    <section className={`panel${error ? " error-card" : ""}`}>
+    <section className={`panel screen-panel${error ? " error-card" : ""}`}>
       <div className="actions">
         <button type="button" className="button" onClick={beginLearning} disabled={isPending || !sessionId}>
           {isPending ? appText.study.instructions.openingFirstPassage : instructionText.study.instructionsPage.startReadingButton}

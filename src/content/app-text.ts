@@ -38,7 +38,7 @@ export const appText = {
       loadError: "לא ניתן היה לטעון את קטע הקריאה.",
       saveError: "לא ניתן היה לשמור את התגובה.",
       loading: "טוען את קטע הקריאה...",
-      progressLabel: (current: number, total: number) => `קטע ${current} מתוך ${total}`
+      progressLabel: "קטע {current} מתוך {total}"
     },
     distractor: {
       loadError: "לא ניתן היה לטעון את ההתקדמות במשימת ההסחה.",
@@ -47,11 +47,11 @@ export const appText = {
       correctFeedback: "נכון",
       incorrectFeedback: "לא נכון",
       boardAriaLabel: "לוח משימת קורסי",
-      blockAriaLabel: (index: number) => `ריבוע ${index}`,
-      trialPill: (trialIndex: number) => `ניסיון ${trialIndex}`,
-      scorePill: (score: number) => `ציון: ${score}`,
+      blockAriaLabel: "ריבוע {index}",
+      trialPill: "ניסיון {trialIndex}",
+      scorePill: "ציון: {score}",
       modeSaving: "שומר את התגובה...",
-      selectedCount: (selected: number, total: number) => `נבחרו ${selected} מתוך ${total} ריבועים.`,
+      selectedCount: "נבחרו {selected} מתוך {total} ריבועים.",
       skipToRecall: "דלגו לשלב הזכירה"
     },
     recall: {
@@ -59,14 +59,13 @@ export const appText = {
       saveRecallError: "לא ניתן היה לשמור את תשובת הזיכרון.",
       saveRecognitionError: "לא ניתן היה לשמור את בחירת הזיהוי.",
       loading: "טוען את שאלת הזיכרון...",
-      progressLabel: (step: "recall" | "recognition", current: number, total: number) =>
-        `${step === "recall" ? "שליפה" : "זיהוי"} ${current} מתוך ${total}`
+      progressLabel: "{stepLabel} {current} מתוך {total}"
     },
     matching: {
       loadError: "לא ניתן היה לטעון את משימת ההתאמה.",
       saveError: "לא ניתן היה לשמור את תגובת ההתאמה.",
       loading: "טוען את ניסוי ההתאמה...",
-      progressLabel: (current: number, total: number) => `התאמה ${current} מתוך ${total}`
+      progressLabel: "התאמה {current} מתוך {total}"
     },
     complete: {
       loading: "טוען את פרטי הסיום...",
@@ -77,11 +76,11 @@ export const appText = {
   },
   nvlt: {
     emptyState: "כרגע אין רמות NVLT פעילות.",
-    progressTitle: (current: number, total: number) => `שאלה ${current} מתוך ${total}`,
+    progressTitle: "שאלה {current} מתוך {total}",
     previousButton: "הקודם",
     nextButton: "הבא",
     continueToExperimentButton: "המשך לניסוי",
     finishButton: "סיום",
-    sheetTitle: (current: number) => `(${current})`
+    sheetTitle: "({current})"
   }
 } as const;

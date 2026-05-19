@@ -279,3 +279,40 @@ export interface CreateSessionResult {
   session: ParticipantSession;
   nextPath: string;
 }
+
+export type EditableContentKey = string;
+export type EditableContentValue = string;
+export type EditableContentScreen =
+  | "home"
+  | "questionnaire"
+  | "nvlt"
+  | "instructions"
+  | "learning"
+  | "distractor"
+  | "recall"
+  | "matching"
+  | "complete";
+export type EditableFieldKind = "text" | "textarea" | "template";
+
+export type EditableContentOverrides = Record<EditableContentKey, EditableContentValue>;
+
+export interface EditableContentOverride {
+  key: EditableContentKey;
+  value: EditableContentValue;
+}
+
+export interface EditableFieldDefinition {
+  key: EditableContentKey;
+  label: string;
+  section: string;
+  screen: EditableContentScreen;
+  kind: EditableFieldKind;
+  defaultValue: string;
+  requiredPlaceholders: string[];
+}
+
+export interface ResolvedContentSnapshot {
+  appText: Record<string, unknown>;
+  instructionText: Record<string, unknown>;
+  questionnaireText: Record<string, unknown>;
+}

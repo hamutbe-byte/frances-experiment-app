@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { appText } from "@/content/app-text";
+import { useResolvedContent } from "@/components/content-provider";
 import { getCurrentSessionId, getSessionBundleRequest } from "@/lib/session-client";
 
 interface CompletePhaseClientProps {
@@ -13,6 +13,8 @@ interface CompletePhaseClientProps {
 export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { snapshot } = useResolvedContent();
+  const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const [code, setCode] = useState<string | null>(null);
   const [status, setStatus] = useState<string>(appText.study.complete.loading);
 
@@ -35,7 +37,7 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
   }, [router, searchParams, studySlug]);
 
   return (
-    <section className="panel">
+    <section className="panel screen-panel">
       <p className="status">{status}</p>
       {code ? <div className="completion-code">{code}</div> : null}
       <div className="actions">

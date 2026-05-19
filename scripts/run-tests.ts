@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { POST as createSessionPost } from "@/app/api/session/route";
+import { DELETE as adminContentDelete, GET as adminContentGet, POST as adminContentPost } from "@/app/api/admin/content/route";
 import { POST as submitComprehensionPost } from "@/app/api/session/[id]/comprehension/route";
 import { POST as submitDistractorPost } from "@/app/api/session/[id]/distractor/route";
 import { POST as submitMatchingPost } from "@/app/api/session/[id]/matching/route";
@@ -12,6 +13,9 @@ import { POST as submitRecognitionPost } from "@/app/api/session/[id]/recognitio
 import { GET as adminExportGet } from "@/app/admin/export/route";
 import { corsiBlocks, corsiTrialList, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import { chooseBalancedVersion } from "@/lib/assignment";
+import { defaultContentSnapshot, getEditableContentValue, validateContentOverrides } from "@/lib/content";
+import { getResolvedContentSnapshot } from "@/lib/content-server";
+import { readContentOverrides } from "@/lib/content-store";
 import { bundlesToResponsesCsv } from "@/lib/csv";
 import {
   __resetStoreForTests,
@@ -946,6 +950,151 @@ async function main() {
   await run("NVLT page includes the shared navigation toolbar", () => {
     const nvltPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "nvlt", "page.tsx"), "utf8");
     assert.match(nvltPage, /studySlug=\{getDefaultStudySlug\(\)\}/);
+  });
+
+  await run("NVLT client shows a solved example before the first 1000-word section", () => {
+    const nvltClient = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "nvlt-test-client.tsx"), "utf8");
+    const instructionContent = fs.readFileSync(path.resolve(process.cwd(), "src", "content", "instruction-text.ts"), "utf8");
+
+    assert.match(nvltClient, /"game", "island", "mouth", "movie", "song", "yard"/);
+    assert.match(nvltClient, /questionIndex === 0/);
+    assert.match(nvltClient, /exampleAnswers = \[2, 3, 5\]/);
+    assert.match(instructionContent, /exampleTitle/);
+  });
+
+  await run("resolved content defaults to the bundled wording without overrides", () => {
+    setIsolatedStoreDir("content-defaults");
+    const snapshot = getResolvedContentSnapshot();
+    assert.deepEqual(snapshot, defaultContentSnapshot);
+  });
+
+  await run("content override validation rejects missing template placeholders", () => {
+    const validationMessage = validateContentOverrides({
+      "appText.nvlt.progressTitle": "שאלה בלבד"
+    });
+
+    assert.equal(validationMessage, "Missing placeholder {current} in appText.nvlt.progressTitle.");
+  });
+
+  await run("content API saves overrides and updates the resolved snapshot", async () => {
+    setIsolatedStoreDir("content-api-save");
+    const response = await adminContentPost(
+      new Request("http://localhost:3000/api/admin/content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          overrides: {
+            "appText.nvlt.progressTitle": "שאלה {current} מתוך {total} - בדיקה"
+          }
+        })
+      })
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.overrides["appText.nvlt.progressTitle"], "שאלה {current} מתוך {total} - בדיקה");
+    assert.equal(
+      getEditableContentValue(payload.snapshot, "appText.nvlt.progressTitle"),
+      "שאלה {current} מתוך {total} - בדיקה"
+    );
+    assert.equal(
+      getEditableContentValue(getResolvedContentSnapshot(), "appText.nvlt.progressTitle"),
+      "שאלה {current} מתוך {total} - בדיקה"
+    );
+  });
+
+  await run("content API rejects invalid template overrides", async () => {
+    setIsolatedStoreDir("content-api-invalid");
+    const response = await adminContentPost(
+      new Request("http://localhost:3000/api/admin/content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          overrides: {
+            "instructionText.nvlt.inputAriaLabel": "טקסט בלי placeholder"
+          }
+        })
+      })
+    );
+
+    assert.equal(response.status, 400);
+    const message = await response.text();
+    assert.match(message, /Missing placeholder \{prompt\}/);
+  });
+
+  await run("content API can fetch fields and reset individual or all overrides", async () => {
+    setIsolatedStoreDir("content-api-reset");
+
+    const saveResponse = await adminContentPost(
+      new Request("http://localhost:3000/api/admin/content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          overrides: {
+            "appText.nvlt.progressTitle": "שאלה {current} מתוך {total} - א",
+            "instructionText.nvlt.inputAriaLabel": "הקלידו עבור {prompt} - א"
+          }
+        })
+      })
+    );
+    assert.equal(saveResponse.status, 200);
+
+    const getResponse = await adminContentGet();
+    assert.equal(getResponse.status, 200);
+    const getPayload = await getResponse.json();
+    assert.ok(Array.isArray(getPayload.fields));
+    assert.ok(getPayload.fields.some((field: { key: string }) => field.key === "appText.nvlt.progressTitle"));
+
+    const deleteOneResponse = await adminContentDelete(
+      new Request("http://localhost:3000/api/admin/content", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          keys: ["appText.nvlt.progressTitle"]
+        })
+      })
+    );
+    assert.equal(deleteOneResponse.status, 200);
+    assert.equal(readContentOverrides()["appText.nvlt.progressTitle"], undefined);
+    assert.equal(readContentOverrides()["instructionText.nvlt.inputAriaLabel"], "הקלידו עבור {prompt} - א");
+
+    const deleteAllResponse = await adminContentDelete(
+      new Request("http://localhost:3000/api/admin/content", {
+        method: "DELETE"
+      })
+    );
+    assert.equal(deleteAllResponse.status, 200);
+    assert.deepEqual(readContentOverrides(), {});
+  });
+
+  await run("inline editing stays hidden until operator mode is enabled", () => {
+    const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
+    const editModeHelpers = fs.readFileSync(path.resolve(process.cwd(), "src", "lib", "content-edit-mode.ts"), "utf8");
+    assert.match(editModeHelpers, /NEXT_PUBLIC_CONTENT_EDITOR_ENABLED/);
+    assert.match(editorComponent, /if \(!isEnabled \|\| screenFields\.length === 0\) \{/);
+    assert.match(editorComponent, /return null;/);
+  });
+
+  await run("admin pages expose the content editor entrypoint", () => {
+    const studiesPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "admin", "studies", "page.tsx"), "utf8");
+    const contentPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "admin", "content", "page.tsx"), "utf8");
+    const launcher = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "admin-content-launcher.tsx"), "utf8");
+    const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
+
+    assert.match(studiesPage, /href="\/admin\/content"/);
+    assert.match(contentPage, /AdminContentLauncher/);
+    assert.match(launcher, /enableContentEditMode/);
+    assert.match(launcher, /\/api\/admin\/content/);
+    assert.match(editorComponent, /addEventListener\("dblclick"/);
+    assert.match(editorComponent, /onBlur=\{\(\) => \{/);
   });
 
   log("All smoke tests passed.");
