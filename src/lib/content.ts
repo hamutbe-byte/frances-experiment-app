@@ -4,6 +4,8 @@ import { questionnaireText } from "@/content/questionnaire-text";
 import type {
   EditableContentKey,
   EditableContentOverrides,
+  EditableContentStyleOverrides,
+  EditableContentTextStyle,
   EditableContentScreen,
   EditableContentValue,
   EditableFieldDefinition,
@@ -257,6 +259,89 @@ export function getEditableContentValue(snapshot: ResolvedContentSnapshot, key: 
 
 export function getDefaultEditableContentValue(key: EditableContentKey) {
   return getEditableContentValue(defaultContentSnapshot, key);
+}
+
+function normalizeTextStyleValue(value: EditableContentTextStyle) {
+  const next: EditableContentTextStyle = {};
+
+  if (typeof value.fontSize === "string") {
+    const trimmed = value.fontSize.trim();
+    if (trimmed) {
+      next.fontSize = trimmed;
+    }
+  }
+
+  if (value.fontWeight === "bold" || value.fontWeight === "normal") {
+    next.fontWeight = value.fontWeight;
+  }
+
+  if (value.fontStyle === "italic" || value.fontStyle === "normal") {
+    next.fontStyle = value.fontStyle;
+  }
+
+  return next;
+}
+
+export function getEditableContentStyleValue(overrides: EditableContentStyleOverrides, key: EditableContentKey) {
+  return overrides[key] ?? {};
+}
+
+export function getDefaultEditableContentStyleValue() {
+  return {};
+}
+
+export function validateContentStyleOverrides(overrides: EditableContentStyleOverrides) {
+  const validKeys = new Set(editableFieldDefinitions.map((field) => field.key));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (!validKeys.has(key)) {
+      return `Unknown editable content style key: ${key}`;
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return `Invalid editable content style value for ${key}.`;
+    }
+
+    const styleValue = value as EditableContentTextStyle;
+    if (typeof styleValue.fontSize !== "undefined" && typeof styleValue.fontSize !== "string") {
+      return `Invalid font size for ${key}.`;
+    }
+
+    if (
+      typeof styleValue.fontWeight !== "undefined" &&
+      styleValue.fontWeight !== "normal" &&
+      styleValue.fontWeight !== "bold"
+    ) {
+      return `Invalid font weight for ${key}.`;
+    }
+
+    if (
+      typeof styleValue.fontStyle !== "undefined" &&
+      styleValue.fontStyle !== "normal" &&
+      styleValue.fontStyle !== "italic"
+    ) {
+      return `Invalid font style for ${key}.`;
+    }
+  }
+
+  return null;
+}
+
+export function normalizeContentStyleOverrides(overrides: EditableContentStyleOverrides) {
+  const next: EditableContentStyleOverrides = {};
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (!value || typeof value !== "object") {
+      continue;
+    }
+
+    const normalized = normalizeTextStyleValue(value as EditableContentTextStyle);
+    if (Object.keys(normalized).length > 0) {
+      next[key] = normalized;
+    }
+  }
+
+  return next;
 }
 
 export function normalizeContentOverrides(overrides: EditableContentOverrides) {

@@ -4,6 +4,7 @@ import { startTransition, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { getCurrentSessionId, getSessionBundleRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { useStageTelemetry } from "@/lib/telemetry";
 
@@ -62,7 +63,15 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
     <section className={`panel screen-panel${error ? " error-card" : ""}`}>
       <div className="actions">
         <button type="button" className="button" onClick={beginLearning} disabled={isPending || !sessionId}>
-          {isPending ? appText.study.instructions.openingFirstPassage : instructionText.study.instructionsPage.startReadingButton}
+          {isPending ? (
+            <EditableContentText contentKey="appText.study.instructions.openingFirstPassage" tag="span">
+              {appText.study.instructions.openingFirstPassage}
+            </EditableContentText>
+          ) : (
+            <EditableContentText contentKey="instructionText.study.instructionsPage.startReadingButton" tag="span">
+              {instructionText.study.instructionsPage.startReadingButton}
+            </EditableContentText>
+          )}
         </button>
       </div>
 

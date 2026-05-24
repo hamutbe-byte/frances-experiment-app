@@ -4,6 +4,7 @@ import { startTransition, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { getDeviceSnapshot } from "@/lib/browser";
 import { createSessionRequest, saveCurrentSessionId } from "@/lib/session-client";
 import type { ParticipantQuestionnaireInput } from "@/lib/types";
@@ -167,12 +168,11 @@ function EditableQuestionnaireText(props: {
   className?: string;
 }) {
   const { contentKey, children, tag = "span", className } = props;
-  const Tag = tag;
 
   return (
-    <Tag className={className} data-content-key={contentKey}>
+    <EditableContentText contentKey={contentKey} tag={tag} className={className}>
       {children}
-    </Tag>
+    </EditableContentText>
   );
 }
 

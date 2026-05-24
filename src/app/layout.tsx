@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import "@/app/globals.css";
 import { ContentProvider } from "@/components/content-provider";
-import { getResolvedContentSnapshot } from "@/lib/content-server";
+import { getResolvedContentWithOverrides } from "@/lib/content-server";
 import { getResolvedUiCssVariables, getResolvedUiSnapshot } from "@/lib/ui-config-server";
 
 export const metadata: Metadata = {
@@ -11,14 +11,14 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const snapshot = getResolvedContentSnapshot();
+  const { snapshot, styleOverrides } = getResolvedContentWithOverrides();
   const uiSnapshot = getResolvedUiSnapshot();
   const uiCssVariables = getResolvedUiCssVariables();
 
   return (
     <html lang="en">
       <body style={uiCssVariables}>
-        <ContentProvider initialSnapshot={snapshot} initialUiSnapshot={uiSnapshot}>
+        <ContentProvider initialSnapshot={snapshot} initialStyleOverrides={styleOverrides} initialUiSnapshot={uiSnapshot}>
           {children}
         </ContentProvider>
       </body>

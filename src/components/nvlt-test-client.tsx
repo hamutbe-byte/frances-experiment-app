@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { formatContent } from "@/lib/content";
 import type { NvltLevel, NvltQuestion } from "@/lib/nvlt";
 
@@ -101,10 +102,14 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
         <div className="panel nvlt-sheet-panel nvlt-example-panel">
           <section className="nvlt-example" aria-label={instructionText.nvlt.exampleTitle}>
             <div className="nvlt-example-header">
-              <strong>{instructionText.nvlt.exampleTitle}</strong>
+              <EditableContentText contentKey="instructionText.nvlt.exampleTitle" tag="strong">
+                {instructionText.nvlt.exampleTitle}
+              </EditableContentText>
             </div>
 
-            <p className="status nvlt-example-instructions">{instructionText.nvlt.exampleSubtitle}</p>
+            <EditableContentText contentKey="instructionText.nvlt.exampleSubtitle" tag="p" className="status nvlt-example-instructions">
+              {instructionText.nvlt.exampleSubtitle}
+            </EditableContentText>
 
             <div className="nvlt-sheet nvlt-drag-sheet" dir="ltr">
               <div className="nvlt-worksheet">
@@ -135,10 +140,14 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
 
           <div className="actions nvlt-page-controls nvlt-bottom-controls">
             <button type="button" className="button button-secondary" disabled>
-              {appText.nvlt.previousButton}
+              <EditableContentText contentKey="appText.nvlt.previousButton" tag="span">
+                {appText.nvlt.previousButton}
+              </EditableContentText>
             </button>
             <button type="button" className="button button-secondary" onClick={() => setQuestionIndex(0)}>
-              {appText.nvlt.nextButton}
+              <EditableContentText contentKey="appText.nvlt.nextButton" tag="span">
+                {appText.nvlt.nextButton}
+              </EditableContentText>
             </button>
           </div>
         </div>
@@ -147,12 +156,14 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
       {activeEntry ? (
         <div className="panel nvlt-sheet-panel screen-panel">
           <div className="trial-header">
-            <strong className="nvlt-page-title">
+            <EditableContentText contentKey="appText.nvlt.progressTitle" tag="strong" className="nvlt-page-title">
               {formatContent(appText.nvlt.progressTitle, { current: activeEntry.sequenceNumber, total: questions.length })}
-            </strong>
+            </EditableContentText>
           </div>
 
-          <p className="status">{instructionText.nvlt.pageSubtitle}</p>
+          <EditableContentText contentKey="instructionText.nvlt.pageSubtitle" tag="p" className="status">
+            {instructionText.nvlt.pageSubtitle}
+          </EditableContentText>
 
           <div className="nvlt-sheet nvlt-drag-sheet" dir="ltr">
             <div className="nvlt-worksheet">
@@ -173,7 +184,9 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
                   return (
                     <div key={`${activeEntry.question.order}-${promptIndex}`} className="nvlt-prompt-row">
                       <label className="nvlt-select-wrap">
-                        <span className="sr-only">{formatContent(instructionText.nvlt.inputSrLabel, { prompt })}</span>
+                        <EditableContentText contentKey="instructionText.nvlt.inputSrLabel" tag="span" className="sr-only">
+                          {formatContent(instructionText.nvlt.inputSrLabel, { prompt })}
+                        </EditableContentText>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -211,7 +224,9 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
               onClick={() => setQuestionIndex((current) => Math.max(-1, current - 1))}
               disabled={questionIndex < 0}
             >
-              {appText.nvlt.previousButton}
+              <EditableContentText contentKey="appText.nvlt.previousButton" tag="span">
+                {appText.nvlt.previousButton}
+              </EditableContentText>
             </button>
             <button
               type="button"
@@ -228,11 +243,22 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
               }}
               disabled={isLastQuestion && !nextPath}
             >
-              {isLastQuestion
-                ? nextPath
-                  ? appText.nvlt.continueToExperimentButton
-                  : appText.nvlt.finishButton
-                : appText.nvlt.nextButton}
+              <EditableContentText
+                contentKey={
+                  isLastQuestion
+                    ? nextPath
+                      ? "appText.nvlt.continueToExperimentButton"
+                      : "appText.nvlt.finishButton"
+                    : "appText.nvlt.nextButton"
+                }
+                tag="span"
+              >
+                {isLastQuestion
+                  ? nextPath
+                    ? appText.nvlt.continueToExperimentButton
+                    : appText.nvlt.finishButton
+                  : appText.nvlt.nextButton}
+              </EditableContentText>
             </button>
           </div>
         </div>

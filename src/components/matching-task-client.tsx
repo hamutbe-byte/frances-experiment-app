@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { formatContent } from "@/lib/content";
 import { getCurrentSessionId, getSessionBundleRequest, submitMatchingRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
@@ -152,12 +153,12 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   return (
     <section className="panel matching-panel screen-panel">
       <div className="trial-header">
-        <span className="pill">
+        <EditableContentText contentKey="appText.study.matching.progressLabel" tag="span" className="pill">
           {formatContent(appText.study.matching.progressLabel, {
             current: answeredTrialIndexes.size + 1,
             total: study.matchingTrials.length
           })}
-        </span>
+        </EditableContentText>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -171,15 +172,21 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
       </div>
 
       <section className="question-block">
-        <span className="question-label">{instructionText.study.matching.questionLabel}</span>
+        <EditableContentText contentKey="instructionText.study.matching.questionLabel" tag="span" className="question-label">
+          {instructionText.study.matching.questionLabel}
+        </EditableContentText>
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <span>{instructionText.study.matching.noKeyHint}</span>
+            <EditableContentText contentKey="instructionText.study.matching.noKeyHint" tag="span">
+              {instructionText.study.matching.noKeyHint}
+            </EditableContentText>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <span>{instructionText.study.matching.yesKeyHint}</span>
+            <EditableContentText contentKey="instructionText.study.matching.yesKeyHint" tag="span">
+              {instructionText.study.matching.yesKeyHint}
+            </EditableContentText>
           </button>
         </div>
       </section>

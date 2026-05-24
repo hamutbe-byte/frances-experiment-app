@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { formatContent } from "@/lib/content";
 import { corsiBlocks, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import {
@@ -220,28 +221,58 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
 
       {showInstructions ? (
         <section className="corsi-instructions" aria-label={instructionText.study.distractor.instructionsAriaLabel}>
-          <p className="status">{instructionText.study.distractor.instructionsIntro}</p>
+          <EditableContentText contentKey="instructionText.study.distractor.instructionsIntro" tag="p" className="status">
+            {instructionText.study.distractor.instructionsIntro}
+          </EditableContentText>
           <ol className="list">
             <li>
-              {instructionText.study.distractor.instructionsForwardLead} <strong>{instructionText.study.distractor.forwardPill}</strong>,{" "}
-              {instructionText.study.distractor.instructionsForwardTail}
+              <EditableContentText contentKey="instructionText.study.distractor.instructionsForwardLead" tag="span">
+                {instructionText.study.distractor.instructionsForwardLead}
+              </EditableContentText>{" "}
+              <EditableContentText contentKey="instructionText.study.distractor.forwardPill" tag="strong">
+                {instructionText.study.distractor.forwardPill}
+              </EditableContentText>
+              ,{" "}
+              <EditableContentText contentKey="instructionText.study.distractor.instructionsForwardTail" tag="span">
+                {instructionText.study.distractor.instructionsForwardTail}
+              </EditableContentText>
             </li>
             <li>
-              {instructionText.study.distractor.instructionsBackwardLead} <strong>{instructionText.study.distractor.backwardPill}</strong>,{" "}
-              {instructionText.study.distractor.instructionsBackwardTail}
+              <EditableContentText contentKey="instructionText.study.distractor.instructionsBackwardLead" tag="span">
+                {instructionText.study.distractor.instructionsBackwardLead}
+              </EditableContentText>{" "}
+              <EditableContentText contentKey="instructionText.study.distractor.backwardPill" tag="strong">
+                {instructionText.study.distractor.backwardPill}
+              </EditableContentText>
+              ,{" "}
+              <EditableContentText contentKey="instructionText.study.distractor.instructionsBackwardTail" tag="span">
+                {instructionText.study.distractor.instructionsBackwardTail}
+              </EditableContentText>
             </li>
-            <li>{instructionText.study.distractor.instructionsCueDuration}</li>
-            <li>{instructionText.study.distractor.instructionsDuration}</li>
+            <li>
+              <EditableContentText contentKey="instructionText.study.distractor.instructionsCueDuration" tag="span">
+                {instructionText.study.distractor.instructionsCueDuration}
+              </EditableContentText>
+            </li>
+            <li>
+              <EditableContentText contentKey="instructionText.study.distractor.instructionsDuration" tag="span">
+                {instructionText.study.distractor.instructionsDuration}
+              </EditableContentText>
+            </li>
           </ol>
           <div className="actions">
             <button type="button" className="button" onClick={startSequence} disabled={!trial || mode !== "ready" || remainingMs <= 0}>
-              {instructionText.study.distractor.startSequenceButton}
+              <EditableContentText contentKey="instructionText.study.distractor.startSequenceButton" tag="span">
+                {instructionText.study.distractor.startSequenceButton}
+              </EditableContentText>
             </button>
           </div>
         </section>
       ) : (
         <>
-          <p className="status corsi-task-line">{instructionText.study.distractor.taskLine}</p>
+          <EditableContentText contentKey="instructionText.study.distractor.taskLine" tag="p" className="status corsi-task-line">
+            {instructionText.study.distractor.taskLine}
+          </EditableContentText>
 
           <div className="corsi-stage-layout corsi-stage-layout-single">
             <div className="corsi-lab-frame">
@@ -270,26 +301,54 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
           </div>
 
           <p className="status corsi-mode-status">
-            {mode === "showing" && instructionText.study.distractor.modeShowing}
+            {mode === "showing" && (
+              <EditableContentText contentKey="instructionText.study.distractor.modeShowing" tag="span">
+                {instructionText.study.distractor.modeShowing}
+              </EditableContentText>
+            )}
             {mode === "responding" &&
-              (trial?.direction === "backward"
-                ? instructionText.study.distractor.modeRespondingBackward
-                : instructionText.study.distractor.modeRespondingForward)}
-            {mode === "saving" && appText.study.distractor.modeSaving}
-            {mode === "ready" && instructionText.study.distractor.modeReady}
+              (trial?.direction === "backward" ? (
+                <EditableContentText contentKey="instructionText.study.distractor.modeRespondingBackward" tag="span">
+                  {instructionText.study.distractor.modeRespondingBackward}
+                </EditableContentText>
+              ) : (
+                <EditableContentText contentKey="instructionText.study.distractor.modeRespondingForward" tag="span">
+                  {instructionText.study.distractor.modeRespondingForward}
+                </EditableContentText>
+              ))}
+            {mode === "saving" && (
+              <EditableContentText contentKey="appText.study.distractor.modeSaving" tag="span">
+                {appText.study.distractor.modeSaving}
+              </EditableContentText>
+            )}
+            {mode === "ready" && (
+              <EditableContentText contentKey="instructionText.study.distractor.modeReady" tag="span">
+                {instructionText.study.distractor.modeReady}
+              </EditableContentText>
+            )}
           </p>
 
           {mode === "ready" ? (
             <div className="actions corsi-bottom-actions">
               <button type="button" className="button" onClick={startSequence} disabled={!trial || remainingMs <= 0}>
-                {instructionText.study.distractor.nextSequenceButton}
+                <EditableContentText contentKey="instructionText.study.distractor.nextSequenceButton" tag="span">
+                  {instructionText.study.distractor.nextSequenceButton}
+                </EditableContentText>
               </button>
             </div>
           ) : null}
         </>
       )} 
 
-      {feedback ? <div className={`corsi-feedback is-${feedback.kind}`}>{feedback.message}</div> : null}
+      {feedback ? (
+        <EditableContentText
+          contentKey={feedback.kind === "correct" ? "appText.study.distractor.correctFeedback" : "appText.study.distractor.incorrectFeedback"}
+          tag="div"
+          className={`corsi-feedback is-${feedback.kind}`}
+        >
+          {feedback.message}
+        </EditableContentText>
+      ) : null}
       {error ? <p className="status error-text">{error}</p> : null}
     </section>
   );

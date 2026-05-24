@@ -14,9 +14,17 @@ import { GET as adminExportGet } from "@/app/admin/export/route";
 import { corsiBlocks, corsiTrialList, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import { chooseBalancedVersion } from "@/lib/assignment";
 import { getDefaultEditableUiValue, getUiCssVariables, validateUiOverrides } from "@/content/ui-config";
-import { defaultContentSnapshot, getEditableContentValue, validateContentOverrides } from "@/lib/content";
+import {
+  defaultContentSnapshot,
+  getDefaultEditableContentStyleValue,
+  getEditableContentStyleValue,
+  getEditableContentValue,
+  validateContentOverrides,
+  validateContentStyleOverrides
+} from "@/lib/content";
 import { getResolvedContentSnapshot } from "@/lib/content-server";
 import { readContentOverrides } from "@/lib/content-store";
+import { readContentStyleOverrides } from "@/lib/content-style-store";
 import { getResolvedUiSnapshot } from "@/lib/ui-config-server";
 import { readUiOverrides } from "@/lib/ui-store";
 import { bundlesToResponsesCsv } from "@/lib/csv";
@@ -982,6 +990,19 @@ async function main() {
     assert.equal(validationMessage, "Missing placeholder {current} in appText.nvlt.progressTitle.");
   });
 
+  await run("content style override validation accepts formatting values", () => {
+    const validationMessage = validateContentStyleOverrides({
+      "appText.nvlt.progressTitle": {
+        fontSize: "1.5rem",
+        fontWeight: "bold",
+        fontStyle: "italic"
+      }
+    });
+
+    assert.equal(validationMessage, null);
+    assert.deepEqual(getDefaultEditableContentStyleValue(), {});
+  });
+
   await run("content API saves overrides and updates the resolved snapshot", async () => {
     setIsolatedStoreDir("content-api-save");
     const response = await adminContentPost(
@@ -993,6 +1014,13 @@ async function main() {
         body: JSON.stringify({
           overrides: {
             "appText.nvlt.progressTitle": "שאלה {current} מתוך {total} - בדיקה"
+          },
+          styleOverrides: {
+            "appText.nvlt.progressTitle": {
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              fontStyle: "italic"
+            }
           }
         })
       })
@@ -1009,6 +1037,11 @@ async function main() {
       getEditableContentValue(getResolvedContentSnapshot(), "appText.nvlt.progressTitle"),
       "שאלה {current} מתוך {total} - בדיקה"
     );
+    assert.equal(payload.styleOverrides["appText.nvlt.progressTitle"].fontSize, "1.5rem");
+    assert.equal(payload.styleOverrides["appText.nvlt.progressTitle"].fontWeight, "bold");
+    assert.equal(payload.styleOverrides["appText.nvlt.progressTitle"].fontStyle, "italic");
+    assert.equal(getEditableContentStyleValue(payload.styleOverrides, "appText.nvlt.progressTitle").fontSize, "1.5rem");
+    assert.equal(readContentStyleOverrides()["appText.nvlt.progressTitle"].fontWeight, "bold");
   });
 
   await run("content API rejects invalid template overrides", async () => {
@@ -1045,6 +1078,13 @@ async function main() {
           overrides: {
             "appText.nvlt.progressTitle": "שאלה {current} מתוך {total} - א",
             "instructionText.nvlt.inputAriaLabel": "הקלידו עבור {prompt} - א"
+          },
+          styleOverrides: {
+            "appText.nvlt.progressTitle": {
+              fontSize: "1.4rem",
+              fontWeight: "bold",
+              fontStyle: "italic"
+            }
           }
         })
       })
@@ -1056,6 +1096,9 @@ async function main() {
     const getPayload = await getResponse.json();
     assert.ok(Array.isArray(getPayload.fields));
     assert.ok(getPayload.fields.some((field: { key: string }) => field.key === "appText.nvlt.progressTitle"));
+    assert.equal(getPayload.styleOverrides["appText.nvlt.progressTitle"].fontSize, "1.4rem");
+    assert.equal(getPayload.styleOverrides["appText.nvlt.progressTitle"].fontWeight, "bold");
+    assert.equal(readContentStyleOverrides()["appText.nvlt.progressTitle"].fontStyle, "italic");
 
     const deleteOneResponse = await adminContentDelete(
       new Request("http://localhost:3000/api/admin/content", {
@@ -1079,6 +1122,7 @@ async function main() {
     );
     assert.equal(deleteAllResponse.status, 200);
     assert.deepEqual(readContentOverrides(), {});
+    assert.deepEqual(readContentStyleOverrides(), {});
     assert.deepEqual(readUiOverrides(), {});
   });
 
@@ -1138,7 +1182,8 @@ async function main() {
     assert.match(launcher, /enableContentEditMode/);
     assert.match(launcher, /\/api\/admin\/content/);
     assert.match(editorComponent, /addEventListener\("dblclick"/);
-    assert.match(editorComponent, /onBlur=\{\(\) => \{/);
+    assert.match(editorComponent, /onBlur=\{\(event\) => \{/);
+    assert.match(editorComponent, /event\.relatedTarget/);
     assert.match(uiConfig, /NVLT Typography/);
   });
 
@@ -1181,7 +1226,7 @@ async function main() {
     assert.match(startClient, /contentKey="questionnaireText\.languageSection\.proficiencyPrompt"/);
     assert.match(startClient, /contentKey="questionnaireText\.languageSection\.learningPrompt"/);
     assert.match(startClient, /contentKey="questionnaireText\.languageSection\.exposurePrompt"/);
-    assert.match(startClient, /data-content-key=\{contentKey\}/);
+    assert.match(startClient, /EditableContentText/);
     assert.match(editorComponent, /querySelectorAll\?\.\("\[data-content-key\]"\)/);
     assert.match(editorComponent, /inlineTarget\.field\.kind === "textarea" \|\| inlineTarget\.field\.kind === "template"/);
   });

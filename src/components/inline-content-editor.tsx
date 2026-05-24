@@ -14,7 +14,9 @@ import type {
   EditableFieldDefinition,
   EditableUiFieldDefinition,
   EditableUiKey,
-  EditableUiOverrides
+  EditableUiOverrides,
+  EditableContentStyleOverrides,
+  EditableContentTextStyle
 } from "@/lib/types";
 
 interface InlineContentEditorProps {
@@ -24,22 +26,60 @@ interface InlineContentEditorProps {
 interface InlineEditorTarget {
   field: EditableFieldDefinition;
   value: string;
+  style: InlineEditorStyleDraft;
   top: number;
   left: number;
   width: number;
 }
 
-function createInlineTarget(field: EditableFieldDefinition, sourceElement: HTMLElement, value: string): InlineEditorTarget {
+interface InlineEditorStyleDraft {
+  fontSize: string;
+  fontWeight: "normal" | "bold";
+  fontStyle: "normal" | "italic";
+}
+
+function createInlineTarget(
+  field: EditableFieldDefinition,
+  sourceElement: HTMLElement,
+  value: string,
+  style?: EditableContentTextStyle
+): InlineEditorTarget {
   const rect = sourceElement.getBoundingClientRect();
-  const maxWidth = Math.min(420, window.innerWidth - 32);
+  const maxWidth = Math.min(680, window.innerWidth - 32);
 
   return {
     field,
     value,
-    top: Math.min(rect.bottom + 8, window.innerHeight - 160),
-    left: Math.max(16, Math.min(rect.left, window.innerWidth - maxWidth - 16)),
-    width: Math.max(240, Math.min(rect.width, maxWidth))
+    style: buildInlineStyleDraft(style),
+    top: window.innerHeight / 2,
+    left: window.innerWidth / 2,
+    width: Math.max(560, Math.min(rect.width, maxWidth))
   };
+}
+
+function buildInlineStyleDraft(style?: EditableContentTextStyle): InlineEditorStyleDraft {
+  return {
+    fontSize: style?.fontSize ?? "",
+    fontWeight: style?.fontWeight ?? "normal",
+    fontStyle: style?.fontStyle ?? "normal"
+  };
+}
+
+function normalizeInlineStyleDraft(style: InlineEditorStyleDraft): EditableContentTextStyle {
+  return {
+    fontSize: style.fontSize.trim(),
+    fontWeight: style.fontWeight,
+    fontStyle: style.fontStyle
+  };
+}
+
+function parseInlineFontSize(value: string) {
+  const match = value.trim().match(/^([0-9]+(?:\.[0-9]+)?)rem$/);
+  return match ? Number(match[1]) : 1;
+}
+
+function formatInlineFontSize(value: number) {
+  return `${Number(value.toFixed(2)).toString()}rem`;
 }
 
 function resolveKeyedElement(target: HTMLElement) {
@@ -71,7 +111,7 @@ function groupFieldsBySection<T extends { section: string }>(fields: T[]) {
 
 export function InlineContentEditor({ screen }: InlineContentEditorProps) {
   const router = useRouter();
-  const { snapshot, setSnapshot, fields, uiSnapshot, setUiSnapshot, uiFields } = useResolvedContent();
+  const { snapshot, setSnapshot, fields, styleOverrides, setStyleOverrides, uiSnapshot, setUiSnapshot, uiFields } = useResolvedContent();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<EditableContentOverrides>({});
@@ -148,7 +188,9 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
         const keyedField = screenFields.find((field) => field.key === keyedElement.dataset.contentKey);
         if (keyedField) {
           setError(null);
-          setInlineTarget(createInlineTarget(keyedField, keyedElement, getEditableContentValue(snapshot, keyedField.key)));
+          setInlineTarget(
+            createInlineTarget(keyedField, keyedElement, getEditableContentValue(snapshot, keyedField.key), styleOverrides[keyedField.key])
+          );
           return;
         }
       }
@@ -171,7 +213,9 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       }
 
       setError(null);
-      setInlineTarget(createInlineTarget(matchingFields[0], target, getEditableContentValue(snapshot, matchingFields[0].key)));
+      setInlineTarget(
+        createInlineTarget(matchingFields[0], target, getEditableContentValue(snapshot, matchingFields[0].key), styleOverrides[matchingFields[0].key])
+      );
     };
 
     window.addEventListener("dblclick", handleDoubleClick);
@@ -179,7 +223,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     return () => {
       window.removeEventListener("dblclick", handleDoubleClick);
     };
-  }, [isEnabled, screenFields, snapshot]);
+  }, [isEnabled, screenFields, snapshot, styleOverrides]);
 
   if (!isEnabled || (screenFields.length === 0 && screenUiFields.length === 0)) {
     return null;
@@ -207,7 +251,30 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     updateUiDraft(key, getDefaultEditableUiValue(key));
   }
 
-  async function saveOverrides(overrides: EditableContentOverrides, nextUiOverrides: EditableUiOverrides = {}) {
+  function updateInlineStyle(partial: Partial<InlineEditorStyleDraft>) {
+    setInlineTarget((current) => (current ? { ...current, style: { ...current.style, ...partial } } : current));
+  }
+
+  function resetInlineStyle() {
+    setInlineTarget((current) =>
+      current
+        ? {
+            ...current,
+            style: {
+              fontSize: "",
+              fontWeight: "normal",
+              fontStyle: "normal"
+            }
+          }
+        : current
+    );
+  }
+
+  async function saveOverrides(
+    overrides: EditableContentOverrides,
+    nextUiOverrides: EditableUiOverrides = {},
+    nextStyleOverrides: EditableContentStyleOverrides = {}
+  ) {
     const response = await fetch("/api/admin/content", {
       method: "POST",
       headers: {
@@ -215,7 +282,8 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       },
       body: JSON.stringify({
         overrides,
-        uiOverrides: nextUiOverrides
+        uiOverrides: nextUiOverrides,
+        styleOverrides: nextStyleOverrides
       })
     });
 
@@ -225,10 +293,12 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
 
     const payload = (await response.json()) as {
       snapshot: typeof snapshot;
+      styleOverrides: typeof styleOverrides;
       uiSnapshot: typeof uiSnapshot;
     };
 
     setSnapshot(payload.snapshot);
+    setStyleOverrides(payload.styleOverrides);
     setUiSnapshot(payload.uiSnapshot);
     router.refresh();
   }
@@ -256,6 +326,8 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       setError(null);
       await saveOverrides({
         [inlineTarget.field.key]: inlineTarget.value
+      }, {}, {
+        [inlineTarget.field.key]: normalizeInlineStyleDraft(inlineTarget.style)
       });
       setInlineTarget(null);
     } catch (caughtError) {
@@ -272,6 +344,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     setInlineTarget(null);
   }
 
+  const inlineFontSize = inlineTarget ? parseInlineFontSize(inlineTarget.style.fontSize) : 1;
   return (
     <>
       <button type="button" className="content-editor-toggle" onClick={() => setIsOpen(true)}>
@@ -282,10 +355,31 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
         <div
           className="content-inline-popover"
           dir="rtl"
+          tabIndex={-1}
           style={{
             top: `${inlineTarget.top}px`,
             left: `${inlineTarget.left}px`,
+            transform: "translate(-50%, -50%)",
             width: `${inlineTarget.width}px`
+          }}
+          onBlur={(event) => {
+            const nextTarget = event.relatedTarget;
+            if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+              return;
+            }
+
+            void saveInlineTarget();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setInlineTarget(null);
+              return;
+            }
+
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              event.preventDefault();
+              void saveInlineTarget();
+            }
           }}
         >
           <label className="form-field">
@@ -299,9 +393,6 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
                 onChange={(event) =>
                   setInlineTarget((current) => (current ? { ...current, value: event.target.value } : current))
                 }
-                onBlur={() => {
-                  void saveInlineTarget();
-                }}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
                     setInlineTarget(null);
@@ -322,9 +413,6 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
                 onChange={(event) =>
                   setInlineTarget((current) => (current ? { ...current, value: event.target.value } : current))
                 }
-                onBlur={() => {
-                  void saveInlineTarget();
-                }}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
                     setInlineTarget(null);
@@ -344,6 +432,54 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
             ) : null}
             <p className="questionnaire-note">לחצו פעמיים על טקסט ייחודי כדי לערוך. לחיצה מחוץ לשדה תשמור אוטומטית.</p>
           </label>
+          <div className="content-inline-formatting">
+            <label className="form-field content-inline-format-field">
+              <span>גודל טקסט</span>
+              <div className="content-inline-format-range-row">
+                <input
+                  type="range"
+                  className="content-inline-format-range"
+                  min="0.6"
+                  max="3.2"
+                  step="0.05"
+                  value={inlineFontSize}
+                  onChange={(event) =>
+                    updateInlineStyle({
+                      fontSize: formatInlineFontSize(Number(event.target.value))
+                    })
+                  }
+                />
+                <output className="content-inline-format-value">{formatInlineFontSize(inlineFontSize)}</output>
+              </div>
+            </label>
+            <div className="content-inline-format-buttons" role="group" aria-label="עיצוב טקסט">
+              <button
+                type="button"
+                className={`button button-secondary content-inline-format-button ${inlineTarget.style.fontWeight === "bold" ? "is-active" : ""}`}
+                onClick={() =>
+                  updateInlineStyle({
+                    fontWeight: inlineTarget.style.fontWeight === "bold" ? "normal" : "bold"
+                  })
+                }
+              >
+                Bold
+              </button>
+              <button
+                type="button"
+                className={`button button-secondary content-inline-format-button ${inlineTarget.style.fontStyle === "italic" ? "is-active" : ""}`}
+                onClick={() =>
+                  updateInlineStyle({
+                    fontStyle: inlineTarget.style.fontStyle === "italic" ? "normal" : "italic"
+                  })
+                }
+              >
+                Italic
+              </button>
+              <button type="button" className="button button-secondary content-editor-reset" onClick={resetInlineStyle}>
+                איפוס עיצוב
+              </button>
+            </div>
+          </div>
           {isInlineSaving ? <p className="status">שומר...</p> : null}
         </div>
       ) : null}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { formatContent } from "@/lib/content";
 import {
   getCurrentSessionId,
@@ -180,13 +181,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   return (
     <section className="panel screen-panel">
       <div className="trial-header">
-        <span className="pill">
+        <EditableContentText contentKey="appText.study.recall.progressLabel" tag="span" className="pill">
           {formatContent(appText.study.recall.progressLabel, {
             stepLabel: step === "recall" ? "שליפה" : "זיהוי",
             current: promptIndex,
             total: study.recallPrompts.length
           })}
-        </span>
+        </EditableContentText>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -197,7 +198,9 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       {step === "recall" ? (
         <section className="question-block">
           <label className="question-label" htmlFor="recall-answer">
-            {instructionText.study.recall.recallInputLabel}
+            <EditableContentText contentKey="instructionText.study.recall.recallInputLabel" tag="span">
+              {instructionText.study.recall.recallInputLabel}
+            </EditableContentText>
           </label>
           <input
             id="recall-answer"
@@ -227,13 +230,17 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
           />
           <div className="actions">
             <button type="button" className="button" onClick={submitRecall} disabled={isPending}>
-              {instructionText.study.recall.continueButton}
+              <EditableContentText contentKey="instructionText.study.recall.continueButton" tag="span">
+                {instructionText.study.recall.continueButton}
+              </EditableContentText>
             </button>
           </div>
         </section>
       ) : (
         <section className="question-block">
-          <span className="question-label">{instructionText.study.recall.recognitionLabel}</span>
+          <EditableContentText contentKey="instructionText.study.recall.recognitionLabel" tag="span" className="question-label">
+            {instructionText.study.recall.recognitionLabel}
+          </EditableContentText>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (
               <button

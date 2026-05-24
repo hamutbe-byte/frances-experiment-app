@@ -4,6 +4,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { formatContent } from "@/lib/content";
 import { getCurrentSessionId, getSessionBundleRequest, submitComprehensionRequest } from "@/lib/session-client";
 import { getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
@@ -139,7 +140,12 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   return (
     <section className="panel screen-panel">
       <div className="trial-header">
-        <div className="pill">{formatContent(appText.study.learning.progressLabel, { current: trial.trialIndex, total: study.versions[0].learningTrials.length })}</div>
+        <EditableContentText contentKey="appText.study.learning.progressLabel" tag="div" className="pill">
+          {formatContent(appText.study.learning.progressLabel, {
+            current: trial.trialIndex,
+            total: study.versions[0].learningTrials.length
+          })}
+        </EditableContentText>
         <div className="progress-track" aria-hidden="true">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -150,7 +156,9 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
       </article>
 
       <section className="question-block">
-        <span className="question-label">{instructionText.study.learning.comprehensionLabel}</span>
+        <EditableContentText contentKey="instructionText.study.learning.comprehensionLabel" tag="span" className="question-label">
+          {instructionText.study.learning.comprehensionLabel}
+        </EditableContentText>
         <p className="question-text" dir="ltr">
           {trial.comprehensionPromptText}
         </p>
@@ -158,11 +166,15 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <span>{instructionText.study.learning.yesExplanation}</span>
+            <EditableContentText contentKey="instructionText.study.learning.yesExplanation" tag="span">
+              {instructionText.study.learning.yesExplanation}
+            </EditableContentText>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <span>{instructionText.study.learning.noExplanation}</span>
+            <EditableContentText contentKey="instructionText.study.learning.noExplanation" tag="span">
+              {instructionText.study.learning.noExplanation}
+            </EditableContentText>
           </button>
         </div>
       </section>

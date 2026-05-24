@@ -296,6 +296,14 @@ export type EditableFieldKind = "text" | "textarea" | "template";
 
 export type EditableContentOverrides = Record<EditableContentKey, EditableContentValue>;
 
+export interface EditableContentTextStyle {
+  fontSize?: string;
+  fontWeight?: "normal" | "bold";
+  fontStyle?: "normal" | "italic";
+}
+
+export type EditableContentStyleOverrides = Record<EditableContentKey, EditableContentTextStyle>;
+
 export interface EditableContentOverride {
   key: EditableContentKey;
   value: EditableContentValue;

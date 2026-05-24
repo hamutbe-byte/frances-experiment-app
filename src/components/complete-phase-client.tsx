@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { EditableContentText } from "@/components/editable-content-text";
 import { getCurrentSessionId, getSessionBundleRequest } from "@/lib/session-client";
 
 interface CompletePhaseClientProps {
@@ -38,11 +39,15 @@ export function CompletePhaseClient({ studySlug }: CompletePhaseClientProps) {
 
   return (
     <section className="panel screen-panel">
-      <p className="status">{status}</p>
+      <EditableContentText contentKey={status === appText.study.complete.loading ? "appText.study.complete.loading" : status === appText.study.complete.success ? "appText.study.complete.success" : "appText.study.complete.fallback"} tag="p" className="status">
+        {status}
+      </EditableContentText>
       {code ? <div className="completion-code">{code}</div> : null}
       <div className="actions">
         <button type="button" className="button button-secondary" onClick={() => router.push(`/study/${studySlug}/start`)}>
-          {appText.study.complete.backToStartButton}
+          <EditableContentText contentKey="appText.study.complete.backToStartButton" tag="span">
+            {appText.study.complete.backToStartButton}
+          </EditableContentText>
         </button>
       </div>
     </section>
