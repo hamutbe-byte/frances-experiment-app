@@ -9,10 +9,6 @@ export function isContentEditModeEnabled(storage?: Pick<Storage, "getItem"> | nu
     return true;
   }
 
-  if (storedValue === "0") {
-    return false;
-  }
-
   return envEnabled;
 }
 
@@ -20,6 +16,6 @@ export function enableContentEditMode(storage?: Pick<Storage, "setItem"> | null)
   storage?.setItem(contentEditModeKey, "1");
 }
 
-export function disableContentEditMode(storage?: Pick<Storage, "setItem"> | null) {
-  storage?.setItem(contentEditModeKey, "0");
+export function disableContentEditMode(storage?: Pick<Storage, "removeItem"> | null) {
+  storage?.removeItem(contentEditModeKey);
 }

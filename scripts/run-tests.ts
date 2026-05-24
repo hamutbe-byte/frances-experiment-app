@@ -13,9 +13,12 @@ import { POST as submitRecognitionPost } from "@/app/api/session/[id]/recognitio
 import { GET as adminExportGet } from "@/app/admin/export/route";
 import { corsiBlocks, corsiTrialList, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
 import { chooseBalancedVersion } from "@/lib/assignment";
+import { getDefaultEditableUiValue, getUiCssVariables, validateUiOverrides } from "@/content/ui-config";
 import { defaultContentSnapshot, getEditableContentValue, validateContentOverrides } from "@/lib/content";
 import { getResolvedContentSnapshot } from "@/lib/content-server";
 import { readContentOverrides } from "@/lib/content-store";
+import { getResolvedUiSnapshot } from "@/lib/ui-config-server";
+import { readUiOverrides } from "@/lib/ui-store";
 import { bundlesToResponsesCsv } from "@/lib/csv";
 import {
   __resetStoreForTests,
@@ -957,8 +960,11 @@ async function main() {
     const instructionContent = fs.readFileSync(path.resolve(process.cwd(), "src", "content", "instruction-text.ts"), "utf8");
 
     assert.match(nvltClient, /"game", "island", "mouth", "movie", "song", "yard"/);
-    assert.match(nvltClient, /questionIndex === 0/);
+    assert.match(nvltClient, /useState\(-1\)/);
+    assert.match(nvltClient, /setQuestionIndex\(0\)/);
     assert.match(nvltClient, /exampleAnswers = \[2, 3, 5\]/);
+    assert.match(nvltClient, /<div className="nvlt-sheet nvlt-drag-sheet" dir="ltr">/);
+    assert.match(nvltClient, /nvlt-example-instructions/);
     assert.match(instructionContent, /exampleTitle/);
   });
 
@@ -1073,13 +1079,50 @@ async function main() {
     );
     assert.equal(deleteAllResponse.status, 200);
     assert.deepEqual(readContentOverrides(), {});
+    assert.deepEqual(readUiOverrides(), {});
+  });
+
+  await run("UI override validation rejects empty values and resolves defaults", () => {
+    const validationMessage = validateUiOverrides({
+      "fontSizes.nvltPromptText": ""
+    });
+
+    assert.equal(validationMessage, "UI value cannot be empty for fontSizes.nvltPromptText.");
+    assert.equal(getDefaultEditableUiValue("fontSizes.nvltPromptText"), "clamp(1.45rem, 2vw, 2.1rem)");
+  });
+
+  await run("UI overrides update NVLT font sizes from one place", async () => {
+    setIsolatedStoreDir("ui-overrides");
+    const response = await adminContentPost(
+      new Request("http://localhost:3000/api/admin/content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          uiOverrides: {
+            "fontSizes.nvltPromptText": "2rem",
+            "fontSizes.nvltWordChip": "1.9rem"
+          }
+        })
+      })
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.uiOverrides["fontSizes.nvltPromptText"], "2rem");
+    assert.equal(getResolvedUiSnapshot().fontSizes.nvltPromptText, "2rem");
+    const uiCssVariables = getUiCssVariables(payload.uiSnapshot) as Record<string, string>;
+    assert.equal(uiCssVariables["--font-size-nvlt-prompt-text"], "2rem");
   });
 
   await run("inline editing stays hidden until operator mode is enabled", () => {
     const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
     const editModeHelpers = fs.readFileSync(path.resolve(process.cwd(), "src", "lib", "content-edit-mode.ts"), "utf8");
     assert.match(editModeHelpers, /NEXT_PUBLIC_CONTENT_EDITOR_ENABLED/);
-    assert.match(editorComponent, /if \(!isEnabled \|\| screenFields\.length === 0\) \{/);
+    assert.doesNotMatch(editModeHelpers, /storedValue === "0"/);
+    assert.match(editModeHelpers, /removeItem\(contentEditModeKey\)/);
+    assert.match(editorComponent, /if \(!isEnabled \|\| \(screenFields\.length === 0 && screenUiFields\.length === 0\)\) \{/);
     assert.match(editorComponent, /return null;/);
   });
 
@@ -1088,6 +1131,7 @@ async function main() {
     const contentPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "admin", "content", "page.tsx"), "utf8");
     const launcher = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "admin-content-launcher.tsx"), "utf8");
     const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
+    const uiConfig = fs.readFileSync(path.resolve(process.cwd(), "src", "content", "ui-config.ts"), "utf8");
 
     assert.match(studiesPage, /href="\/admin\/content"/);
     assert.match(contentPage, /AdminContentLauncher/);
@@ -1095,6 +1139,51 @@ async function main() {
     assert.match(launcher, /\/api\/admin\/content/);
     assert.match(editorComponent, /addEventListener\("dblclick"/);
     assert.match(editorComponent, /onBlur=\{\(\) => \{/);
+    assert.match(uiConfig, /NVLT Typography/);
+  });
+
+  await run("questionnaire language fields support type-ahead suggestions", () => {
+    const startClient = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "start-phase-client.tsx"), "utf8");
+    assert.match(startClient, /datalist id=\{languageOptionsListId\}/);
+    assert.match(startClient, /list=\{languageOptionsListId\}/);
+  });
+
+  await run("questionnaire education options keep the original logical order", () => {
+    const questionnaireText = fs.readFileSync(path.resolve(process.cwd(), "src", "content", "questionnaire-text.ts"), "utf8");
+    const expectedOrder = [
+      "less_than_high_school",
+      "high_school",
+      "professional_training",
+      "some_college",
+      "college",
+      "some_graduate_school",
+      "masters",
+      "phd_md_jd",
+      "other"
+    ];
+    const positions = expectedOrder.map((value) => questionnaireText.indexOf(`{ value: "${value}"`));
+    assert.ok(positions.every((position) => position >= 0));
+    assert.deepEqual([...positions].sort((left, right) => left - right), positions);
+  });
+
+  await run("questionnaire headings can opt into direct inline editing by content key", () => {
+    const startClient = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "start-phase-client.tsx"), "utf8");
+    const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
+    assert.match(startClient, /contentKey="questionnaireText\.prompts\.usaImmigrationDate"/);
+    assert.match(startClient, /contentKey="questionnaireText\.prompts\.otherEducationSpecify"/);
+    assert.match(startClient, /contentKey="questionnaireText\.prompts\.disabilityExplanationLabel"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.profileHeading"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.profileIntro"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.knowledgePrefix"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.statusLabel"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.ageWhenYou"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.environmentPrompt"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.proficiencyPrompt"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.learningPrompt"/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.exposurePrompt"/);
+    assert.match(startClient, /data-content-key=\{contentKey\}/);
+    assert.match(editorComponent, /querySelectorAll\?\.\("\[data-content-key\]"\)/);
+    assert.match(editorComponent, /inlineTarget\.field\.kind === "textarea" \|\| inlineTarget\.field\.kind === "template"/);
   });
 
   log("All smoke tests passed.");

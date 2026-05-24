@@ -3,10 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { getDefaultEditableUiValue, getEditableUiValue } from "@/content/ui-config";
 import { useResolvedContent } from "@/components/content-provider";
 import { disableContentEditMode, isContentEditModeEnabled } from "@/lib/content-edit-mode";
 import { getDefaultEditableContentValue, getEditableContentValue } from "@/lib/content";
-import type { EditableContentKey, EditableContentOverrides, EditableContentScreen, EditableFieldDefinition } from "@/lib/types";
+import type {
+  EditableContentKey,
+  EditableContentOverrides,
+  EditableContentScreen,
+  EditableFieldDefinition,
+  EditableUiFieldDefinition,
+  EditableUiKey,
+  EditableUiOverrides
+} from "@/lib/types";
 
 interface InlineContentEditorProps {
   screen: EditableContentScreen;
@@ -20,8 +29,36 @@ interface InlineEditorTarget {
   width: number;
 }
 
-function groupFieldsBySection(fields: EditableFieldDefinition[]) {
-  const groups = new Map<string, EditableFieldDefinition[]>();
+function createInlineTarget(field: EditableFieldDefinition, sourceElement: HTMLElement, value: string): InlineEditorTarget {
+  const rect = sourceElement.getBoundingClientRect();
+  const maxWidth = Math.min(420, window.innerWidth - 32);
+
+  return {
+    field,
+    value,
+    top: Math.min(rect.bottom + 8, window.innerHeight - 160),
+    left: Math.max(16, Math.min(rect.left, window.innerWidth - maxWidth - 16)),
+    width: Math.max(240, Math.min(rect.width, maxWidth))
+  };
+}
+
+function resolveKeyedElement(target: HTMLElement) {
+  const directMatch = target.closest("[data-content-key]");
+  if (directMatch instanceof HTMLElement) {
+    return directMatch;
+  }
+
+  const nestedMatches = target.querySelectorAll?.("[data-content-key]");
+  if (nestedMatches && nestedMatches.length === 1) {
+    const nestedMatch = nestedMatches[0];
+    return nestedMatch instanceof HTMLElement ? nestedMatch : null;
+  }
+
+  return null;
+}
+
+function groupFieldsBySection<T extends { section: string }>(fields: T[]) {
+  const groups = new Map<string, T[]>();
 
   for (const field of fields) {
     const current = groups.get(field.section) ?? [];
@@ -34,17 +71,23 @@ function groupFieldsBySection(fields: EditableFieldDefinition[]) {
 
 export function InlineContentEditor({ screen }: InlineContentEditorProps) {
   const router = useRouter();
-  const { snapshot, setSnapshot, fields } = useResolvedContent();
+  const { snapshot, setSnapshot, fields, uiSnapshot, setUiSnapshot, uiFields } = useResolvedContent();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<EditableContentOverrides>({});
+  const [uiDraft, setUiDraft] = useState<EditableUiOverrides>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isInlineSaving, setIsInlineSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inlineTarget, setInlineTarget] = useState<InlineEditorTarget | null>(null);
 
   const screenFields = useMemo(() => fields.filter((field) => field.screen === screen), [fields, screen]);
+  const screenUiFields = useMemo(
+    () => uiFields.filter((field) => field.screens === "all" || field.screens.includes(screen)),
+    [screen, uiFields]
+  );
   const groupedFields = useMemo(() => groupFieldsBySection(screenFields), [screenFields]);
+  const groupedUiFields = useMemo(() => groupFieldsBySection(screenUiFields), [screenUiFields]);
 
   useEffect(() => {
     const syncMode = () => {
@@ -71,7 +114,13 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       nextDraft[field.key] = getEditableContentValue(snapshot, field.key);
     }
     setDraft(nextDraft);
-  }, [isOpen, screenFields, snapshot]);
+
+    const nextUiDraft: EditableUiOverrides = {};
+    for (const field of screenUiFields) {
+      nextUiDraft[field.key] = getEditableUiValue(uiSnapshot, field.key);
+    }
+    setUiDraft(nextUiDraft);
+  }, [isOpen, screenFields, screenUiFields, snapshot, uiSnapshot]);
 
   useEffect(() => {
     if (!isEnabled) {
@@ -94,6 +143,16 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
         return;
       }
 
+      const keyedElement = resolveKeyedElement(target);
+      if (keyedElement instanceof HTMLElement) {
+        const keyedField = screenFields.find((field) => field.key === keyedElement.dataset.contentKey);
+        if (keyedField) {
+          setError(null);
+          setInlineTarget(createInlineTarget(keyedField, keyedElement, getEditableContentValue(snapshot, keyedField.key)));
+          return;
+        }
+      }
+
       const text = target.textContent?.replace(/\s+/g, " ").trim() ?? "";
       if (!text) {
         return;
@@ -111,16 +170,8 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
         return;
       }
 
-      const rect = target.getBoundingClientRect();
-      const maxWidth = Math.min(420, window.innerWidth - 32);
       setError(null);
-      setInlineTarget({
-        field: matchingFields[0],
-        value: getEditableContentValue(snapshot, matchingFields[0].key),
-        top: Math.min(rect.bottom + 8, window.innerHeight - 160),
-        left: Math.max(16, Math.min(rect.left, window.innerWidth - maxWidth - 16)),
-        width: Math.max(240, Math.min(rect.width, maxWidth))
-      });
+      setInlineTarget(createInlineTarget(matchingFields[0], target, getEditableContentValue(snapshot, matchingFields[0].key)));
     };
 
     window.addEventListener("dblclick", handleDoubleClick);
@@ -130,7 +181,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     };
   }, [isEnabled, screenFields, snapshot]);
 
-  if (!isEnabled || screenFields.length === 0) {
+  if (!isEnabled || (screenFields.length === 0 && screenUiFields.length === 0)) {
     return null;
   }
 
@@ -141,18 +192,30 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     }));
   }
 
+  function updateUiDraft(key: EditableUiKey, value: string) {
+    setUiDraft((current) => ({
+      ...current,
+      [key]: value
+    }));
+  }
+
   function resetField(key: EditableContentKey) {
     updateDraft(key, getDefaultEditableContentValue(key));
   }
 
-  async function saveOverrides(overrides: EditableContentOverrides) {
+  function resetUiField(key: EditableUiKey) {
+    updateUiDraft(key, getDefaultEditableUiValue(key));
+  }
+
+  async function saveOverrides(overrides: EditableContentOverrides, nextUiOverrides: EditableUiOverrides = {}) {
     const response = await fetch("/api/admin/content", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        overrides
+        overrides,
+        uiOverrides: nextUiOverrides
       })
     });
 
@@ -160,8 +223,13 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       throw new Error(await response.text());
     }
 
-    const payload = (await response.json()) as { snapshot: typeof snapshot };
+    const payload = (await response.json()) as {
+      snapshot: typeof snapshot;
+      uiSnapshot: typeof uiSnapshot;
+    };
+
     setSnapshot(payload.snapshot);
+    setUiSnapshot(payload.uiSnapshot);
     router.refresh();
   }
 
@@ -169,10 +237,10 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     try {
       setIsSaving(true);
       setError(null);
-      await saveOverrides(draft);
+      await saveOverrides(draft, uiDraft);
       setIsOpen(false);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את הטקסטים.");
+      setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את ההגדרות.");
     } finally {
       setIsSaving(false);
     }
@@ -222,7 +290,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
         >
           <label className="form-field">
             <span>{inlineTarget.field.label}</span>
-            {inlineTarget.field.kind === "textarea" ? (
+            {inlineTarget.field.kind === "textarea" || inlineTarget.field.kind === "template" ? (
               <textarea
                 autoFocus
                 className="textarea-input"
@@ -269,6 +337,11 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
                 }}
               />
             )}
+            {inlineTarget.field.requiredPlaceholders.length > 0 ? (
+              <p className="questionnaire-note">
+                שדות חובה בתבנית: {inlineTarget.field.requiredPlaceholders.map((placeholder) => `{${placeholder}}`).join(", ")}
+              </p>
+            ) : null}
             <p className="questionnaire-note">לחצו פעמיים על טקסט ייחודי כדי לערוך. לחיצה מחוץ לשדה תשמור אוטומטית.</p>
           </label>
           {isInlineSaving ? <p className="status">שומר...</p> : null}
@@ -280,7 +353,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
           <div className="content-editor-header">
             <div>
               <strong>מצב עריכה</strong>
-              <p>הטקסטים במסך זה ניתנים לעריכה ושמירה מיידית. אפשר גם ללחוץ פעמיים על טקסט ייחודי במסך.</p>
+              <p>אפשר לערוך כאן גם טקסטים וגם גדלי פונט. שדות NVLT משפיעים על כל המסך בבת אחת.</p>
             </div>
             <button type="button" className="button button-secondary" onClick={() => setIsOpen(false)}>
               סגירה
@@ -288,6 +361,35 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
           </div>
 
           <div className="content-editor-body">
+            {groupedUiFields.map(([section, sectionFields]) => (
+              <section key={`ui-${section}`} className="content-editor-group">
+                <h3>{section}</h3>
+                <div className="stack">
+                  {sectionFields.map((field) => {
+                    const value = uiDraft[field.key] ?? getEditableUiValue(uiSnapshot, field.key);
+
+                    return (
+                      <label key={field.key} className="form-field">
+                        <span>{field.label}</span>
+                        <input
+                          type="text"
+                          className="text-input"
+                          value={value}
+                          onChange={(event) => updateUiDraft(field.key, event.target.value)}
+                        />
+                        <p className="questionnaire-note">
+                          {field.helperText ?? "השתמשו בערכים כמו 1rem, 18px או clamp(...)."}
+                        </p>
+                        <button type="button" className="button button-secondary content-editor-reset" onClick={() => resetUiField(field.key)}>
+                          החזרת גודל זה לברירת המחדל
+                        </button>
+                      </label>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+
             {groupedFields.map(([section, sectionFields]) => (
               <section key={section} className="content-editor-group">
                 <h3>{section}</h3>

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 import "@/app/globals.css";
 import { ContentProvider } from "@/components/content-provider";
-import { getUiCssVariables } from "@/content/ui-config";
 import { getResolvedContentSnapshot } from "@/lib/content-server";
+import { getResolvedUiCssVariables, getResolvedUiSnapshot } from "@/lib/ui-config-server";
 
 export const metadata: Metadata = {
   title: "Frances 2020 Reading Phase",
@@ -12,11 +12,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snapshot = getResolvedContentSnapshot();
+  const uiSnapshot = getResolvedUiSnapshot();
+  const uiCssVariables = getResolvedUiCssVariables();
 
   return (
     <html lang="en">
-      <body style={getUiCssVariables()}>
-        <ContentProvider initialSnapshot={snapshot}>{children}</ContentProvider>
+      <body style={uiCssVariables}>
+        <ContentProvider initialSnapshot={snapshot} initialUiSnapshot={uiSnapshot}>
+          {children}
+        </ContentProvider>
       </body>
     </html>
   );

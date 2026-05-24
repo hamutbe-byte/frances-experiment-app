@@ -92,11 +92,13 @@ export const questionnaireText = {
     yearsOfEducation: "(7) כמה שנות השכלה פורמלית יש לכם?",
     highestEducation:
       "נא לסמן את רמת ההשכלה הגבוהה ביותר שלכם (או את המקבילה המשוערת בארה\"ב לתואר שהושג במדינה אחרת):",
+    otherEducationSpecify: "נא לציין:",
     usaImmigrationDate: "(8) תאריך העלייה לישראל, אם רלוונטי",
     otherImmigrationDetails:
       "אם עליתם אי פעם לישראל ממדינה אחרת, נא לציין כאן את שם המדינה ואת תאריך העלייה.",
     difficulties:
-      "(9) האם הייתה לכם אי פעם בעיית ראייה, לקות שמיעה, לקות שפה או לקות למידה? (סמנו את כל האפשרויות הרלוונטיות). אם כן, נא להסביר (כולל כל תיקון או התאמה):"
+      "(9) האם הייתה לכם אי פעם בעיית ראייה, לקות שמיעה, לקות שפה או לקות למידה? (סמנו את כל האפשרויות הרלוונטיות). אם כן, נא להסביר (כולל כל תיקון או התאמה):",
+    disabilityExplanationLabel: "פירוט"
   },
   pairedEntryLabels: {
     listLanguageHere: "שפה",
@@ -112,13 +114,13 @@ export const questionnaireText = {
   },
   educationOptions: [
     { value: "less_than_high_school", label: "פחות מתיכון" },
-    { value: "some_college", label: "לימודים אקדמיים חלקיים" },
-    { value: "masters", label: "תואר שני" },
     { value: "high_school", label: "תיכון" },
-    { value: "college", label: "קולג' / תואר ראשון" },
-    { value: "phd_md_jd", label: "Ph.D./M.D./J.D." },
     { value: "professional_training", label: "הכשרה מקצועית" },
+    { value: "some_college", label: "לימודים אקדמיים חלקיים" },
+    { value: "college", label: "קולג' / תואר ראשון" },
     { value: "some_graduate_school", label: "לימודים לתואר מתקדם חלקיים" },
+    { value: "masters", label: "תואר שני" },
+    { value: "phd_md_jd", label: "Ph.D./M.D./J.D." },
     { value: "other", label: "אחר" }
   ],
   disabilityOptions: [
@@ -274,11 +276,11 @@ export const questionnaireText = {
     next: "המשך"
   },
   buttons: {
-    submit: "התחילו בניסוי",
+    submit: "המשך",
     submitting: "שומר ומתחיל..."
   },
   validation: {
-    percentageTotal: "האחוזים בקבוצה \"{label}\" צריכים להסתכם בדיוק ב־100.",
+    percentageTotal: "האחוזים צריכים להסתכם בדיוק ב־100.",
     percentageLanguageMissing: "יש לבחור שפה לכל אחוז שמולא בקבוצה \"{label}\".",
     percentageValueMissing: "יש לבחור אחוז לכל שפה שנבחרה בקבוצה \"{label}\".",
     generic: "לא ניתן היה להתחיל את המחקר."

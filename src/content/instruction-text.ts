@@ -15,6 +15,7 @@ export const instructionText = {
       instructionsAriaLabel: "הוראות למשימת קורסי",
       instructionsIntro:
         "בכל ניסיון יוצג רצף של ריבועים מודגשים. לאחר שהרצף יסתיים, לחצו על הריבועים לפי הסדר המתאים.",
+      taskLine: "צפו ברצף הריבועים, ולאחר מכן לחצו עליהם לפי הסדר המתאים.",
       instructionsForwardLead: "כאשר מוצג ניסיון",
       forwardPill: "קדימה",
       instructionsForwardTail: "לחצו על הריבועים באותו הסדר שבו הם הופיעו.",
@@ -43,9 +44,9 @@ export const instructionText = {
   },
   nvlt: {
     pageTitle: "מבחן אוצר מילים באנגלית",
-    pageSubtitle: "בחרו את מספר המילה המתאימה לכל משמעות.",
+    pageSubtitle: "נא כתבו את מספר המילה המתאימה ליד ההגדרה שלה בצד שמאל",
     exampleTitle: "דוגמה פתורה",
-    exampleSubtitle: "לפני המבחן עצמו, כך נראה מילוי נכון של שאלה בדוגמה.",
+    exampleSubtitle: "נא כתבו את מספר המילה המתאימה ליד ההגדרה שלה בצד שמאל, לפניכם דוגמה לפתרון נכון של השאלה:",
     exampleAnswerLabel: "תשובה",
     wordBankAriaLabel: "רשימת המילים הזמינות",
     inputAriaLabel: "הקלידו את מספר המילה המתאימה עבור {prompt}",

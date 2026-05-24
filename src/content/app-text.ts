@@ -26,7 +26,7 @@ export const appText = {
       stagesLabel: "שלבים",
       stagesValue: "קריאה, זיכרון והתאמה",
       preparing: "מכין את ההשתתפות שלך...",
-      startButton: "התחילו בניסוי",
+      startButton: "המשך",
       startError: "לא ניתן היה להתחיל את המחקר."
     },
     instructions: {

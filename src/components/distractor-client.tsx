@@ -18,7 +18,6 @@ interface DistractorClientProps {
   studySlug: string;
 }
 
-const devToolsEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === "true";
 const durationMs = 10 * 60 * 1000;
 const cueDurationMs = 500;
 const cueGapMs = 0;
@@ -41,8 +40,6 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [trialIndex, setTrialIndex] = useState(1);
-  const [answeredCount, setAnsweredCount] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
   const [endsAt, setEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [mode, setMode] = useState<Mode>("ready");
@@ -86,8 +83,6 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
     setSessionId(resolvedSessionId);
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
-        setAnsweredCount(bundle.distractor.length);
-        setCorrectCount(bundle.distractor.filter((entry) => entry.correct).length);
         setTrialIndex(bundle.distractor.length + 1);
 
         const savedEndsAt = window.localStorage.getItem(distractorEndsAtKey(resolvedSessionId));
@@ -191,15 +186,11 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
         kind: result.correct ? "correct" : "incorrect",
         message: result.correct ? appText.study.distractor.correctFeedback : appText.study.distractor.incorrectFeedback
       });
-      if (result.correct) {
-        setCorrectCount((count) => count + 1);
-      }
       feedbackTimeoutRef.current = window.setTimeout(() => {
         setFeedback(null);
         feedbackTimeoutRef.current = null;
       }, feedbackDurationMs);
 
-      setAnsweredCount((count) => count + 1);
       setTrialIndex((current) => current + 1);
       setResponseSequence([]);
       setMode("ready");
@@ -219,14 +210,6 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
     if (nextSequence.length >= trial.sequenceLength) {
       void saveResponse(nextSequence);
     }
-  }
-
-  function continueToRecall() {
-    if (!sessionId) {
-      return;
-    }
-    window.localStorage.removeItem(distractorEndsAtKey(sessionId));
-    router.push(`/study/${studySlug}/recall/1?session=${sessionId}`);
   }
 
   return (
@@ -257,77 +240,57 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
           </div>
         </section>
       ) : (
-        <div className="corsi-stage-layout">
-          <div className="corsi-lab-frame">
-            <div className="corsi-status-strip" aria-hidden="true">
-              <span className={`corsi-status-dot ${mode === "showing" ? "is-on" : ""}`} />
-              <span className={`corsi-status-dot ${mode === "responding" ? "is-on" : ""}`} />
-              <span className={`corsi-status-dot ${mode === "saving" ? "is-on" : ""}`} />
-            </div>
+        <>
+          <p className="status corsi-task-line">{instructionText.study.distractor.taskLine}</p>
 
-            <div className="corsi-board" aria-label={appText.study.distractor.boardAriaLabel} dir="ltr">
-              {corsiBlocks.map((block) => (
-                <button
-                  key={block.blockIndex}
-                  type="button"
-                  className={`corsi-block ${activeBlockIndex === block.blockIndex ? "is-active" : ""} ${
-                    responseSequence.includes(block.blockIndex) ? "is-selected" : ""
-                  }`}
-                  style={{ left: `${block.x}%`, top: `${block.y}%` }}
-                  onClick={() => handleBlockPress(block.blockIndex)}
-                  disabled={mode !== "responding"}
-                  aria-label={formatContent(appText.study.distractor.blockAriaLabel, { index: block.blockIndex + 1 })}
-                />
-              ))}
+          <div className="corsi-stage-layout corsi-stage-layout-single">
+            <div className="corsi-lab-frame">
+              <div className="corsi-status-strip" aria-hidden="true">
+                <span className={`corsi-status-dot ${mode === "showing" ? "is-on" : ""}`} />
+                <span className={`corsi-status-dot ${mode === "responding" ? "is-on" : ""}`} />
+                <span className={`corsi-status-dot ${mode === "saving" ? "is-on" : ""}`} />
+              </div>
+
+              <div className="corsi-board" aria-label={appText.study.distractor.boardAriaLabel} dir="ltr">
+                {corsiBlocks.map((block) => (
+                  <button
+                    key={block.blockIndex}
+                    type="button"
+                    className={`corsi-block ${activeBlockIndex === block.blockIndex ? "is-active" : ""} ${
+                      responseSequence.includes(block.blockIndex) ? "is-selected" : ""
+                    }`}
+                    style={{ left: `${block.x}%`, top: `${block.y}%` }}
+                    onClick={() => handleBlockPress(block.blockIndex)}
+                    disabled={mode !== "responding"}
+                    aria-label={formatContent(appText.study.distractor.blockAriaLabel, { index: block.blockIndex + 1 })}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
-          <aside className="corsi-sidecar">
-            <div className="corsi-sidecar-meta">
-              <span className="pill">{formatContent(appText.study.distractor.trialPill, { trialIndex })}</span>
-              {trial ? (
-                <span className="pill">
-                  {trial.direction === "forward" ? instructionText.study.distractor.forwardPill : instructionText.study.distractor.backwardPill}
-                </span>
-              ) : null}
-              <span className="pill">{formatContent(appText.study.distractor.scorePill, { score: correctCount })}</span>
+          <p className="status corsi-mode-status">
+            {mode === "showing" && instructionText.study.distractor.modeShowing}
+            {mode === "responding" &&
+              (trial?.direction === "backward"
+                ? instructionText.study.distractor.modeRespondingBackward
+                : instructionText.study.distractor.modeRespondingForward)}
+            {mode === "saving" && appText.study.distractor.modeSaving}
+            {mode === "ready" && instructionText.study.distractor.modeReady}
+          </p>
+
+          {mode === "ready" ? (
+            <div className="actions corsi-bottom-actions">
+              <button type="button" className="button" onClick={startSequence} disabled={!trial || remainingMs <= 0}>
+                {instructionText.study.distractor.nextSequenceButton}
+              </button>
             </div>
-
-            {mode === "ready" ? (
-              <div className="actions corsi-actions">
-                <button type="button" className="button" onClick={startSequence} disabled={!trial || remainingMs <= 0}>
-                  {instructionText.study.distractor.nextSequenceButton}
-                </button>
-              </div>
-            ) : null}
-
-            <p className="status corsi-mode-status">
-              {mode === "showing" && instructionText.study.distractor.modeShowing}
-              {mode === "responding" &&
-                (trial?.direction === "backward"
-                  ? instructionText.study.distractor.modeRespondingBackward
-                  : instructionText.study.distractor.modeRespondingForward)}
-              {mode === "saving" && appText.study.distractor.modeSaving}
-              {mode === "ready" && instructionText.study.distractor.modeReady}
-            </p>
-
-            {trial && mode === "responding" ? (
-              <p className="status">{formatContent(appText.study.distractor.selectedCount, { selected: responseSequence.length, total: trial.sequenceLength })}</p>
-            ) : null}
-          </aside>
-        </div>
+          ) : null}
+        </>
       )} 
 
       {feedback ? <div className={`corsi-feedback is-${feedback.kind}`}>{feedback.message}</div> : null}
       {error ? <p className="status error-text">{error}</p> : null}
-
-      {devToolsEnabled ? (
-        <div className="actions">
-          <button type="button" className="button" onClick={continueToRecall}>
-            {appText.study.distractor.skipToRecall}
-          </button>
-        </div>
-      ) : null}
     </section>
   );
 }

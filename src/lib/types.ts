@@ -316,3 +316,20 @@ export interface ResolvedContentSnapshot {
   instructionText: Record<string, unknown>;
   questionnaireText: Record<string, unknown>;
 }
+
+export type EditableUiKey = string;
+export type EditableUiValue = string;
+export type EditableUiOverrides = Record<EditableUiKey, EditableUiValue>;
+
+export interface EditableUiFieldDefinition {
+  key: EditableUiKey;
+  label: string;
+  section: string;
+  screens: EditableContentScreen[] | "all";
+  defaultValue: string;
+  helperText?: string;
+}
+
+export interface ResolvedUiSnapshot {
+  fontSizes: Record<string, string>;
+}

@@ -658,6 +658,10 @@ select {
   align-items: start;
 }
 
+.corsi-stage-layout-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .corsi-instructions {
   display: flex;
   flex: 1 1 auto;
@@ -670,6 +674,11 @@ select {
 
 .corsi-actions {
   margin-top: auto;
+}
+
+.corsi-bottom-actions {
+  margin-top: auto;
+  justify-content: flex-end;
 }
 
 .corsi-sidecar {
@@ -760,6 +769,10 @@ select {
 
 .corsi-mode-status {
   min-height: 1.5em;
+}
+
+.corsi-task-line {
+  margin: 0;
 }
 
 .corsi-feedback {

@@ -14,7 +14,6 @@ export default function NvltPage() {
   return (
     <StudyFrame
       title={instructionText.nvlt.pageTitle}
-      description={instructionText.nvlt.pageSubtitle}
       studySlug={getDefaultStudySlug()}
       screen="nvlt"
       dir="rtl"
