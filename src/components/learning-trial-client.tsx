@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { formatContent } from "@/lib/content";
 import { getCurrentSessionId, getSessionBundleRequest, submitComprehensionRequest } from "@/lib/session-client";
 import { getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
@@ -135,22 +134,8 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
     );
   }
 
-  const progress = Math.round((trial.trialIndex / study.versions[0].learningTrials.length) * 100);
-
   return (
     <section className="panel screen-panel">
-      <div className="trial-header">
-        <EditableContentText contentKey="appText.study.learning.progressLabel" tag="div" className="pill">
-          {formatContent(appText.study.learning.progressLabel, {
-            current: trial.trialIndex,
-            total: study.versions[0].learningTrials.length
-          })}
-        </EditableContentText>
-        <div className="progress-track" aria-hidden="true">
-          <div className="progress-bar" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
       <article className="passage" dir="ltr">
         {trial.passageText}
       </article>

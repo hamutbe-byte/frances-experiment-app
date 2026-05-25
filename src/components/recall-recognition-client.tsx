@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { formatContent } from "@/lib/content";
 import {
   getCurrentSessionId,
   getSessionBundleRequest,
@@ -175,24 +174,8 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       </section>
     );
   }
-
-  const progress = Math.round((promptIndex / study.recallPrompts.length) * 100);
-
   return (
     <section className="panel screen-panel">
-      <div className="trial-header">
-        <EditableContentText contentKey="appText.study.recall.progressLabel" tag="span" className="pill">
-          {formatContent(appText.study.recall.progressLabel, {
-            stepLabel: step === "recall" ? "שליפה" : "זיהוי",
-            current: promptIndex,
-            total: study.recallPrompts.length
-          })}
-        </EditableContentText>
-        <div className="progress-track" aria-hidden="true">
-          <div className="progress-bar" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
       <div className="recall-prompt" dir="ltr" dangerouslySetInnerHTML={{ __html: prompt.promptHtml }} />
 
       {step === "recall" ? (

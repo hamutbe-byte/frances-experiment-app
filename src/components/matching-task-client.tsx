@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { formatContent } from "@/lib/content";
 import { getCurrentSessionId, getSessionBundleRequest, submitMatchingRequest, updateSessionStatusRequest } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
@@ -148,22 +147,8 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     );
   }
 
-  const progress = Math.round(((answeredTrialIndexes.size + 1) / study.matchingTrials.length) * 100);
-
   return (
     <section className="panel matching-panel screen-panel">
-      <div className="trial-header">
-        <EditableContentText contentKey="appText.study.matching.progressLabel" tag="span" className="pill">
-          {formatContent(appText.study.matching.progressLabel, {
-            current: answeredTrialIndexes.size + 1,
-            total: study.matchingTrials.length
-          })}
-        </EditableContentText>
-        <div className="progress-track" aria-hidden="true">
-          <div className="progress-bar" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
       <div className="matching-stimulus">
         <img src={trial.imagePath} alt="" className="matching-image" draggable={false} />
         <div className="matching-word" dir="ltr">

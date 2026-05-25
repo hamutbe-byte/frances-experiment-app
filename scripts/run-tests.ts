@@ -438,24 +438,14 @@ async function main() {
 
   await run("Corsi trials use a fixed span-style task list", () => {
     assert.equal(corsiTrialList.length, 20);
-    assert.deepEqual(
-      corsiTrialList.slice(0, 4).map((trial) => [trial.direction, trial.sequence.length]),
-      [
-        ["forward", 2],
-        ["forward", 2],
-        ["forward", 3],
-        ["forward", 3]
-      ]
-    );
-    assert.deepEqual(
-      corsiTrialList.slice(10, 14).map((trial) => [trial.direction, trial.sequence.length]),
-      [
-        ["backward", 2],
-        ["backward", 2],
-        ["backward", 3],
-        ["backward", 3]
-      ]
-    );
+    assert.deepEqual(corsiTrialList.map((trial) => trial.direction), Array(20).fill("forward"));
+    assert.deepEqual(corsiTrialList.map((trial) => trial.sequence.length), [
+      2, 2, 2, 2,
+      3, 3, 3, 3,
+      4, 4, 4, 4,
+      5, 5, 5, 5,
+      6, 6, 6, 6
+    ]);
   });
 
   await run("Corsi block coordinates stay within the board frame", () => {
@@ -465,13 +455,6 @@ async function main() {
     }
   });
 
-  await run("backward Corsi trials expect reversed responses", () => {
-    const sessionId = "session-corsi";
-    const backwardTrial = getCorsiTrial(sessionId, 11);
-    assert.equal(backwardTrial.direction, "backward");
-    assert.deepEqual(getExpectedCorsiResponse(backwardTrial.direction, backwardTrial.sequence), [...backwardTrial.sequence].reverse());
-  });
-
   await run("distractor client uses an explicit start button, 500ms cues, and correctness feedback", () => {
     const distractor = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "distractor-client.tsx"), "utf8");
     assert.match(distractor, /const cueDurationMs = 500/);
@@ -479,6 +462,22 @@ async function main() {
     assert.match(distractor, /startSequence/);
     assert.match(distractor, /התחיל[וו] את הרצף הבא/);
     assert.match(distractor, /message: result\.correct \? "נכון" : "לא נכון"/);
+  });
+
+  await run("distractor client keeps instructions, action controls, and timer at the top", () => {
+    const distractor = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "distractor-client.tsx"), "utf8");
+    const instructionText = fs.readFileSync(path.resolve(process.cwd(), "src", "content", "instruction-text.ts"), "utf8");
+
+    assert.match(distractor, /corsi-top-stack/);
+    assert.match(distractor, /corsi-top-controls/);
+    assert.match(distractor, /corsi-inline-instruction/);
+    assert.match(distractor, /className="countdown"/);
+    assert.match(
+      distractor,
+      /showInstructions \? "instructionText\.study\.distractor\.startSequenceButton" : "instructionText\.study\.distractor\.nextSequenceButton"/
+    );
+    assert.match(instructionText, /instructionsIntro:/);
+    assert.match(instructionText, /startSequenceButton:/);
   });
 
   await run("recall response stores timing, edit, and paste metadata", () => {
@@ -961,6 +960,15 @@ async function main() {
   await run("NVLT page includes the shared navigation toolbar", () => {
     const nvltPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "nvlt", "page.tsx"), "utf8");
     assert.match(nvltPage, /studySlug=\{getDefaultStudySlug\(\)\}/);
+    assert.doesNotMatch(nvltPage, /title=/);
+  });
+
+  await run("recall and matching pages omit the phase title", () => {
+    const recallPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "study", "[slug]", "recall", "[prompt]", "page.tsx"), "utf8");
+    const matchingPage = fs.readFileSync(path.resolve(process.cwd(), "src", "app", "study", "[slug]", "matching", "page.tsx"), "utf8");
+
+    assert.doesNotMatch(recallPage, /title=/);
+    assert.doesNotMatch(matchingPage, /title=/);
   });
 
   await run("NVLT client shows a solved example before the first 1000-word section", () => {
@@ -1158,6 +1166,14 @@ async function main() {
     assert.equal(getResolvedUiSnapshot().fontSizes.nvltPromptText, "2rem");
     const uiCssVariables = getUiCssVariables(payload.uiSnapshot) as Record<string, string>;
     assert.equal(uiCssVariables["--font-size-nvlt-prompt-text"], "2rem");
+  });
+
+  await run("matching typography defaults are compact", () => {
+    assert.equal(getDefaultEditableUiValue("fontSizes.matchingWord"), "clamp(1.6rem, 6vw, 2.9rem)");
+    assert.equal(getDefaultEditableUiValue("fontSizes.questionLabel"), "0.76rem");
+    assert.equal(getDefaultEditableUiValue("fontSizes.questionText"), "0.98rem");
+    assert.equal(getDefaultEditableUiValue("fontSizes.answerTitle"), "0.92rem");
+    assert.equal(getDefaultEditableUiValue("fontSizes.answerHint"), "0.84rem");
   });
 
   await run("inline editing stays hidden until operator mode is enabled", () => {
