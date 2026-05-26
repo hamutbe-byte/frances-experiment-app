@@ -110,7 +110,6 @@ const uiFieldConfig: UiFieldConfig[] = [
   { key: "countdown", label: "טיימר", section: "Distractor Typography", screens: ["distractor"] },
   { key: "feedback", label: "משוב", section: "Distractor Typography", screens: ["distractor"] },
   { key: "matchingWord", label: "מילת התאמה", section: "Matching Typography", screens: ["matching"] },
-  { key: "completionCode", label: "קוד סיום", section: "Complete Typography", screens: ["complete"] },
   { key: "nvltPageTitle", label: "כותרת התקדמות", section: "NVLT Typography", screens: ["nvlt"] },
   { key: "nvltWordChip", label: "רשימת מילים", section: "NVLT Typography", screens: ["nvlt"], helperText: "שולט על כל המילים ברשימה בבת אחת" },
   { key: "nvltNumberInput", label: "תיבות תשובה", section: "NVLT Typography", screens: ["nvlt"] },

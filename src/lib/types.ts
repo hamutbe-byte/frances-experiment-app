@@ -283,15 +283,13 @@ export interface CreateSessionResult {
 export type EditableContentKey = string;
 export type EditableContentValue = string;
 export type EditableContentScreen =
-  | "home"
   | "questionnaire"
   | "nvlt"
   | "instructions"
   | "learning"
   | "distractor"
   | "recall"
-  | "matching"
-  | "complete";
+  | "matching";
 export type EditableFieldKind = "text" | "textarea" | "template";
 
 export type EditableContentOverrides = Record<EditableContentKey, EditableContentValue>;

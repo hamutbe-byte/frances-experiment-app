@@ -682,8 +682,9 @@ async function main() {
     const matching = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "matching-task-client.tsx"), "utf8");
 
     assert.match(toolbar, /devJump=1/);
-    assert.match(toolbar, /Home/);
     assert.match(toolbar, /NVLT/);
+    assert.doesNotMatch(toolbar, /Home/);
+    assert.doesNotMatch(toolbar, /Complete/);
     assert.match(learning, /isDevJump/);
     assert.match(learning, /alreadyAnswered && !isDevJump/);
     assert.match(recall, /isDevJump/);

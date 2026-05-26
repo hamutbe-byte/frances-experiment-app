@@ -26,6 +26,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   const [answeredTrialIndexes, setAnsweredTrialIndexes] = useState<Set<number>>(new Set());
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const study = useMemo(() => getStudyOrThrow(studySlug), [studySlug]);
 
@@ -66,16 +67,23 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     }
 
     setSessionId(resolvedSessionId);
-    void updateSessionStatusRequest(resolvedSessionId, "matching").catch(() => undefined);
     void getSessionBundleRequest(resolvedSessionId)
       .then((bundle) => {
+        if (bundle.session.status === "complete") {
+          setTrial(null);
+          setStartedAt(null);
+          setIsFinished(true);
+          return;
+        }
+
+        void updateSessionStatusRequest(resolvedSessionId, "matching").catch(() => undefined);
         const order = bundle.session.matchingTrialOrder.length > 0 ? bundle.session.matchingTrialOrder : study.matchingTrials.map((entry) => entry.trialIndex);
         const answered = new Set(bundle.matching.map((entry) => entry.trialIndex));
         setMatchingOrder(order);
         setAnsweredTrialIndexes(answered);
         const nextTrial = isDevJump ? trialByIndex(order[0]) : firstUnansweredTrial(answered, order);
         if (!nextTrial) {
-          router.replace(`/study/${studySlug}/complete?session=${resolvedSessionId}`);
+          setIsFinished(true);
           return;
         }
         showTrial(nextTrial, order);
@@ -86,7 +94,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   }, [router, searchParams, study, studySlug]);
 
   async function submitAnswer(answer: "yes" | "no") {
-    if (!sessionId || !trial || startedAt === null || isPending) {
+    if (isFinished || !sessionId || !trial || startedAt === null || isPending) {
       return;
     }
 
@@ -96,7 +104,9 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
       const responseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
       const result = await submitMatchingRequest(sessionId, trial.trialIndex, answer, responseTimeMs);
       if (result.completed) {
-        router.push(`/study/${studySlug}/complete?session=${sessionId}`);
+        setTrial(null);
+        setStartedAt(null);
+        setIsFinished(true);
         return;
       }
 
@@ -129,12 +139,23 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isPending, sessionId, startedAt, trial]);
+  }, [isFinished, isPending, sessionId, startedAt, trial]);
 
   if (error) {
     return (
       <section className="panel error-card">
         <p className="status">{error}</p>
+      </section>
+    );
+  }
+
+  if (isFinished) {
+    return (
+      <section className="panel screen-panel">
+        <EditableContentText contentKey="appText.study.matching.finishedTitle" tag="p" className="status">
+          {appText.study.matching.finishedTitle}
+        </EditableContentText>
+        <p>{appText.study.matching.finishedDescription}</p>
       </section>
     );
   }

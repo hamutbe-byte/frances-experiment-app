@@ -12,20 +12,17 @@ interface DevToolbarProps {
 }
 
 type ToolbarSection =
-  | { label: string; kind: "home" }
   | { label: string; kind: "nvlt" }
   | { label: string; kind: "study"; path: string };
 
 const sections: ToolbarSection[] = [
-  { label: "Home", kind: "home" },
   { label: "Questionnaire", kind: "study", path: "start" },
   { label: "NVLT", kind: "nvlt" },
   { label: "Instructions", kind: "study", path: "instructions" },
   { label: "Learn", kind: "study", path: "learn/1" },
   { label: "Distractor", kind: "study", path: "distractor" },
   { label: "Recall+Recognition", kind: "study", path: "recall/1" },
-  { label: "Matching", kind: "study", path: "matching" },
-  { label: "Complete", kind: "study", path: "complete" }
+  { label: "Matching", kind: "study", path: "matching" }
 ];
 
 export function DevToolbar({ studySlug }: DevToolbarProps) {
@@ -44,12 +41,6 @@ export function DevToolbar({ studySlug }: DevToolbarProps) {
 
   function jump(section: ToolbarSection) {
     const resolvedSessionId = searchParams.get("session") ?? sessionId ?? getCurrentSessionId(studySlug);
-
-    if (section.kind === "home") {
-      router.replace("/");
-      setIsOpen(false);
-      return;
-    }
 
     if (section.kind === "nvlt") {
       const nextPath = resolvedSessionId ? `/study/${studySlug}/instructions?session=${encodeURIComponent(resolvedSessionId)}` : `/study/${studySlug}/instructions`;

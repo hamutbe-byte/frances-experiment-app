@@ -1,24 +1,9 @@
 export const appText = {
-  home: {
-    eyebrow: "Research App",
-    title: "Choose a flow",
-    description: "The participant flow now starts with the NVLT vocabulary test and then continues to the rest of the experiment.",
-    orderedFlowPill: "NVLT then Frances",
-    orderedFlowTitle: "Full participant flow",
-    orderedFlowDescription: "Begin with the NVLT worksheet, then continue into the Hebrew-shell experiment phases.",
-    nvltOnlyPill: "NVLT only",
-    nvltOnlyTitle: "Vocabulary test only",
-    nvltOnlyDescription: "Open just the NVLT worksheet without continuing into the rest of the experiment.",
-    experimentOnlyPill: "Frances et al. (2020)",
-    experimentOnlyTitle: "Experiment only",
-    experimentOnlyDescription: "Open the reading experiment directly, without the NVLT step first."
-  },
   study: {
     pages: {
       startTitle: "תחילת הניסוי",
       recallTitle: "שלב הזיכרון",
-      matchingTitle: "שלב ההתאמה",
-      completeTitle: "סיום"
+      matchingTitle: "שלב ההתאמה"
     },
     start: {
       readingPassagesLabel: "קטעי קריאה",
@@ -65,13 +50,9 @@ export const appText = {
       loadError: "לא ניתן היה לטעון את משימת ההתאמה.",
       saveError: "לא ניתן היה לשמור את תגובת ההתאמה.",
       loading: "טוען את ניסוי ההתאמה...",
-      progressLabel: "התאמה {current} מתוך {total}"
-    },
-    complete: {
-      loading: "טוען את פרטי הסיום...",
-      success: "השלמתם את כל שלבי הניסוי הזמינים.",
-      fallback: "ההשתתפות הסתיימה, אך לא ניתן היה לטעון את קוד הסיום.",
-      backToStartButton: "חזרה להתחלה"
+      progressLabel: "התאמה {current} מתוך {total}",
+      finishedTitle: "הניסוי הסתיים",
+      finishedDescription: "תודה רבה על ההשתתפות. אפשר לסגור את החלון."
     }
   },
   nvlt: {

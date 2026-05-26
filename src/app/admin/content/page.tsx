@@ -5,15 +5,13 @@ import { getDefaultStudySlug } from "@/lib/study";
 export const dynamic = "force-dynamic";
 
 const screenLabels: Record<(typeof editableScreens)[number], string> = {
-  home: "Home",
   questionnaire: "שאלון פתיחה",
   nvlt: "NVLT",
   instructions: "הוראות",
   learning: "למידה",
   distractor: "הסחה",
   recall: "זכירה וזיהוי",
-  matching: "התאמה",
-  complete: "סיום"
+  matching: "התאמה"
 };
 
 export default function AdminContentPage() {

@@ -48,7 +48,7 @@ The smoke tests verify:
   - typed recall prompts
   - immediate four-option recognition prompts
   - 32-trial picture-word matching task
-  - completion screen
+  - inline end-of-experiment state after the final matching trial
 - Researcher admin and cloud persistence will be added later.
 - The current implementation uses a local file-backed session store in `.runtime/session-store.json` so the training flow remains stable in local development before the Supabase layer is added.
 - Telemetry is disabled by default in local development for speed. Turn it on by setting `NEXT_PUBLIC_ENABLE_TELEMETRY=true` when you want to profile participant behavior.

@@ -14,15 +14,13 @@ import type {
 } from "@/lib/types";
 
 export const editableScreens = [
-  "home",
   "questionnaire",
   "nvlt",
   "instructions",
   "learning",
   "distractor",
   "recall",
-  "matching",
-  "complete"
+  "matching"
 ] as const satisfies readonly EditableContentScreen[];
 
 export const defaultContentSnapshot = {
@@ -123,10 +121,6 @@ function inferScreenFromKey(key: EditableContentKey): EditableContentScreen {
     return "questionnaire";
   }
 
-  if (key.startsWith("appText.home.")) {
-    return "home";
-  }
-
   if (key.startsWith("instructionText.nvlt.") || key.startsWith("appText.nvlt.")) {
     return "nvlt";
   }
@@ -157,10 +151,6 @@ function inferScreenFromKey(key: EditableContentKey): EditableContentScreen {
 
   if (key === "appText.study.pages.matchingTitle") {
     return "matching";
-  }
-
-  if (key === "appText.study.pages.completeTitle" || key.startsWith("appText.study.complete.")) {
-    return "complete";
   }
 
   return "questionnaire";
@@ -386,9 +376,6 @@ export function getScreenFromPathname(pathname: string): EditableContentScreen |
     }
     if (pathname.includes("/matching")) {
       return "matching";
-    }
-    if (pathname.includes("/complete")) {
-      return "complete";
     }
   }
 
