@@ -61,7 +61,7 @@ for (let index = 0; index < sessionCount; index += 1) {
   const sessionId = created.session.id;
   if (includePages) {
     await timedFetch("GET /study/start", "/study/frances-2020/start");
-    await timedFetch("GET /study/instructions", `/study/frances-2020/instructions?session=${sessionId}`);
+    await timedFetch("GET /study/learn/1", `/study/frances-2020/learn/1?session=${sessionId}`);
   }
 
   await timedFetch("GET /api/session/:id", `/api/session/${sessionId}`, {
@@ -88,7 +88,7 @@ for (let index = 0; index < sessionCount; index += 1) {
 console.table([
   summarize("POST /api/session"),
   summarize("GET /study/start"),
-  summarize("GET /study/instructions"),
+  summarize("GET /study/learn/1"),
   summarize("GET /study/learn/:trial"),
   summarize("GET /api/session/:id"),
   summarize("POST /api/session/:id/comprehension")

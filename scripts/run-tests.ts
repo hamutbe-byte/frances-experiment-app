@@ -724,7 +724,7 @@ async function main() {
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.equal(payload.session.studySlug, "frances-2020");
-    assert.match(payload.nextPath, /instructions\?session=/);
+    assert.match(payload.nextPath, /learn\/1\?session=/);
     assert.equal(getSessionBundle(payload.session.id)?.questionnaire?.gender, "female");
   });
 

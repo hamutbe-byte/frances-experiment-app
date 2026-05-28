@@ -210,7 +210,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
 
   return (
     <section className="panel corsi-panel screen-panel">
-      {isResolvingSession ? <p className="status">{appText.study.instructions.loading}</p> : null}
+      {isResolvingSession ? <p className="status">{appText.study.distractor.loading}</p> : null}
       <div className="corsi-top-stack">
         <div className="corsi-top-controls">
           <EditableContentText

@@ -16,7 +16,6 @@ import type {
 export const editableScreens = [
   "questionnaire",
   "nvlt",
-  "instructions",
   "learning",
   "distractor",
   "recall",
@@ -28,6 +27,8 @@ export const defaultContentSnapshot = {
   instructionText,
   questionnaireText
 } as const satisfies ResolvedContentSnapshot;
+
+const editableContentKeySet = new Set<string>();
 
 const templateFieldConfig: Record<EditableContentKey, readonly string[]> = {
   "appText.study.learning.progressLabel": ["current", "total"],
@@ -96,14 +97,24 @@ function setValueAtPath<T>(target: T, dottedPath: string, value: EditableContent
 
   for (let index = 0; index < parts.length - 1; index += 1) {
     const part = parts[index];
-    const nextValue: unknown = Array.isArray(cursor) ? cursor[Number(part)] : cursor[part];
+    const isArray = Array.isArray(cursor);
+    const nextValue: unknown = isArray ? (cursor as unknown[])[Number(part)] : (cursor as Record<string, unknown>)[part];
 
-    if (Array.isArray(nextValue)) {
-      cursor = nextValue;
+    if (nextValue && typeof nextValue === "object") {
+      cursor = nextValue as Record<string, unknown> | unknown[];
       continue;
     }
 
-    cursor = nextValue as Record<string, unknown>;
+    const nextPart = parts[index + 1];
+    const createdContainer: Record<string, unknown> | unknown[] = /^\d+$/.test(nextPart) ? [] : {};
+
+    if (isArray) {
+      (cursor as unknown[])[Number(part)] = createdContainer;
+    } else {
+      (cursor as Record<string, unknown>)[part] = createdContainer;
+    }
+
+    cursor = createdContainer;
   }
 
   const lastPart = parts.at(-1) ?? "";
@@ -123,10 +134,6 @@ function inferScreenFromKey(key: EditableContentKey): EditableContentScreen {
 
   if (key.startsWith("instructionText.nvlt.") || key.startsWith("appText.nvlt.")) {
     return "nvlt";
-  }
-
-  if (key.startsWith("instructionText.study.instructionsPage.") || key.startsWith("appText.study.instructions.")) {
-    return "instructions";
   }
 
   if (key.startsWith("instructionText.study.learning.") || key.startsWith("appText.study.learning.")) {
@@ -208,16 +215,17 @@ function flattenFields(target: unknown, pathParts: string[] = []): EditableField
 }
 
 export const editableFieldDefinitions = flattenFields(defaultContentSnapshot);
+for (const field of editableFieldDefinitions) {
+  editableContentKeySet.add(field.key);
+}
 
 export function getEditableFieldDefinitionsForScreen(screen: EditableContentScreen) {
   return editableFieldDefinitions.filter((definition) => definition.screen === screen);
 }
 
 export function validateContentOverrides(overrides: EditableContentOverrides) {
-  const validKeys = new Set(editableFieldDefinitions.map((field) => field.key));
-
   for (const [key, value] of Object.entries(overrides)) {
-    if (!validKeys.has(key)) {
+    if (!editableContentKeySet.has(key)) {
       return `Unknown editable content key: ${key}`;
     }
 
@@ -237,7 +245,7 @@ export function applyContentOverrides(
   overrides: EditableContentOverrides
 ): ResolvedContentSnapshot {
   return Object.entries(overrides).reduce<ResolvedContentSnapshot>(
-    (current, [key, value]) => setValueAtPath(current, key, value),
+    (current, [key, value]) => (editableContentKeySet.has(key) ? setValueAtPath(current, key, value) : current),
     cloneValue(snapshot)
   );
 }
@@ -281,10 +289,8 @@ export function getDefaultEditableContentStyleValue() {
 }
 
 export function validateContentStyleOverrides(overrides: EditableContentStyleOverrides) {
-  const validKeys = new Set(editableFieldDefinitions.map((field) => field.key));
-
   for (const [key, value] of Object.entries(overrides)) {
-    if (!validKeys.has(key)) {
+    if (!editableContentKeySet.has(key)) {
       return `Unknown editable content style key: ${key}`;
     }
 
@@ -342,6 +348,10 @@ export function normalizeContentOverrides(overrides: EditableContentOverrides) {
       continue;
     }
 
+    if (!editableContentKeySet.has(key)) {
+      continue;
+    }
+
     const defaultValue = getDefaultEditableContentValue(key);
     if (value === defaultValue) {
       continue;
@@ -361,9 +371,6 @@ export function getScreenFromPathname(pathname: string): EditableContentScreen |
   if (pathname.startsWith("/study/")) {
     if (pathname.includes("/start")) {
       return "questionnaire";
-    }
-    if (pathname.includes("/instructions")) {
-      return "instructions";
     }
     if (pathname.includes("/learn/")) {
       return "learning";

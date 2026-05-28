@@ -285,7 +285,6 @@ export type EditableContentValue = string;
 export type EditableContentScreen =
   | "questionnaire"
   | "nvlt"
-  | "instructions"
   | "learning"
   | "distractor"
   | "recall"

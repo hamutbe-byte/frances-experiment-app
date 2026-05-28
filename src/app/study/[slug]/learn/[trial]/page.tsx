@@ -1,6 +1,7 @@
 import { LearningTrialClient } from "@/components/learning-trial-client";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
+import { getResolvedContentSnapshot } from "@/lib/content-server";
 
 interface Props {
   params: Promise<{
@@ -12,9 +13,12 @@ interface Props {
 export default async function LearningTrialPage({ params }: Props) {
   const { slug, trial } = await params;
   const study = getStudyOrThrow(slug);
+  const content = getResolvedContentSnapshot();
+  const appText = content.appText as typeof import("@/content/app-text").appText;
 
   return (
     <StudyFrame
+      description={appText.study.learning.subtitle}
       studySlug={study.slug}
       screen="learning"
       dir="rtl"

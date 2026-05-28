@@ -166,7 +166,7 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
     );
   }
   return (
-    <section className="panel screen-panel">
+    <section className="panel screen-panel study-stage-panel recall-panel">
       <div className="recall-prompt" dir="ltr" dangerouslySetInnerHTML={{ __html: prompt.promptHtml }} />
 
       {step === "recall" ? (

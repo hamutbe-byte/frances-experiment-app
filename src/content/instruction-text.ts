@@ -1,11 +1,5 @@
 export const instructionText = {
   study: {
-    instructionsPage: {
-      title: "הוראות",
-      subtitle:
-        "קראו כל קטע באנגלית וענו על שאלת ההבנה שאחריו. לאחר שלב הקריאה תמשיכו למשימות זיכרון והתאמה, שגם התוכן שלהן יופיע באנגלית.",
-      startReadingButton: "התחילו בקריאה"
-    },
     learning: {
       comprehensionLabel: "בדיקת הבנה / Comprehension check",
       comprehensionLabelEnglish: "Comprehension check",

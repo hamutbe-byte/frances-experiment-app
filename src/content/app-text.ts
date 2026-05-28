@@ -14,22 +14,18 @@ export const appText = {
       startButton: "המשך",
       startError: "לא ניתן היה להתחיל את המחקר."
     },
-    instructions: {
-      loadError: "לא ניתן היה לטעון את ההשתתפות.",
-      continueError: "לא ניתן היה להמשיך לשלב הבא.",
-      loading: "טוען את פרטי ההשתתפות...",
-      openingFirstPassage: "פותח את הקטע הראשון..."
-    },
     learning: {
       loadError: "לא ניתן היה לטעון את קטע הקריאה.",
       saveError: "לא ניתן היה לשמור את התגובה.",
       loading: "טוען את קטע הקריאה...",
-      progressLabel: "קטע {current} מתוך {total}"
+      progressLabel: "קטע {current} מתוך {total}",
+      subtitle: "קראו כל קטע באנגלית וענו על שאלת ההבנה שאחריו. לאחר שלב שלם של קריאה התשובה תמשיך באופן אוטומטי."
     },
     distractor: {
       loadError: "לא ניתן היה לטעון את ההתקדמות במשימת ההסחה.",
       startError: "לא ניתן היה להתחיל את משימת ההסחה.",
       saveError: "לא ניתן היה לשמור את התגובה במשימת ההסחה.",
+      loading: "טוען את משימת ההסחה...",
       correctFeedback: "נכון",
       incorrectFeedback: "לא נכון",
       boardAriaLabel: "לוח משימת קורסי",

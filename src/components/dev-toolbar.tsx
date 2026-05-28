@@ -18,7 +18,6 @@ type ToolbarSection =
 const sections: ToolbarSection[] = [
   { label: "Questionnaire", kind: "study", path: "start" },
   { label: "NVLT", kind: "nvlt" },
-  { label: "Instructions", kind: "study", path: "instructions" },
   { label: "Learn", kind: "study", path: "learn/1" },
   { label: "Distractor", kind: "study", path: "distractor" },
   { label: "Recall+Recognition", kind: "study", path: "recall/1" },
@@ -44,8 +43,8 @@ export function DevToolbar({ studySlug }: DevToolbarProps) {
 
     if (section.kind === "nvlt") {
       const nextPath = resolvedSessionId
-        ? buildStudyPathWithSession(studySlug, "instructions", resolvedSessionId)
-        : buildStudyPath(studySlug, "instructions");
+        ? buildStudyPathWithSession(studySlug, "learn/1", resolvedSessionId)
+        : buildStudyPath(studySlug, "learn/1");
       router.replace(appendQueryParams("/nvlt", { next: nextPath }));
       setIsOpen(false);
       return;

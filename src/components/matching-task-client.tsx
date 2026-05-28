@@ -166,7 +166,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   }
 
   return (
-    <section className="panel matching-panel screen-panel">
+    <section className="panel matching-panel screen-panel study-stage-panel">
       <div className="matching-stimulus">
         <img src={trial.imagePath} alt="" className="matching-image" draggable={false} />
         <div className="matching-word" dir="ltr">

@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 const screenLabels: Record<(typeof editableScreens)[number], string> = {
   questionnaire: "שאלון פתיחה",
   nvlt: "NVLT",
-  instructions: "הוראות",
   learning: "למידה",
   distractor: "הסחה",
   recall: "זכירה וזיהוי",

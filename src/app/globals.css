@@ -108,6 +108,11 @@ select {
   min-height: max(420px, calc(100dvh - 220px));
 }
 
+.study-stage-panel {
+  gap: 14px;
+  min-height: max(0px, calc(100dvh - 176px));
+}
+
 .panel::before {
   content: "";
   position: absolute;
@@ -822,19 +827,47 @@ select {
   margin: 0;
 }
 
+.recall-panel .recall-prompt {
+  font-size: clamp(1rem, 1.15vw, 1.18rem);
+  line-height: 1.5;
+}
+
+.recall-panel .question-block {
+  margin-top: 0;
+}
+
+.recall-panel .question-label {
+  margin-bottom: 6px;
+  font-size: clamp(0.82rem, 0.95vw, 0.95rem);
+}
+
+.recall-panel .instruction-english {
+  margin-bottom: 10px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.recall-panel .text-input {
+  padding: 14px 16px;
+}
+
+.recall-panel .actions {
+  margin-top: 16px;
+}
+
 .matching-panel {
-  min-height: 560px;
+  min-height: max(0px, calc(100dvh - 176px));
 }
 
 .matching-stimulus {
   display: grid;
   justify-items: center;
-  gap: 18px;
-  padding: 14px 0 4px;
+  gap: 12px;
+  padding: 6px 0 0;
 }
 
 .matching-image {
-  width: min(260px, 62vw);
+  width: min(220px, 30vh, 48vw);
   aspect-ratio: 1;
   object-fit: contain;
   border-radius: 8px;
@@ -844,7 +877,7 @@ select {
 
 .matching-word {
   font-family: "Segoe UI", sans-serif;
-  font-size: var(--font-size-matching-word);
+  font-size: clamp(1.2rem, 1.8vw, var(--font-size-matching-word));
   font-weight: 800;
   color: var(--ink);
   letter-spacing: 0;
@@ -854,8 +887,8 @@ select {
 }
 
 .question-block {
-  margin-top: 16px;
-  padding-top: 18px;
+  margin-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
 }
 
@@ -872,6 +905,36 @@ select {
 .question-label.instruction-bilingual {
   text-transform: none;
   letter-spacing: normal;
+}
+
+.matching-panel .question-block {
+  margin-top: 0;
+}
+
+.matching-panel .question-label {
+  margin-bottom: 6px;
+  font-size: clamp(0.82rem, 0.95vw, 0.95rem);
+}
+
+.matching-panel .instruction-english {
+  margin-bottom: 10px;
+}
+
+.matching-panel .answer-grid {
+  gap: 10px;
+}
+
+.matching-panel .answer-button {
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+.matching-panel .answer-button strong {
+  margin-bottom: 1px;
+}
+
+.matching-panel .answer-button span {
+  font-size: 0.84rem;
 }
 
 .instruction-english {
@@ -931,6 +994,37 @@ select {
   justify-content: center;
   text-align: center;
   text-transform: uppercase;
+}
+
+@media (max-height: 860px) {
+  .study-stage-panel {
+    gap: 12px;
+    min-height: max(0px, calc(100dvh - 196px));
+  }
+
+  .recall-panel .recall-prompt {
+    font-size: clamp(0.95rem, 1vw, 1.08rem);
+    line-height: 1.42;
+  }
+
+  .recall-panel .instruction-english,
+  .matching-panel .instruction-english {
+    font-size: 0.82rem;
+    line-height: 1.32;
+  }
+
+  .matching-panel .matching-image {
+    width: min(190px, 26vh, 42vw);
+  }
+
+  .matching-panel .matching-word {
+    font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+  }
+
+  .answer-grid,
+  .option-grid {
+    gap: 10px;
+  }
 }
 
 .text-input {

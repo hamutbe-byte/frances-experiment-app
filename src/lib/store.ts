@@ -330,7 +330,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
 
   return {
     session: cloneBundle(bundle).session,
-    nextPath: buildStudyPathWithSession(study.slug, "instructions", sessionId)
+    nextPath: buildStudyPathWithSession(study.slug, "learn/1", sessionId)
   };
 }
 

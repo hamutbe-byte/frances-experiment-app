@@ -135,7 +135,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
       </article>
 
       <section className="question-block">
-        <EditableContentText contentKey="instructionText.study.learning.comprehensionLabel" tag="span" className="question-label instruction-bilingual">
+        <EditableContentText contentKey="instructionText.study.learning.comprehensionLabel" tag="span" className="question-label">
           {instructionText.study.learning.comprehensionLabel}
         </EditableContentText>
         <p className="question-text" dir="ltr">
