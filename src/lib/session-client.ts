@@ -172,6 +172,12 @@ export async function sendTelemetryRequest(
   );
 }
 
+export function appendSessionToPath(path: string, sessionId: string) {
+  const url = new URL(path, window.location.origin);
+  url.searchParams.set("session", sessionId);
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export function saveCurrentSessionId(studySlug: string, sessionId: string) {
   window.localStorage.setItem(`frances-session:${studySlug}`, sessionId);
 }

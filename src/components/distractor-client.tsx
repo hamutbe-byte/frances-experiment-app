@@ -77,7 +77,6 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   useEffect(() => {
     const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
-      router.replace(`/study/${studySlug}/start`);
       return;
     }
 

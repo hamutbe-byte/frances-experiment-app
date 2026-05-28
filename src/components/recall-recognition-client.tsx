@@ -51,7 +51,6 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
     const isDevJump = searchParams.get("devJump") === "1";
     const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
-      router.replace(`/study/${studySlug}/start`);
       return;
     }
 
@@ -180,11 +179,20 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
 
       {step === "recall" ? (
         <section className="question-block">
-          <label className="question-label" htmlFor="recall-answer">
+          <label className="question-label instruction-bilingual" htmlFor="recall-answer">
             <EditableContentText contentKey="instructionText.study.recall.recallInputLabel" tag="span">
               {instructionText.study.recall.recallInputLabel}
             </EditableContentText>
           </label>
+          <EditableContentText
+            contentKey="instructionText.study.recall.recallInputLabelEnglish"
+            tag="p"
+            className="instruction-english"
+            dir="ltr"
+            lang="en"
+          >
+            {instructionText.study.recall.recallInputLabelEnglish}
+          </EditableContentText>
           <input
             id="recall-answer"
             className="text-input"
@@ -221,8 +229,17 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
         </section>
       ) : (
         <section className="question-block">
-          <EditableContentText contentKey="instructionText.study.recall.recognitionLabel" tag="span" className="question-label">
+          <EditableContentText contentKey="instructionText.study.recall.recognitionLabel" tag="span" className="question-label instruction-bilingual">
             {instructionText.study.recall.recognitionLabel}
+          </EditableContentText>
+          <EditableContentText
+            contentKey="instructionText.study.recall.recognitionLabelEnglish"
+            tag="p"
+            className="instruction-english"
+            dir="ltr"
+            lang="en"
+          >
+            {instructionText.study.recall.recognitionLabelEnglish}
           </EditableContentText>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (

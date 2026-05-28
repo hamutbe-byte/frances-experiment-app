@@ -21,6 +21,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
   const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [isResolvingSession, setIsResolvingSession] = useState(true);
 
   useStageTelemetry(sessionId, "instructions");
 
@@ -29,7 +30,6 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
     const resolvedSessionId = fromUrl ?? getCurrentSessionId(studySlug);
 
     if (!resolvedSessionId) {
-      router.replace(`/study/${studySlug}/start`);
       return;
     }
 
@@ -39,6 +39,9 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
       .then(() => updateSessionStatusRequest(resolvedSessionId, "instructions"))
       .catch((caughtError) => {
         setError(caughtError instanceof Error ? caughtError.message : appText.study.instructions.loadError);
+      })
+      .finally(() => {
+        setIsResolvingSession(false);
       });
   }, [router, searchParams, studySlug]);
 
@@ -61,6 +64,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
 
   return (
     <section className={`panel screen-panel${error ? " error-card" : ""}`}>
+      {isResolvingSession ? <p className="status">{appText.study.instructions.loading}</p> : null}
       <div className="actions">
         <button type="button" className="button" onClick={beginLearning} disabled={isPending || !sessionId}>
           {isPending ? (

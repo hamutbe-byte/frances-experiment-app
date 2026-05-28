@@ -7,14 +7,17 @@ export const instructionText = {
       startReadingButton: "התחילו בקריאה"
     },
     learning: {
-      comprehensionLabel: "בדיקת הבנה",
-      yesExplanation: "המשפט נכון.",
-      noExplanation: "המשפט אינו נכון."
+      comprehensionLabel: "בדיקת הבנה / Comprehension check",
+      comprehensionLabelEnglish: "Comprehension check",
+      yesExplanation: "המפתח נכון.",
+      yesExplanationEnglish: "The statement is correct.",
+      noExplanation: "המפתח אינו נכון.",
+      noExplanationEnglish: "The statement is not correct."
     },
     distractor: {
-      instructionsAriaLabel: "\u05d4\u05d5\u05e8\u05d0\u05d5\u05ea \u05dc\u05de\u05e9\u05d9\u05de\u05d4",
+      instructionsAriaLabel: "הוראות למשימה",
       instructionsIntro:
-        "\u05e6\u05e4\u05d5 \u05d1\u05e8\u05e6\u05e3 \u05d4\u05e8\u05d9\u05d1\u05d5\u05e2\u05d9\u05dd \u05d4\u05de\u05d5\u05e4\u05d9\u05e2 \u05e2\u05dc \u05d4\u05de\u05e1\u05da, \u05d5\u05dc\u05d0\u05d7\u05e8 \u05de\u05db\u05df \u05dc\u05d7\u05e6\u05d5 \u05e2\u05dc\u05d9\u05d4\u05dd \u05d1\u05d0\u05d5\u05ea\u05d5 \u05e1\u05d3\u05e8.",
+        "צפו ברצף הריבועים המופיע על המסך, ולאחר מכן לחצו עליהם באותו סדר.",
       taskLine: "",
       instructionsForwardLead: "",
       forwardPill: "",
@@ -24,29 +27,37 @@ export const instructionText = {
       instructionsBackwardTail: "",
       instructionsCueDuration: "",
       instructionsDuration: "",
-      startSequenceButton: "\u05d4\u05ea\u05d7\u05d9\u05dc\u05d5 \u05d0\u05ea \u05d4\u05e8\u05e6\u05e3 \u05d4\u05d1\u05d0",
-      nextSequenceButton: "\u05d4\u05de\u05e9\u05db\u05d5",
+      startSequenceButton: "התחילו את הרצף הבא",
+      nextSequenceButton: "המשיכו",
       modeShowing: "",
       modeRespondingForward: "",
       modeRespondingBackward: "",
       modeReady: ""
     },
     recall: {
-      recallInputLabel: "הקלידו את מילת הפסאודו באנגלית שמשלימה את כל החסר",
+      recallInputLabel: "הקלידו את מילת הפסאודו באנגלית שמשלימה את החסר",
+      recallInputLabelEnglish: "Type the word you remember in English.",
       continueButton: "המשיכו",
-      recognitionLabel: "בחרו את מילת הפסאודו שאתם זוכרים"
+      continueButtonEnglish: "Continue",
+      recognitionLabel: "בחרו את מילת הפסאודו שאתם זוכרים",
+      recognitionLabelEnglish: "Choose the word that matches what you remember."
     },
     matching: {
       questionLabel: "האם התמונה והמילה מתאימות זו לזו?",
+      questionLabelEnglish: "Do the image and the word match?",
       noKeyHint: "לחצו F",
-      yesKeyHint: "לחצו J"
+      noKeyHintEnglish: "Press F",
+      yesKeyHint: "לחצו J",
+      yesKeyHintEnglish: "Press J"
     }
   },
   nvlt: {
     pageTitle: "מבחן אוצר מילים באנגלית",
-    pageSubtitle: "נא כתבו את מספר המילה המתאימה ליד ההגדרה שלה בצד שמאל",
+    pageSubtitle:
+      "נא כתבו את מספר המילה המתאימה ליד ההגדרה שלצד שמאל",
     exampleTitle: "דוגמה פתורה",
-    exampleSubtitle: "נא כתבו את מספר המילה המתאימה ליד ההגדרה שלה בצד שמאל, לפניכם דוגמה לפתרון נכון של השאלה:",
+    exampleSubtitle:
+      "נא כתבו את מספר המילה המתאימה ליד ההגדרה שלצד שמאל, לפניכם דוגמה לפתרון נכון של השאלה:",
     exampleAnswerLabel: "תשובה",
     wordBankAriaLabel: "רשימת המילים הזמינות",
     inputAriaLabel: "הקלידו את מספר המילה המתאימה עבור {prompt}",

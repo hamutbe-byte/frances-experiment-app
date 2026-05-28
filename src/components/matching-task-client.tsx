@@ -62,7 +62,6 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     const isDevJump = searchParams.get("devJump") === "1";
     const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
-      router.replace(`/study/${studySlug}/start`);
       return;
     }
 
@@ -178,8 +177,17 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
       </div>
 
       <section className="question-block">
-        <EditableContentText contentKey="instructionText.study.matching.questionLabel" tag="span" className="question-label">
+        <EditableContentText contentKey="instructionText.study.matching.questionLabel" tag="span" className="question-label instruction-bilingual">
           {instructionText.study.matching.questionLabel}
+        </EditableContentText>
+        <EditableContentText
+          contentKey="instructionText.study.matching.questionLabelEnglish"
+          tag="p"
+          className="instruction-english"
+          dir="ltr"
+          lang="en"
+        >
+          {instructionText.study.matching.questionLabelEnglish}
         </EditableContentText>
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>

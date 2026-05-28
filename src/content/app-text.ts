@@ -17,6 +17,7 @@ export const appText = {
     instructions: {
       loadError: "לא ניתן היה לטעון את ההשתתפות.",
       continueError: "לא ניתן היה להמשיך לשלב הבא.",
+      loading: "טוען את פרטי ההשתתפות...",
       openingFirstPassage: "פותח את הקטע הראשון..."
     },
     learning: {

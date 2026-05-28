@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 
 import { DevToolbar } from "@/components/dev-toolbar";
 import { InlineContentEditor } from "@/components/inline-content-editor";
+import { StudySessionBootstrap } from "@/components/study-session-bootstrap";
 import type { EditableContentScreen } from "@/lib/types";
 
 interface StudyFrameProps {
@@ -20,6 +21,11 @@ export function StudyFrame({ eyebrow, title, description, studySlug, screen, dir
   return (
     <main className="page-shell" dir={dir}>
       <div className="page-inner stack">
+        {studySlug ? (
+          <Suspense fallback={null}>
+            <StudySessionBootstrap studySlug={studySlug} />
+          </Suspense>
+        ) : null}
         {studySlug ? (
           <Suspense fallback={null}>
             <DevToolbar studySlug={studySlug} />

@@ -35,7 +35,6 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
     const isDevJump = searchParams.get("devJump") === "1";
     const resolvedSessionId = fromUrl ?? getCurrentSessionId(studySlug);
     if (!resolvedSessionId) {
-      router.replace(`/study/${studySlug}/start`);
       return;
     }
 
@@ -141,7 +140,7 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
       </article>
 
       <section className="question-block">
-        <EditableContentText contentKey="instructionText.study.learning.comprehensionLabel" tag="span" className="question-label">
+        <EditableContentText contentKey="instructionText.study.learning.comprehensionLabel" tag="span" className="question-label instruction-bilingual">
           {instructionText.study.learning.comprehensionLabel}
         </EditableContentText>
         <p className="question-text" dir="ltr">
