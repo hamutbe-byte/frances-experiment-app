@@ -10,6 +10,7 @@ import {
   getRecallPromptOrThrow,
   getStudyOrThrow
 } from "@/lib/study";
+import { buildStudyPathWithSession } from "@/lib/study-paths";
 import type {
   ClientEvent,
   ComprehensionResponse,
@@ -329,7 +330,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResult {
 
   return {
     session: cloneBundle(bundle).session,
-    nextPath: `/study/${study.slug}/instructions?session=${sessionId}`
+    nextPath: buildStudyPathWithSession(study.slug, "instructions", sessionId)
   };
 }
 

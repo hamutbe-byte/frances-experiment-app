@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { getCurrentSessionId, getSessionBundleRequest, submitComprehensionRequest } from "@/lib/session-client";
+import { buildStudyPathWithSession, submitComprehensionRequest } from "@/lib/session-client";
 import { getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
-import type { SessionBundle, YesNoAnswer } from "@/lib/types";
+import type { YesNoAnswer } from "@/lib/types";
+import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface LearningTrialClientProps {
   studySlug: string;
@@ -21,8 +22,12 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
-  const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
-  const [bundle, setBundle] = useState<SessionBundle | null>(null);
+  const { sessionId, bundle, error: sessionError } = useStudySessionBundle({
+    studySlug,
+    stage: "learning",
+    loadErrorMessage: appText.study.learning.loadError,
+    stageErrorMessage: appText.study.learning.loadError
+  });
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -31,36 +36,26 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   useStageTelemetry(sessionId, "learning");
 
   useEffect(() => {
-    const fromUrl = searchParams.get("session");
-    const isDevJump = searchParams.get("devJump") === "1";
-    const resolvedSessionId = fromUrl ?? getCurrentSessionId(studySlug);
-    if (!resolvedSessionId) {
+    if (!bundle) {
       return;
     }
 
-    setSessionId(resolvedSessionId);
-
-    void getSessionBundleRequest(resolvedSessionId)
-      .then((result) => {
-        const alreadyAnswered = result.comprehension.some((entry) => entry.trialIndex === trialIndex);
-        if (alreadyAnswered && !isDevJump) {
-          const totalTrials = study.versions.find((version) => version.id === result.session.versionId)?.learningTrials.length ?? 30;
-          const nextPath =
-            trialIndex >= totalTrials
-              ? `/study/${studySlug}/distractor?session=${resolvedSessionId}`
-              : `/study/${studySlug}/learn/${trialIndex + 1}?session=${resolvedSessionId}`;
-          startTransition(() => {
-            router.replace(nextPath);
-          });
-          return;
-        }
-        setBundle(result);
-        setStartedAt(performance.now());
-      })
-      .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : appText.study.learning.loadError);
+    const isDevJump = searchParams.get("devJump") === "1";
+    const alreadyAnswered = bundle.comprehension.some((entry) => entry.trialIndex === trialIndex);
+    if (alreadyAnswered && !isDevJump) {
+      const totalTrials = study.versions.find((version) => version.id === bundle.session.versionId)?.learningTrials.length ?? 30;
+      const nextPath =
+        trialIndex >= totalTrials
+          ? buildStudyPathWithSession(studySlug, "distractor", bundle.session.id)
+          : buildStudyPathWithSession(studySlug, `learn/${trialIndex + 1}`, bundle.session.id);
+      startTransition(() => {
+        router.replace(nextPath);
       });
-  }, [router, searchParams, studySlug, trialIndex, study.versions]);
+      return;
+    }
+
+    setStartedAt(performance.now());
+  }, [bundle, router, searchParams, study.versions, studySlug, trialIndex]);
 
   useEffect(() => {
     if (!bundle) {
@@ -72,11 +67,11 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
       : null;
 
     if (nextTrial) {
-      router.prefetch(`/study/${studySlug}/learn/${nextTrial.trialIndex}?session=${bundle.session.id}`);
+      router.prefetch(buildStudyPathWithSession(studySlug, `learn/${nextTrial.trialIndex}`, bundle.session.id));
     } else {
-      router.prefetch(`/study/${studySlug}/distractor?session=${bundle.session.id}`);
+      router.prefetch(buildStudyPathWithSession(studySlug, "distractor", bundle.session.id));
     }
-  }, [bundle, router, study, studySlug, trialIndex]);
+  }, [bundle, router, study.versions, studySlug, trialIndex]);
 
   const trial = useMemo(() => {
     if (!bundle) {
@@ -103,13 +98,13 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
 
       if (result.completed) {
         startTransition(() => {
-          router.push(`/study/${studySlug}/distractor?session=${sessionId}`);
+          router.push(buildStudyPathWithSession(studySlug, "distractor", sessionId));
         });
         return;
       }
 
       startTransition(() => {
-        router.push(`/study/${studySlug}/learn/${result.nextTrialIndex}?session=${sessionId}`);
+        router.push(buildStudyPathWithSession(studySlug, `learn/${result.nextTrialIndex}`, sessionId));
       });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : appText.study.learning.saveError);
@@ -117,10 +112,10 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
     }
   }
 
-  if (error) {
+  if (sessionError || error) {
     return (
       <section className="panel error-card">
-        <p className="status">{error}</p>
+        <p className="status">{sessionError ?? error}</p>
       </section>
     );
   }

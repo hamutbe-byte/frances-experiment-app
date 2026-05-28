@@ -1,12 +1,13 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { startTransition, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { getCurrentSessionId, getSessionBundleRequest, updateSessionStatusRequest } from "@/lib/session-client";
+import { buildStudyPathWithSession, updateSessionStatusRequest } from "@/lib/session-client";
 import { useStageTelemetry } from "@/lib/telemetry";
+import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface InstructionsClientProps {
   studySlug: string;
@@ -14,36 +15,19 @@ interface InstructionsClientProps {
 
 export function InstructionsClient({ studySlug }: InstructionsClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
-  const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
+  const { sessionId, error: sessionError, isResolvingSession } = useStudySessionBundle({
+    studySlug,
+    stage: "instructions",
+    loadErrorMessage: appText.study.instructions.loadError,
+    stageErrorMessage: appText.study.instructions.continueError
+  });
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [isResolvingSession, setIsResolvingSession] = useState(true);
 
   useStageTelemetry(sessionId, "instructions");
-
-  useEffect(() => {
-    const fromUrl = searchParams.get("session");
-    const resolvedSessionId = fromUrl ?? getCurrentSessionId(studySlug);
-
-    if (!resolvedSessionId) {
-      return;
-    }
-
-    setSessionId(resolvedSessionId);
-
-    void getSessionBundleRequest(resolvedSessionId)
-      .then(() => updateSessionStatusRequest(resolvedSessionId, "instructions"))
-      .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : appText.study.instructions.loadError);
-      })
-      .finally(() => {
-        setIsResolvingSession(false);
-      });
-  }, [router, searchParams, studySlug]);
 
   async function beginLearning() {
     if (!sessionId) {
@@ -54,7 +38,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
       setIsPending(true);
       await updateSessionStatusRequest(sessionId, "learning");
       startTransition(() => {
-        router.push(`/study/${studySlug}/learn/1?session=${sessionId}`);
+        router.push(buildStudyPathWithSession(studySlug, "learn/1", sessionId));
       });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : appText.study.instructions.continueError);
@@ -63,7 +47,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
   }
 
   return (
-    <section className={`panel screen-panel${error ? " error-card" : ""}`}>
+    <section className={`panel screen-panel${sessionError || error ? " error-card" : ""}`}>
       {isResolvingSession ? <p className="status">{appText.study.instructions.loading}</p> : null}
       <div className="actions">
         <button type="button" className="button" onClick={beginLearning} disabled={isPending || !sessionId}>
@@ -79,6 +63,7 @@ export function InstructionsClient({ studySlug }: InstructionsClientProps) {
         </button>
       </div>
 
+      {sessionError ? <p className="status">{sessionError}</p> : null}
       {error ? <p className="status">{error}</p> : null}
     </section>
   );

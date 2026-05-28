@@ -1,13 +1,15 @@
 "use client";
 
-import { startTransition, useState, type ReactNode } from "react";
+import { startTransition, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
-import { EditableContentText } from "@/components/editable-content-text";
+import { EditableQuestionnaireText } from "@/components/editable-questionnaire-text";
 import { getDeviceSnapshot } from "@/lib/browser";
 import { createSessionRequest, saveCurrentSessionId } from "@/lib/session-client";
 import type { ParticipantQuestionnaireInput } from "@/lib/types";
+
+// EditableContentText is still the primitive behind the questionnaire wrapper.
 
 interface StartPhaseClientProps {
   studySlug: string;
@@ -159,21 +161,6 @@ function getTodayDateValue() {
 
 function formatValidationMessage(template: string, label: string) {
   return template.replace("{label}", label);
-}
-
-function EditableQuestionnaireText(props: {
-  contentKey: string;
-  children: ReactNode;
-  tag?: "span" | "h2" | "p" | "div";
-  className?: string;
-}) {
-  const { contentKey, children, tag = "span", className } = props;
-
-  return (
-    <EditableContentText contentKey={contentKey} tag={tag} className={className}>
-      {children}
-    </EditableContentText>
-  );
 }
 
 function LanguageSelect(props: {

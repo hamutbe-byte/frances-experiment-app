@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { BilingualInstructionText } from "@/components/bilingual-instruction-text";
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { getCurrentSessionId, getSessionBundleRequest, submitMatchingRequest, updateSessionStatusRequest } from "@/lib/session-client";
+import { buildStudyPathWithSession, submitMatchingRequest } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
 import type { MatchingTrial } from "@/lib/types";
+import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface MatchingTaskClientProps {
   studySlug: string;
@@ -20,7 +22,12 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
-  const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
+  const { sessionId, bundle, error: sessionError } = useStudySessionBundle({
+    studySlug,
+    stage: "matching",
+    loadErrorMessage: appText.study.matching.loadError,
+    stageErrorMessage: appText.study.matching.loadError
+  });
   const [trial, setTrial] = useState<MatchingTrial | null>(null);
   const [matchingOrder, setMatchingOrder] = useState<number[]>([]);
   const [answeredTrialIndexes, setAnsweredTrialIndexes] = useState<Set<number>>(new Set());
@@ -60,37 +67,28 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
 
   useEffect(() => {
     const isDevJump = searchParams.get("devJump") === "1";
-    const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
-    if (!resolvedSessionId) {
+    if (!bundle) {
       return;
     }
 
-    setSessionId(resolvedSessionId);
-    void getSessionBundleRequest(resolvedSessionId)
-      .then((bundle) => {
-        if (bundle.session.status === "complete") {
-          setTrial(null);
-          setStartedAt(null);
-          setIsFinished(true);
-          return;
-        }
+    if (bundle.session.status === "complete") {
+      setTrial(null);
+      setStartedAt(null);
+      setIsFinished(true);
+      return;
+    }
 
-        void updateSessionStatusRequest(resolvedSessionId, "matching").catch(() => undefined);
-        const order = bundle.session.matchingTrialOrder.length > 0 ? bundle.session.matchingTrialOrder : study.matchingTrials.map((entry) => entry.trialIndex);
-        const answered = new Set(bundle.matching.map((entry) => entry.trialIndex));
-        setMatchingOrder(order);
-        setAnsweredTrialIndexes(answered);
-        const nextTrial = isDevJump ? trialByIndex(order[0]) : firstUnansweredTrial(answered, order);
-        if (!nextTrial) {
-          setIsFinished(true);
-          return;
-        }
-        showTrial(nextTrial, order);
-      })
-      .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : appText.study.matching.loadError);
-      });
-  }, [router, searchParams, study, studySlug]);
+    const order = bundle.session.matchingTrialOrder.length > 0 ? bundle.session.matchingTrialOrder : study.matchingTrials.map((entry) => entry.trialIndex);
+    const answered = new Set(bundle.matching.map((entry) => entry.trialIndex));
+    setMatchingOrder(order);
+    setAnsweredTrialIndexes(answered);
+    const nextTrial = isDevJump ? trialByIndex(order[0]) : firstUnansweredTrial(answered, order);
+    if (!nextTrial) {
+      setIsFinished(true);
+      return;
+    }
+    showTrial(nextTrial, order);
+  }, [bundle, searchParams, study.matchingTrials, studySlug]);
 
   async function submitAnswer(answer: "yes" | "no") {
     if (isFinished || !sessionId || !trial || startedAt === null || isPending) {
@@ -140,10 +138,10 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isFinished, isPending, sessionId, startedAt, trial]);
 
-  if (error) {
+  if (sessionError || error) {
     return (
       <section className="panel error-card">
-        <p className="status">{error}</p>
+        <p className="status">{sessionError ?? error}</p>
       </section>
     );
   }
@@ -177,18 +175,14 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
       </div>
 
       <section className="question-block">
-        <EditableContentText contentKey="instructionText.study.matching.questionLabel" tag="span" className="question-label instruction-bilingual">
-          {instructionText.study.matching.questionLabel}
-        </EditableContentText>
-        <EditableContentText
-          contentKey="instructionText.study.matching.questionLabelEnglish"
-          tag="p"
-          className="instruction-english"
-          dir="ltr"
-          lang="en"
-        >
-          {instructionText.study.matching.questionLabelEnglish}
-        </EditableContentText>
+        <div className="question-label instruction-bilingual">
+          <BilingualInstructionText
+            labelContentKey="instructionText.study.matching.questionLabel"
+            englishContentKey="instructionText.study.matching.questionLabelEnglish"
+            label={instructionText.study.matching.questionLabel}
+            english={instructionText.study.matching.questionLabelEnglish}
+          />
+        </div>
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>

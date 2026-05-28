@@ -1,19 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
 import { formatContent } from "@/lib/content";
 import { corsiBlocks, getCorsiTrial, getExpectedCorsiResponse } from "@/lib/corsi";
-import {
-  getCurrentSessionId,
-  getSessionBundleRequest,
-  submitDistractorRequest,
-  updateSessionStatusRequest
-} from "@/lib/session-client";
+import { buildStudyPathWithSession, submitDistractorRequest } from "@/lib/session-client";
 import { useStageTelemetry } from "@/lib/telemetry";
+import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface DistractorClientProps {
   studySlug: string;
@@ -35,11 +31,15 @@ type Feedback = {
 
 export function DistractorClient({ studySlug }: DistractorClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
-  const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
+  const { sessionId, bundle, error: sessionError, isResolvingSession } = useStudySessionBundle({
+    studySlug,
+    stage: "distractor",
+    loadErrorMessage: appText.study.distractor.loadError,
+    stageErrorMessage: appText.study.distractor.startError
+  });
   const [trialIndex, setTrialIndex] = useState(1);
   const [endsAt, setEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -75,30 +75,18 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
   }, []);
 
   useEffect(() => {
-    const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
-    if (!resolvedSessionId) {
+    if (!bundle || !sessionId) {
       return;
     }
 
-    setSessionId(resolvedSessionId);
-    void getSessionBundleRequest(resolvedSessionId)
-      .then((bundle) => {
-        setTrialIndex(bundle.distractor.length + 1);
+    setTrialIndex(bundle.distractor.length + 1);
 
-        const savedEndsAt = window.localStorage.getItem(distractorEndsAtKey(resolvedSessionId));
-        const nextEndsAt = savedEndsAt ? Number(savedEndsAt) : Date.now() + durationMs;
-        window.localStorage.setItem(distractorEndsAtKey(resolvedSessionId), String(nextEndsAt));
-        setEndsAt(nextEndsAt);
-        setShowInstructions(bundle.distractor.length === 0);
-      })
-      .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : appText.study.distractor.loadError);
-      });
-
-    void updateSessionStatusRequest(resolvedSessionId, "distractor").catch((caughtError) => {
-      setError(caughtError instanceof Error ? caughtError.message : appText.study.distractor.startError);
-    });
-  }, [router, searchParams, studySlug]);
+    const savedEndsAt = window.localStorage.getItem(distractorEndsAtKey(sessionId));
+    const nextEndsAt = savedEndsAt ? Number(savedEndsAt) : Date.now() + durationMs;
+    window.localStorage.setItem(distractorEndsAtKey(sessionId), String(nextEndsAt));
+    setEndsAt(nextEndsAt);
+    setShowInstructions(bundle.distractor.length === 0);
+  }, [bundle, sessionId]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
@@ -119,7 +107,7 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
     }
 
     window.localStorage.removeItem(distractorEndsAtKey(sessionId));
-    router.replace(`/study/${studySlug}/recall/1?session=${sessionId}`);
+    router.replace(buildStudyPathWithSession(studySlug, "recall/1", sessionId));
   }, [endsAt, remainingMs, router, sessionId, studySlug]);
 
   function clearScheduledTimeouts() {
@@ -212,8 +200,17 @@ export function DistractorClient({ studySlug }: DistractorClientProps) {
     }
   }
 
+  if (sessionError || error) {
+    return (
+      <section className="panel error-card">
+        <p className="status">{sessionError ?? error}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="panel corsi-panel screen-panel">
+      {isResolvingSession ? <p className="status">{appText.study.instructions.loading}</p> : null}
       <div className="corsi-top-stack">
         <div className="corsi-top-controls">
           <EditableContentText

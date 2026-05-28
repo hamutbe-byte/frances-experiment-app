@@ -12,6 +12,9 @@ import type {
   SessionStage,
   YesNoAnswer
 } from "@/lib/types";
+import { appendQueryParams, buildStudyPath, buildStudyPathWithSession } from "@/lib/study-paths";
+
+export { appendQueryParams, buildStudyPath, buildStudyPathWithSession };
 
 async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -173,9 +176,11 @@ export async function sendTelemetryRequest(
 }
 
 export function appendSessionToPath(path: string, sessionId: string) {
-  const url = new URL(path, window.location.origin);
-  url.searchParams.set("session", sessionId);
-  return `${url.pathname}${url.search}${url.hash}`;
+  return appendQueryParams(path, { session: sessionId });
+}
+
+export function getResolvedStudySessionId(studySlug: string, searchParams: { get(name: string): string | null }) {
+  return searchParams.get("session") ?? getCurrentSessionId(studySlug);
 }
 
 export function saveCurrentSessionId(studySlug: string, sessionId: string) {

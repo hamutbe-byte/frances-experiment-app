@@ -3,18 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { BilingualInstructionText } from "@/components/bilingual-instruction-text";
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import {
-  getCurrentSessionId,
-  getSessionBundleRequest,
-  sendTelemetryRequest,
-  submitRecallRequest,
-  submitRecognitionRequest
-} from "@/lib/session-client";
+import { buildStudyPathWithSession, sendTelemetryRequest, submitRecallRequest, submitRecognitionRequest } from "@/lib/session-client";
 import { getRecallPromptOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
 import type { RecallPrompt } from "@/lib/types";
+import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface RecallRecognitionClientProps {
   studySlug: string;
@@ -31,7 +27,12 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
-  const [sessionId, setSessionId] = useState<string | null>(searchParams.get("session"));
+  const { sessionId, bundle, error: sessionError } = useStudySessionBundle({
+    studySlug,
+    stage: "recall",
+    loadErrorMessage: appText.study.recall.loadError,
+    stageErrorMessage: appText.study.recall.loadError
+  });
   const [prompt, setPrompt] = useState<RecallPrompt | null>(null);
   const [actualPromptIndex, setActualPromptIndex] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("recall");
@@ -49,45 +50,36 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
 
   useEffect(() => {
     const isDevJump = searchParams.get("devJump") === "1";
-    const resolvedSessionId = searchParams.get("session") ?? getCurrentSessionId(studySlug);
-    if (!resolvedSessionId) {
+    if (!bundle) {
       return;
     }
 
-    setSessionId(resolvedSessionId);
+    const order = bundle.session.recallPromptOrder.length > 0 ? bundle.session.recallPromptOrder : study.recallPrompts.map((entry) => entry.promptIndex);
+    const orderedPromptIndex = order[promptIndex - 1];
+    if (!orderedPromptIndex) {
+      router.replace(buildStudyPathWithSession(studySlug, "matching", bundle.session.id));
+      return;
+    }
 
-    void getSessionBundleRequest(resolvedSessionId)
-      .then((bundle) => {
-        const order = bundle.session.recallPromptOrder.length > 0 ? bundle.session.recallPromptOrder : study.recallPrompts.map((entry) => entry.promptIndex);
-        const orderedPromptIndex = order[promptIndex - 1];
-        if (!orderedPromptIndex) {
-          router.replace(`/study/${studySlug}/matching?session=${resolvedSessionId}`);
-          return;
-        }
+    setActualPromptIndex(orderedPromptIndex);
+    setPrompt(getRecallPromptOrThrow(studySlug, orderedPromptIndex));
 
-        setActualPromptIndex(orderedPromptIndex);
-        setPrompt(getRecallPromptOrThrow(studySlug, orderedPromptIndex));
+    const recallDone = bundle.recall.some((entry) => entry.promptIndex === orderedPromptIndex);
+    const recognitionDone = bundle.recognition.some((entry) => entry.promptIndex === orderedPromptIndex);
 
-        const recallDone = bundle.recall.some((entry) => entry.promptIndex === orderedPromptIndex);
-        const recognitionDone = bundle.recognition.some((entry) => entry.promptIndex === orderedPromptIndex);
+    if (recallDone && recognitionDone && !isDevJump) {
+      const nextPath =
+        promptIndex >= study.recallPrompts.length
+          ? buildStudyPathWithSession(studySlug, "matching", bundle.session.id)
+          : buildStudyPathWithSession(studySlug, `recall/${promptIndex + 1}`, bundle.session.id);
+      router.replace(nextPath);
+      return;
+    }
 
-        if (recallDone && recognitionDone && !isDevJump) {
-          const nextPath =
-            promptIndex >= study.recallPrompts.length
-              ? `/study/${studySlug}/matching?session=${resolvedSessionId}`
-              : `/study/${studySlug}/recall/${promptIndex + 1}?session=${resolvedSessionId}`;
-          router.replace(nextPath);
-          return;
-        }
-
-        setStep(isDevJump ? "recall" : recallDone ? "recognition" : "recall");
-        setStartedAt(performance.now());
-        setRecognitionStartedAt(!isDevJump && recallDone ? performance.now() : null);
-      })
-      .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.loadError);
-      });
-  }, [promptIndex, router, searchParams, study.recallPrompts.length, studySlug]);
+    setStep(isDevJump ? "recall" : recallDone ? "recognition" : "recall");
+    setStartedAt(performance.now());
+    setRecognitionStartedAt(!isDevJump && recallDone ? performance.now() : null);
+  }, [bundle, promptIndex, router, searchParams, study.recallPrompts.length, studySlug]);
 
   function logRecallEvent(eventType: "paste" | "copy" | "cut" | "clipboard_shortcut" | "beforeinput_paste") {
     if (!telemetryEnabled || !sessionId || actualPromptIndex === null) {
@@ -148,20 +140,20 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       const responseTimeMs = Math.max(1, Math.round(performance.now() - recognitionStartedAt));
       const result = await submitRecognitionRequest(sessionId, actualPromptIndex, optionIndex, responseTimeMs);
       if (result.completed || promptIndex >= study.recallPrompts.length) {
-        router.push(`/study/${studySlug}/matching?session=${sessionId}`);
+        router.push(buildStudyPathWithSession(studySlug, "matching", sessionId));
         return;
       }
-      router.push(`/study/${studySlug}/recall/${promptIndex + 1}?session=${sessionId}`);
+      router.push(buildStudyPathWithSession(studySlug, `recall/${promptIndex + 1}`, sessionId));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.saveRecognitionError);
       setIsPending(false);
     }
   }
 
-  if (error) {
+  if (sessionError || error) {
     return (
       <section className="panel error-card">
-        <p className="status">{error}</p>
+        <p className="status">{sessionError ?? error}</p>
       </section>
     );
   }
@@ -180,19 +172,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       {step === "recall" ? (
         <section className="question-block">
           <label className="question-label instruction-bilingual" htmlFor="recall-answer">
-            <EditableContentText contentKey="instructionText.study.recall.recallInputLabel" tag="span">
-              {instructionText.study.recall.recallInputLabel}
-            </EditableContentText>
+            <BilingualInstructionText
+              labelContentKey="instructionText.study.recall.recallInputLabel"
+              englishContentKey="instructionText.study.recall.recallInputLabelEnglish"
+              label={instructionText.study.recall.recallInputLabel}
+              english={instructionText.study.recall.recallInputLabelEnglish}
+            />
           </label>
-          <EditableContentText
-            contentKey="instructionText.study.recall.recallInputLabelEnglish"
-            tag="p"
-            className="instruction-english"
-            dir="ltr"
-            lang="en"
-          >
-            {instructionText.study.recall.recallInputLabelEnglish}
-          </EditableContentText>
           <input
             id="recall-answer"
             className="text-input"
@@ -229,18 +215,14 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
         </section>
       ) : (
         <section className="question-block">
-          <EditableContentText contentKey="instructionText.study.recall.recognitionLabel" tag="span" className="question-label instruction-bilingual">
-            {instructionText.study.recall.recognitionLabel}
-          </EditableContentText>
-          <EditableContentText
-            contentKey="instructionText.study.recall.recognitionLabelEnglish"
-            tag="p"
-            className="instruction-english"
-            dir="ltr"
-            lang="en"
-          >
-            {instructionText.study.recall.recognitionLabelEnglish}
-          </EditableContentText>
+          <div className="question-label instruction-bilingual">
+            <BilingualInstructionText
+              labelContentKey="instructionText.study.recall.recognitionLabel"
+              englishContentKey="instructionText.study.recall.recognitionLabelEnglish"
+              label={instructionText.study.recall.recognitionLabel}
+              english={instructionText.study.recall.recognitionLabelEnglish}
+            />
+          </div>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (
               <button
