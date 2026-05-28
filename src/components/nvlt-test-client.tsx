@@ -15,7 +15,6 @@ interface NvltTestClientProps {
 interface FlatQuestion {
   levelId: string;
   question: NvltQuestion;
-  sequenceNumber: number;
 }
 
 type AnswerMap = Record<string, number>;
@@ -44,12 +43,10 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
   const [answers, setAnswers] = useState<AnswerMap>({});
 
   const questions = useMemo<FlatQuestion[]>(() => {
-    let sequenceNumber = 0;
     return levels.flatMap((level) =>
       level.questions.map((question) => ({
         levelId: level.id,
-        question,
-        sequenceNumber: (sequenceNumber += 1)
+        question
       }))
     );
   }, [levels]);
@@ -97,69 +94,68 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
   }
 
   return (
-    <section className="stack">
+    <section className="nvlt-stage">
       {showingExample ? (
-        <div className="panel nvlt-sheet-panel nvlt-example-panel">
+        <div className="panel nvlt-sheet-panel nvlt-example-panel nvlt-task-panel">
           <section className="nvlt-example" aria-label={instructionText.nvlt.exampleTitle}>
             <div className="nvlt-example-header">
-              <EditableContentText contentKey="instructionText.nvlt.exampleTitle" tag="strong">
+              <EditableContentText contentKey="instructionText.nvlt.exampleTitle" tag="strong" className="nvlt-example-title">
                 {instructionText.nvlt.exampleTitle}
+              </EditableContentText>
+              <EditableContentText contentKey="instructionText.nvlt.exampleSubtitle" tag="p" className="status nvlt-example-instructions">
+                {instructionText.nvlt.exampleSubtitle}
               </EditableContentText>
             </div>
 
-            <EditableContentText contentKey="instructionText.nvlt.exampleSubtitle" tag="p" className="status nvlt-example-instructions">
-              {instructionText.nvlt.exampleSubtitle}
-            </EditableContentText>
-
-            <div className="nvlt-sheet nvlt-drag-sheet" dir="ltr">
-              <div className="nvlt-worksheet">
-                <div className="nvlt-word-bank" aria-label={instructionText.nvlt.wordBankAriaLabel}>
-                  {exampleQuestion.words.map((word, index) => (
-                    <div key={`example-word-${word}`} className="nvlt-word-chip">
-                      <span className="nvlt-word-number">{index + 1}.</span>
-                      <span>{word}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="nvlt-prompt-list">
-                  {exampleQuestion.prompts.map((prompt, promptIndex) => (
-                    <div key={`example-prompt-${prompt}`} className="nvlt-prompt-row">
-                      <div className="nvlt-select-wrap">
-                        <div className="nvlt-number-input nvlt-number-input-readonly" aria-label={instructionText.nvlt.exampleAnswerLabel}>
-                          {exampleAnswers[promptIndex]}
-                        </div>
+            <div className="nvlt-example-body">
+              <div className="nvlt-sheet nvlt-drag-sheet" dir="ltr">
+                <div className="nvlt-worksheet">
+                  <div className="nvlt-word-bank" aria-label={instructionText.nvlt.wordBankAriaLabel}>
+                    {exampleQuestion.words.map((word, index) => (
+                      <div key={`example-word-${word}`} className="nvlt-word-chip">
+                        <span className="nvlt-word-number">{index + 1}.</span>
+                        <span>{word}</span>
                       </div>
-                      <p className="nvlt-prompt-text">{prompt}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  <div className="nvlt-prompt-list">
+                    {exampleQuestion.prompts.map((prompt, promptIndex) => (
+                      <div key={`example-prompt-${prompt}`} className="nvlt-prompt-row">
+                        <div className="nvlt-select-wrap">
+                          <div className="nvlt-number-input nvlt-number-input-readonly" aria-label={instructionText.nvlt.exampleAnswerLabel}>
+                            {exampleAnswers[promptIndex]}
+                          </div>
+                        </div>
+                        <p className="nvlt-prompt-text">{prompt}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </section>
 
-          <div className="actions nvlt-page-controls nvlt-bottom-controls">
-            <button type="button" className="button button-secondary" disabled>
-              <EditableContentText contentKey="appText.nvlt.previousButton" tag="span">
-                {appText.nvlt.previousButton}
-              </EditableContentText>
-            </button>
-            <button type="button" className="button button-secondary" onClick={() => setQuestionIndex(0)}>
-              <EditableContentText contentKey="appText.nvlt.nextButton" tag="span">
-                {appText.nvlt.nextButton}
-              </EditableContentText>
-            </button>
-          </div>
+            <div className="actions nvlt-page-controls nvlt-example-actions">
+              <button type="button" className="button button-secondary" disabled>
+                <EditableContentText contentKey="appText.nvlt.previousButton" tag="span">
+                  {appText.nvlt.previousButton}
+                </EditableContentText>
+              </button>
+              <button type="button" className="button" onClick={() => setQuestionIndex(0)}>
+                <EditableContentText contentKey="appText.nvlt.nextButton" tag="span">
+                  {appText.nvlt.nextButton}
+                </EditableContentText>
+              </button>
+            </div>
+          </section>
         </div>
       ) : null}
 
       {activeEntry ? (
-        <div className="panel nvlt-sheet-panel screen-panel">
-          <div className="trial-header">
-            <EditableContentText contentKey="appText.nvlt.progressTitle" tag="strong" className="nvlt-page-title">
-              {formatContent(appText.nvlt.progressTitle, { current: activeEntry.sequenceNumber, total: questions.length })}
-            </EditableContentText>
-          </div>
+        <div className="panel nvlt-sheet-panel screen-panel nvlt-task-panel nvlt-question-panel">
+          <EditableContentText contentKey="appText.nvlt.progressTitle" tag="strong" className="nvlt-page-title">
+            {formatContent(appText.nvlt.progressTitle, { current: questionIndex + 1, total: questions.length })}
+          </EditableContentText>
 
           <EditableContentText contentKey="instructionText.nvlt.pageSubtitle" tag="p" className="status">
             {instructionText.nvlt.pageSubtitle}

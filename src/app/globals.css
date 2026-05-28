@@ -1054,28 +1054,61 @@ select {
   padding-bottom: 24px;
 }
 
+.nvlt-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: max(0px, calc(100dvh - 176px));
+}
+
 .nvlt-sheet-panel {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .nvlt-example-panel {
   min-height: 0;
 }
 
+.nvlt-task-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nvlt-question-panel {
+  gap: 10px;
+  min-height: max(0px, calc(100dvh - 176px));
+}
+
 .nvlt-example {
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
 }
 
 .nvlt-example-header {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .nvlt-example-header p {
   margin: 0;
   color: var(--muted);
+}
+
+.nvlt-example-actions {
+  margin-top: auto;
+}
+
+.nvlt-example-body {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .nvlt-page-title {
@@ -1085,7 +1118,7 @@ select {
 .nvlt-page-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .nvlt-bottom-controls {
@@ -1093,10 +1126,56 @@ select {
   justify-content: flex-end;
 }
 
+.nvlt-task-panel .nvlt-sheet {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.nvlt-question-panel .nvlt-sheet {
+  padding: 16px 18px;
+}
+
+.nvlt-question-panel .nvlt-worksheet {
+  gap: 22px;
+}
+
+.nvlt-question-panel .nvlt-word-bank {
+  gap: 8px;
+}
+
+.nvlt-question-panel .nvlt-word-chip {
+  padding: 6px 0;
+}
+
+.nvlt-question-panel .nvlt-prompt-list {
+  gap: 14px;
+}
+
+.nvlt-question-panel .nvlt-prompt-row {
+  gap: 12px;
+}
+
+.nvlt-question-panel .nvlt-select-wrap {
+  width: 76px;
+}
+
+.nvlt-question-panel .nvlt-number-input {
+  min-height: 44px;
+}
+
+.nvlt-question-panel .nvlt-page-title {
+  font-size: clamp(1.02rem, 1.2vw, 1.18rem);
+}
+
+.nvlt-question-panel .status {
+  margin-top: -2px;
+}
+
 .nvlt-sheet {
   display: grid;
-  gap: 20px;
-  padding: 28px;
+  gap: 14px;
+  padding: 18px 20px;
   border-radius: 24px;
   border: 1px solid rgba(122, 60, 31, 0.12);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 246, 240, 0.96));
@@ -1109,7 +1188,7 @@ select {
 }
 
 .nvlt-drag-sheet {
-  gap: 28px;
+  gap: 18px;
 }
 
 .nvlt-sheet-header h2 {
@@ -1127,20 +1206,20 @@ select {
 .nvlt-worksheet {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  gap: 42px;
+  gap: 28px;
   align-items: start;
 }
 
 .nvlt-word-bank {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .nvlt-word-chip {
   display: flex;
   align-items: baseline;
-  gap: 14px;
-  padding: 10px 0;
+  gap: 12px;
+  padding: 8px 0;
   color: var(--ink);
   text-align: left;
   font-size: var(--font-size-nvlt-word-chip);
@@ -1155,24 +1234,24 @@ select {
 
 .nvlt-prompt-list {
   display: grid;
-  gap: 22px;
+  gap: 16px;
 }
 
 .nvlt-prompt-row {
   display: grid;
   grid-template-columns: minmax(170px, 210px) minmax(0, 1fr);
-  gap: 20px;
+  gap: 14px;
   align-items: center;
 }
 
 .nvlt-select-wrap {
   display: block;
-  width: 88px;
+  width: 80px;
 }
 
 .nvlt-number-input {
   width: 100%;
-  min-height: 56px;
+  min-height: 48px;
   padding: 10px 14px;
   border: 1px solid rgba(122, 60, 31, 0.2);
   border-radius: 16px;
@@ -1329,17 +1408,21 @@ select {
   }
 
   .nvlt-sheet {
-    padding: 20px 16px;
+    padding: 16px 14px;
+  }
+
+  .nvlt-stage {
+    min-height: max(0px, calc(100dvh - 164px));
   }
 
   .nvlt-worksheet {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 
   .nvlt-prompt-row {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 12px;
   }
 
   .nvlt-select-wrap {
@@ -1347,7 +1430,7 @@ select {
   }
 
   .nvlt-number-input {
-    min-height: 48px;
+    min-height: 44px;
   }
 
   .nvlt-word-chip {
