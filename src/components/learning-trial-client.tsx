@@ -130,17 +130,17 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
 
   return (
     <section className="panel screen-panel">
-      <article className="passage" dir="ltr">
+      <EditableContentText contentKey="appText.study.learning.passageTextStyle" tag="article" className="passage" dir="ltr">
         {trial.passageText}
-      </article>
+      </EditableContentText>
 
       <section className="question-block">
         <EditableContentText contentKey="instructionText.study.learning.comprehensionLabel" tag="span" className="question-label">
           {instructionText.study.learning.comprehensionLabel}
         </EditableContentText>
-        <p className="question-text" dir="ltr">
+        <EditableContentText contentKey="appText.study.learning.questionTextStyle" tag="p" className="question-text" dir="ltr">
           {trial.comprehensionPromptText}
-        </p>
+        </EditableContentText>
 
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>

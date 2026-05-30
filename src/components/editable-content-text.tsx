@@ -7,14 +7,23 @@ import type { EditableContentKey } from "@/lib/types";
 
 interface EditableContentTextProps {
   contentKey: EditableContentKey;
-  children: ReactNode;
+  children?: ReactNode;
   tag?: ElementType;
   className?: string;
   dir?: "ltr" | "rtl";
   lang?: string;
+  dangerouslySetInnerHTML?: { __html: string };
 }
 
-export function EditableContentText({ contentKey, children, tag = "span", className, dir, lang }: EditableContentTextProps) {
+export function EditableContentText({
+  contentKey,
+  children,
+  tag = "span",
+  className,
+  dir,
+  lang,
+  dangerouslySetInnerHTML
+}: EditableContentTextProps) {
   const { styleOverrides } = useResolvedContent();
   const style = styleOverrides[contentKey];
   const resolvedStyle = useMemo<CSSProperties | undefined>(() => {
@@ -32,8 +41,19 @@ export function EditableContentText({ contentKey, children, tag = "span", classN
   const Tag = tag;
 
   return (
-    <Tag className={className} data-content-key={contentKey} dir={dir} lang={lang} style={resolvedStyle}>
-      {children}
-    </Tag>
+    dangerouslySetInnerHTML ? (
+      <Tag
+        className={className}
+        data-content-key={contentKey}
+        dir={dir}
+        lang={lang}
+        style={resolvedStyle}
+        dangerouslySetInnerHTML={dangerouslySetInnerHTML}
+      />
+    ) : (
+      <Tag className={className} data-content-key={contentKey} dir={dir} lang={lang} style={resolvedStyle}>
+        {children}
+      </Tag>
+    )
   );
 }

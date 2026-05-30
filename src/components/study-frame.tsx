@@ -1,10 +1,9 @@
 import { Suspense, type ReactNode } from "react";
 
 import { DevToolbar } from "@/components/dev-toolbar";
-import { EditableContentText } from "@/components/editable-content-text";
 import { InlineContentEditor } from "@/components/inline-content-editor";
 import { StudySessionBootstrap } from "@/components/study-session-bootstrap";
-import type { EditableContentKey, EditableContentScreen } from "@/lib/types";
+import type { EditableContentScreen } from "@/lib/types";
 
 interface StudyFrameProps {
   eyebrow?: string;

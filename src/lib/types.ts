@@ -290,7 +290,7 @@ export type EditableContentScreen =
   | "distractor"
   | "recall"
   | "matching";
-export type EditableFieldKind = "text" | "textarea" | "template";
+export type EditableFieldKind = "text" | "textarea" | "template" | "style";
 
 export type EditableContentOverrides = Record<EditableContentKey, EditableContentValue>;
 

@@ -128,6 +128,10 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
   );
   const groupedFields = useMemo(() => groupFieldsBySection(screenFields), [screenFields]);
   const groupedUiFields = useMemo(() => groupFieldsBySection(screenUiFields), [screenUiFields]);
+  const styleOnlyFieldKeys = useMemo(
+    () => new Set(screenFields.filter((field) => field.kind === "style").map((field) => field.key)),
+    [screenFields]
+  );
 
   useEffect(() => {
     const syncMode = () => {
@@ -307,7 +311,8 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     try {
       setIsSaving(true);
       setError(null);
-      await saveOverrides(draft, uiDraft);
+      const contentDraft = Object.fromEntries(Object.entries(draft).filter(([key]) => !styleOnlyFieldKeys.has(key)));
+      await saveOverrides(contentDraft, uiDraft);
       setIsOpen(false);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את ההגדרות.");
@@ -324,11 +329,13 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     try {
       setIsInlineSaving(true);
       setError(null);
-      await saveOverrides({
-        [inlineTarget.field.key]: inlineTarget.value
-      }, {}, {
-        [inlineTarget.field.key]: normalizeInlineStyleDraft(inlineTarget.style)
-      });
+      await saveOverrides(
+        inlineTarget.field.kind === "style" ? {} : { [inlineTarget.field.key]: inlineTarget.value },
+        {},
+        {
+          [inlineTarget.field.key]: normalizeInlineStyleDraft(inlineTarget.style)
+        }
+      );
       setInlineTarget(null);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "לא ניתן היה לשמור את הטקסט.");
@@ -384,7 +391,11 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
         >
           <label className="form-field">
             <span>{inlineTarget.field.label}</span>
-            {inlineTarget.field.kind === "textarea" || inlineTarget.field.kind === "template" ? (
+            {inlineTarget.field.kind === "style" ? (
+              <p className="questionnaire-note">
+                זהו שדה עיצוב בלבד. אפשר לשנות כאן גודל, bold ו-italic, בלי לערוך את הטקסט עצמו.
+              </p>
+            ) : inlineTarget.field.kind === "textarea" || inlineTarget.field.kind === "template" ? (
               <textarea
                 autoFocus
                 className="textarea-input"
@@ -536,29 +547,41 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
                     return (
                       <label key={field.key} className="form-field">
                         <span>{field.label}</span>
-                        {field.kind === "textarea" || field.kind === "template" ? (
-                          <textarea
-                            className="textarea-input"
-                            rows={3}
-                            value={value}
-                            onChange={(event) => updateDraft(field.key, event.target.value)}
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            className="text-input"
-                            value={value}
-                            onChange={(event) => updateDraft(field.key, event.target.value)}
-                          />
-                        )}
-                        {field.requiredPlaceholders.length > 0 ? (
+                        {field.kind === "style" ? (
                           <p className="questionnaire-note">
-                            שדות חובה בתבנית: {field.requiredPlaceholders.map((placeholder) => `{${placeholder}}`).join(", ")}
+                            זהו שדה עיצוב בלבד. לשינוי גודל, bold או italic, לחצו פעמיים על הטקסט המתאים במסך עצמו.
                           </p>
-                        ) : null}
-                        <button type="button" className="button button-secondary content-editor-reset" onClick={() => resetField(field.key)}>
-                          החזרת שדה זה לברירת המחדל
-                        </button>
+                        ) : (
+                          <>
+                            {field.kind === "textarea" || field.kind === "template" ? (
+                              <textarea
+                                className="textarea-input"
+                                rows={3}
+                                value={value}
+                                onChange={(event) => updateDraft(field.key, event.target.value)}
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                className="text-input"
+                                value={value}
+                                onChange={(event) => updateDraft(field.key, event.target.value)}
+                              />
+                            )}
+                            {field.requiredPlaceholders.length > 0 ? (
+                              <p className="questionnaire-note">
+                                שדות חובה בתבנית: {field.requiredPlaceholders.map((placeholder) => `{${placeholder}}`).join(", ")}
+                              </p>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="button button-secondary content-editor-reset"
+                              onClick={() => resetField(field.key)}
+                            >
+                              החזרת שדה זה לברירת המחדל
+                            </button>
+                          </>
+                        )}
                       </label>
                     );
                   })}

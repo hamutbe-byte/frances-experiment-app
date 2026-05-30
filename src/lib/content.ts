@@ -28,7 +28,8 @@ export const defaultContentSnapshot = {
   questionnaireText
 } as const satisfies ResolvedContentSnapshot;
 
-const editableContentKeySet = new Set<string>();
+const editableTextContentKeySet = new Set<string>();
+const editableStyleContentKeySet = new Set<string>();
 
 const templateFieldConfig: Record<EditableContentKey, readonly string[]> = {
   "appText.study.learning.progressLabel": ["current", "total"],
@@ -214,9 +215,45 @@ function flattenFields(target: unknown, pathParts: string[] = []): EditableField
   return [];
 }
 
-export const editableFieldDefinitions = flattenFields(defaultContentSnapshot);
-for (const field of editableFieldDefinitions) {
-  editableContentKeySet.add(field.key);
+const styleOnlyFieldDefinitions: EditableFieldDefinition[] = [
+  {
+    key: "appText.study.learning.passageTextStyle",
+    label: "Passage text style",
+    section: "Learning Content Style",
+    screen: "learning",
+    kind: "style",
+    defaultValue: "",
+    requiredPlaceholders: []
+  },
+  {
+    key: "appText.study.learning.questionTextStyle",
+    label: "Question text style",
+    section: "Learning Content Style",
+    screen: "learning",
+    kind: "style",
+    defaultValue: "",
+    requiredPlaceholders: []
+  },
+  {
+    key: "appText.study.recall.promptTextStyle",
+    label: "Recall prompt style",
+    section: "Recall Content Style",
+    screen: "recall",
+    kind: "style",
+    defaultValue: "",
+    requiredPlaceholders: []
+  }
+];
+
+const textFieldDefinitions = flattenFields(defaultContentSnapshot);
+
+export const editableFieldDefinitions = [...textFieldDefinitions, ...styleOnlyFieldDefinitions];
+for (const field of textFieldDefinitions) {
+  editableTextContentKeySet.add(field.key);
+  editableStyleContentKeySet.add(field.key);
+}
+for (const field of styleOnlyFieldDefinitions) {
+  editableStyleContentKeySet.add(field.key);
 }
 
 export function getEditableFieldDefinitionsForScreen(screen: EditableContentScreen) {
@@ -225,7 +262,7 @@ export function getEditableFieldDefinitionsForScreen(screen: EditableContentScre
 
 export function validateContentOverrides(overrides: EditableContentOverrides) {
   for (const [key, value] of Object.entries(overrides)) {
-    if (!editableContentKeySet.has(key)) {
+    if (!editableTextContentKeySet.has(key)) {
       return `Unknown editable content key: ${key}`;
     }
 
@@ -245,7 +282,7 @@ export function applyContentOverrides(
   overrides: EditableContentOverrides
 ): ResolvedContentSnapshot {
   return Object.entries(overrides).reduce<ResolvedContentSnapshot>(
-    (current, [key, value]) => (editableContentKeySet.has(key) ? setValueAtPath(current, key, value) : current),
+    (current, [key, value]) => (editableTextContentKeySet.has(key) ? setValueAtPath(current, key, value) : current),
     cloneValue(snapshot)
   );
 }
@@ -290,7 +327,7 @@ export function getDefaultEditableContentStyleValue() {
 
 export function validateContentStyleOverrides(overrides: EditableContentStyleOverrides) {
   for (const [key, value] of Object.entries(overrides)) {
-    if (!editableContentKeySet.has(key)) {
+    if (!editableStyleContentKeySet.has(key)) {
       return `Unknown editable content style key: ${key}`;
     }
 
@@ -348,7 +385,7 @@ export function normalizeContentOverrides(overrides: EditableContentOverrides) {
       continue;
     }
 
-    if (!editableContentKeySet.has(key)) {
+    if (!editableTextContentKeySet.has(key)) {
       continue;
     }
 

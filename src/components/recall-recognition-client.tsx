@@ -167,7 +167,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
   }
   return (
     <section className="panel screen-panel study-stage-panel recall-panel">
-      <div className="recall-prompt" dir="ltr" dangerouslySetInnerHTML={{ __html: prompt.promptHtml }} />
+      <EditableContentText
+        contentKey="appText.study.recall.promptTextStyle"
+        tag="div"
+        className="recall-prompt"
+        dir="ltr"
+        dangerouslySetInnerHTML={{ __html: prompt.promptHtml }}
+      />
 
       {step === "recall" ? (
         <section className="question-block">
