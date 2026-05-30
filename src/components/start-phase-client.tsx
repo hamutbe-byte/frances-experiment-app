@@ -86,7 +86,8 @@ interface QuestionnaireFormState {
 type PercentageField = "currentExposure" | "readingPreference" | "speakingPreference";
 
 const rankedSlotCount = 5;
-const languageProfileCount = 2;
+const initialLanguageProfileCount = 1;
+const maxLanguageProfileCount = 3;
 const languageOptionsListId = "questionnaire-language-options";
 
 function makeRankedLanguageList() {
@@ -139,6 +140,10 @@ function makeEmptyLanguageProfile(): LanguageProfileFormState {
     foreignAccent: "",
     nonNativeIdentificationByAccent: ""
   };
+}
+
+function isBlankLanguageProfile(profile: LanguageProfileFormState) {
+  return Object.values(profile).every((value) => value.trim() === "");
 }
 
 function parseOptionalNumber(value: string) {
@@ -262,7 +267,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
     hasLanguageDisability: false,
     hasLearningDisability: false,
     disabilityExplanation: "",
-    languageProfiles: Array.from({ length: languageProfileCount }, () => makeEmptyLanguageProfile())
+    languageProfiles: Array.from({ length: initialLanguageProfileCount }, () => makeEmptyLanguageProfile())
   });
 
   function updateField<Key extends keyof QuestionnaireFormState>(field: Key, value: QuestionnaireFormState[Key]) {
@@ -319,6 +324,36 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
           : profile
       )
     }));
+  }
+
+  function addLanguageProfile() {
+    setForm((current) => {
+      if (current.languageProfiles.length >= maxLanguageProfileCount) {
+        return current;
+      }
+
+      return {
+        ...current,
+        languageProfiles: [...current.languageProfiles, makeEmptyLanguageProfile()]
+      };
+    });
+  }
+
+  function removeLanguageProfile(index: number) {
+    if (index === 0) {
+      return;
+    }
+
+    setForm((current) => {
+      if (current.languageProfiles.length <= 1) {
+        return current;
+      }
+
+      return {
+        ...current,
+        languageProfiles: current.languageProfiles.filter((_, profileIndex) => profileIndex !== index)
+      };
+    });
   }
 
   function validatePercentageGroup(entries: PercentageEntryFormState[], label: string) {
@@ -401,7 +436,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
       hasLanguageDisability: form.hasLanguageDisability,
       hasLearningDisability: form.hasLearningDisability,
       disabilityExplanation: form.disabilityExplanation.trim(),
-      languageProfiles: form.languageProfiles.map((profile) => ({
+      languageProfiles: form.languageProfiles.filter((profile) => !isBlankLanguageProfile(profile)).map((profile) => ({
         language: profile.language.trim(),
         languageStatus: profile.languageStatus,
         ageBeganAcquiring: parseOptionalNumber(profile.ageBeganAcquiring),
@@ -788,16 +823,30 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         const exposurePrompt = questionnaireText.languageSection.exposurePrompt.replace("{language}", languageName);
         const foreignAccentPrompt = questionnaireText.languageSection.foreignAccent.replace("{language}", languageName);
         const nonNativeIdentificationPrompt = questionnaireText.languageSection.nonNativeIdentification.replace("{language}", languageName);
+        const isLastProfile = index === form.languageProfiles.length - 1;
 
         return (
           <section key={`language-profile-${index}`} className="form-section">
             <div className="questionnaire-language-header">
-              <EditableQuestionnaireText contentKey="questionnaireText.languageSection.profileHeading" tag="h2">
-                {profileHeading}
-              </EditableQuestionnaireText>
-              <EditableQuestionnaireText contentKey="questionnaireText.languageSection.profileIntro" tag="p">
-                {questionnaireText.languageSection.profileIntro}
-              </EditableQuestionnaireText>
+              <div className="questionnaire-language-heading">
+                <EditableQuestionnaireText contentKey="questionnaireText.languageSection.profileHeading" tag="h2">
+                  {profileHeading}
+                </EditableQuestionnaireText>
+                <EditableQuestionnaireText contentKey="questionnaireText.languageSection.profileIntro" tag="p">
+                  {questionnaireText.languageSection.profileIntro}
+                </EditableQuestionnaireText>
+              </div>
+              {index > 0 ? (
+                <button
+                  type="button"
+                  className="button button-secondary questionnaire-language-action questionnaire-language-remove"
+                  onClick={() => removeLanguageProfile(index)}
+                >
+                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.removeLanguageButton">
+                    {questionnaireText.languageSection.removeLanguageButton}
+                  </EditableQuestionnaireText>
+                </button>
+              ) : null}
             </div>
 
             <div className="form-grid form-grid-two">
@@ -1210,6 +1259,20 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                 options={questionnaireText.scales.frequency}
               />
             </label>
+
+            {isLastProfile && form.languageProfiles.length < maxLanguageProfileCount ? (
+              <div className="questionnaire-language-actions">
+                <button
+                  type="button"
+                  className="button button-secondary questionnaire-language-action questionnaire-language-add"
+                  onClick={addLanguageProfile}
+                >
+                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.addLanguageButton">
+                    {questionnaireText.languageSection.addLanguageButton}
+                  </EditableQuestionnaireText>
+                </button>
+              </div>
+            ) : null}
           </section>
         );
       })}

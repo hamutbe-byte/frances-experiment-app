@@ -41,7 +41,7 @@ import {
 } from "@/lib/store";
 import { getAllNvltLevels, getConfiguredNvltLevelIds } from "@/lib/nvlt";
 import { getStudyOrThrow } from "@/lib/study";
-import type { ParticipantQuestionnaireInput, ParticipantSession } from "@/lib/types";
+import type { ParticipantLanguageProfileInput, ParticipantQuestionnaireInput, ParticipantSession } from "@/lib/types";
 
 function log(message: string) {
   process.stdout.write(`${message}\n`);
@@ -140,6 +140,40 @@ function sampleQuestionnaire(): ParticipantQuestionnaireInput {
         nonNativeIdentificationByAccent: 0
       }
     ]
+  };
+}
+
+function makeBlankLanguageProfile(): ParticipantLanguageProfileInput {
+  return {
+    language: "",
+    languageStatus: "",
+    ageBeganAcquiring: null,
+    ageBecameFluent: null,
+    ageBeganReading: null,
+    ageBecameFluentReading: null,
+    countryYears: null,
+    countryMonths: null,
+    familyYears: null,
+    familyMonths: null,
+    schoolWorkYears: null,
+    schoolWorkMonths: null,
+    speakingProficiency: null,
+    understandingSpokenLanguageProficiency: null,
+    readingProficiency: null,
+    learningByFriends: null,
+    learningByFamily: null,
+    learningByReading: null,
+    learningByLanguageTapesSelfInstruction: null,
+    learningByWatchingTv: null,
+    learningByListeningToRadio: null,
+    exposureToFriends: null,
+    exposureToFamily: null,
+    exposureToWatchingTv: null,
+    exposureToRadioMusic: null,
+    exposureToReading: null,
+    exposureToLanguageLabSelfInstruction: null,
+    foreignAccent: null,
+    nonNativeIdentificationByAccent: null
   };
 }
 
@@ -356,6 +390,23 @@ async function main() {
     assert.equal(bundle?.questionnaire?.gender, "female");
     assert.deepEqual(bundle?.questionnaire?.languagesByDominance.slice(0, 2), ["עברית", "אנגלית"]);
     assert.equal(bundle?.questionnaire?.currentExposure[0]?.percentage, "70%");
+    assert.equal(bundle?.questionnaire?.languageProfiles[0]?.language, "עברית");
+  });
+
+  await run("session creation skips blank extra language profiles", () => {
+    setIsolatedStoreDir("questionnaire-language-profiles");
+    const questionnaire = sampleQuestionnaire();
+    const created = createSession({
+      studySlug: "frances-2020",
+      device: sampleDevice(),
+      questionnaire: {
+        ...questionnaire,
+        languageProfiles: [questionnaire.languageProfiles[0], makeBlankLanguageProfile(), makeBlankLanguageProfile()]
+      }
+    });
+    const bundle = getSessionBundle(created.session.id);
+
+    assert.equal(bundle?.questionnaire?.languageProfiles.length, 1);
     assert.equal(bundle?.questionnaire?.languageProfiles[0]?.language, "עברית");
   });
 

@@ -206,6 +206,8 @@ export const questionnaireText = {
   languageSection: {
     profileHeading: "פרטי שפה {number}",
     profileIntro: "בחלק זה יש למלא את כל השאלות עבור שפה אחת.",
+    addLanguageButton: "הוספת שפה נוספת",
+    removeLanguageButton: "הסרת שפה",
     heading: "השפה שעליה מתייחס חלק זה",
     statusLabel: "מעמד השפה עבורי",
     knowledgePrefix: "כל השאלות הבאות מתייחסות לידע ולניסיון שלך ב־",

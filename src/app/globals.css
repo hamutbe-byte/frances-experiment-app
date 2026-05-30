@@ -298,8 +298,26 @@ select {
 }
 
 .questionnaire-language-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.questionnaire-language-heading {
   display: grid;
   gap: 6px;
+  min-width: 0;
+}
+
+.questionnaire-language-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+.questionnaire-language-action {
+  white-space: nowrap;
 }
 
 .questionnaire-language-header h2,

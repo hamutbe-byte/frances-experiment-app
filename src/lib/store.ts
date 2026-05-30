@@ -241,7 +241,7 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
     hasLanguageDisability: normaliseBoolean(input.hasLanguageDisability),
     hasLearningDisability: normaliseBoolean(input.hasLearningDisability),
     disabilityExplanation: normaliseText(input.disabilityExplanation),
-    languageProfiles: (input.languageProfiles ?? []).map(normaliseLanguageProfile),
+    languageProfiles: (input.languageProfiles ?? []).map(normaliseLanguageProfile).filter(hasLanguageProfileContent),
     submittedAt: nowIso()
   };
 
