@@ -871,7 +871,16 @@ select {
 }
 
 .recall-panel .instruction-english {
-  margin-bottom: 10px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.recall-page-subtitle-label {
+  font-size: clamp(0.86rem, 1vw, 0.98rem);
+  line-height: 1.45;
+}
+
+.recall-page-subtitle-english {
   font-size: 0.84rem;
   line-height: 1.4;
 }
@@ -976,6 +985,15 @@ select {
   text-transform: none;
   letter-spacing: normal;
   text-align: left;
+}
+
+.instruction-bilingual {
+  display: grid;
+  gap: 10px;
+}
+
+.instruction-bilingual .instruction-english {
+  margin-bottom: 0;
 }
 
 .question-text {

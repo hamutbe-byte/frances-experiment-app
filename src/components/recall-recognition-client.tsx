@@ -177,14 +177,6 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
 
       {step === "recall" ? (
         <section className="question-block">
-          <label className="question-label instruction-bilingual" htmlFor="recall-answer">
-            <BilingualInstructionText
-              labelContentKey="instructionText.study.recall.recallInputLabel"
-              englishContentKey="instructionText.study.recall.recallInputLabelEnglish"
-              label={instructionText.study.recall.recallInputLabel}
-              english={instructionText.study.recall.recallInputLabelEnglish}
-            />
-          </label>
           <input
             id="recall-answer"
             className="text-input"
@@ -221,14 +213,6 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
         </section>
       ) : (
         <section className="question-block">
-          <div className="question-label instruction-bilingual">
-            <BilingualInstructionText
-              labelContentKey="instructionText.study.recall.recognitionLabel"
-              englishContentKey="instructionText.study.recall.recognitionLabelEnglish"
-              label={instructionText.study.recall.recognitionLabel}
-              english={instructionText.study.recall.recognitionLabelEnglish}
-            />
-          </div>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (
               <button
