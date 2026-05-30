@@ -136,12 +136,7 @@ export function NvltTestClient({ levels }: NvltTestClientProps) {
             </div>
 
             <div className="actions nvlt-page-controls nvlt-example-actions">
-              <button type="button" className="button button-secondary" disabled>
-                <EditableContentText contentKey="appText.nvlt.previousButton" tag="span">
-                  {appText.nvlt.previousButton}
-                </EditableContentText>
-              </button>
-              <button type="button" className="button" onClick={() => setQuestionIndex(0)}>
+              <button type="button" className="button button-secondary" onClick={() => setQuestionIndex(0)}>
                 <EditableContentText contentKey="appText.nvlt.nextButton" tag="span">
                   {appText.nvlt.nextButton}
                 </EditableContentText>

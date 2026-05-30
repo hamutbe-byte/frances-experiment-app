@@ -721,28 +721,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         </label>
 
         <div className="form-field">
-          <QuestionnairePromptText contentKey="questionnaireText.prompts.englishCourseLevel">
-            {questionnaireText.prompts.englishCourseLevel}
-          </QuestionnairePromptText>
-          <div className="questionnaire-choice-grid">
-            {questionnaireText.englishCourseLevelOptions.map((option, optionIndex) => (
-              <label key={option.value} className="questionnaire-choice">
-                <input
-                  type="radio"
-                  name="english-course-level"
-                  value={option.value}
-                  checked={form.englishCourseLevel === option.value}
-                  onChange={(event) => updateField("englishCourseLevel", event.target.value)}
-                />
-                <EditableQuestionnaireText contentKey={`questionnaireText.englishCourseLevelOptions.${optionIndex}.label`}>
-                  {option.label}
-                </EditableQuestionnaireText>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="form-field">
           <EditableQuestionnaireText contentKey="questionnaireText.prompts.highestEducation">
             {questionnaireText.prompts.highestEducation}
           </EditableQuestionnaireText>
@@ -777,6 +755,28 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             />
           </label>
         ) : null}
+
+        <div className="form-field">
+          <QuestionnairePromptText contentKey="questionnaireText.prompts.englishCourseLevel">
+            {questionnaireText.prompts.englishCourseLevel}
+          </QuestionnairePromptText>
+          <div className="questionnaire-choice-grid">
+            {questionnaireText.englishCourseLevelOptions.map((option, optionIndex) => (
+              <label key={option.value} className="questionnaire-choice">
+                <input
+                  type="radio"
+                  name="english-course-level"
+                  value={option.value}
+                  checked={form.englishCourseLevel === option.value}
+                  onChange={(event) => updateField("englishCourseLevel", event.target.value)}
+                />
+                <EditableQuestionnaireText contentKey={`questionnaireText.englishCourseLevelOptions.${optionIndex}.label`}>
+                  {option.label}
+                </EditableQuestionnaireText>
+              </label>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="form-section">
