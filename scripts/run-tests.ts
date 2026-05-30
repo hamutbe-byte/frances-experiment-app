@@ -1193,6 +1193,7 @@ async function main() {
 
     assert.equal(validationMessage, "UI value cannot be empty for fontSizes.nvltPromptText.");
     assert.equal(getDefaultEditableUiValue("fontSizes.nvltPromptText"), "clamp(1.45rem, 2vw, 2.1rem)");
+    assert.equal(getDefaultEditableUiValue("fontSizes.questionnairePrompt"), "1.05rem");
   });
 
   await run("UI overrides update NVLT font sizes from one place", async () => {
@@ -1218,6 +1219,7 @@ async function main() {
     assert.equal(getResolvedUiSnapshot().fontSizes.nvltPromptText, "2rem");
     const uiCssVariables = getUiCssVariables(payload.uiSnapshot) as Record<string, string>;
     assert.equal(uiCssVariables["--font-size-nvlt-prompt-text"], "2rem");
+    assert.equal(uiCssVariables["--font-size-questionnaire-prompt"], "1.05rem");
   });
 
   await run("matching typography defaults are compact", () => {
