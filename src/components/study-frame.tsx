@@ -1,22 +1,33 @@
 import { Suspense, type ReactNode } from "react";
 
 import { DevToolbar } from "@/components/dev-toolbar";
+import { EditableContentText } from "@/components/editable-content-text";
 import { InlineContentEditor } from "@/components/inline-content-editor";
 import { StudySessionBootstrap } from "@/components/study-session-bootstrap";
-import type { EditableContentScreen } from "@/lib/types";
+import type { EditableContentKey, EditableContentScreen } from "@/lib/types";
 
 interface StudyFrameProps {
   eyebrow?: string;
   title?: string;
   description?: string;
+  descriptionNode?: ReactNode;
   studySlug?: string;
   screen?: EditableContentScreen;
   dir?: "ltr" | "rtl";
   children: ReactNode;
 }
 
-export function StudyFrame({ eyebrow, title, description, studySlug, screen, dir = "ltr", children }: StudyFrameProps) {
-  const hasHeroContent = Boolean(eyebrow || title || description);
+export function StudyFrame({
+  eyebrow,
+  title,
+  description,
+  descriptionNode,
+  studySlug,
+  screen,
+  dir = "ltr",
+  children
+}: StudyFrameProps) {
+  const hasHeroContent = Boolean(eyebrow || title || description || descriptionNode);
 
   return (
     <main className="page-shell" dir={dir}>
@@ -36,7 +47,7 @@ export function StudyFrame({ eyebrow, title, description, studySlug, screen, dir
           <section className="hero">
             {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}
             {title ? <h1>{title}</h1> : null}
-            {description ? <p>{description}</p> : null}
+            {descriptionNode ?? (description ? <p>{description}</p> : null)}
           </section>
         ) : null}
         {children}

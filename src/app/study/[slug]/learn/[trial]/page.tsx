@@ -1,4 +1,5 @@
 import { LearningTrialClient } from "@/components/learning-trial-client";
+import { EditableContentText } from "@/components/editable-content-text";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 import { getResolvedContentSnapshot } from "@/lib/content-server";
@@ -18,7 +19,11 @@ export default async function LearningTrialPage({ params }: Props) {
 
   return (
     <StudyFrame
-      description={appText.study.learning.subtitle}
+      descriptionNode={
+        <EditableContentText contentKey="appText.study.learning.subtitle" tag="p" className="study-hero-description">
+          {appText.study.learning.subtitle}
+        </EditableContentText>
+      }
       studySlug={study.slug}
       screen="learning"
       dir="rtl"
