@@ -98,6 +98,7 @@ function sampleQuestionnaire(): ParticipantQuestionnaireInput {
       { culture: "", identificationLevel: null }
     ],
     yearsOfEducation: 16,
+    englishCourseLevel: "טרום בסיסי א",
     educationLevel: "college",
     educationLevelOther: "",
     usaImmigrationDate: "",
@@ -775,6 +776,7 @@ async function main() {
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.equal(payload.session.studySlug, "frances-2020");
+    assert.equal(getSessionBundle(payload.session.id)?.questionnaire?.englishCourseLevel, "טרום בסיסי א");
     assert.match(payload.nextPath, /learn\/1\?session=/);
     assert.equal(getSessionBundle(payload.session.id)?.questionnaire?.gender, "female");
   });

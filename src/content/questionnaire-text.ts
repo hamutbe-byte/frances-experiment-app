@@ -90,6 +90,8 @@ export const questionnaireText = {
     cultures:
       "(6) נא לציין את התרבויות שאיתן אתם מזדהים. בסולם שבין אפס לעשר, נא לדרג עד כמה אתם מזדהים עם כל תרבות. (דוגמאות לתרבויות אפשריות: אמריקאית, סינית, יהודית-אורתודוקסית וכו'):",
     yearsOfEducation: "(7) כמה שנות השכלה פורמלית יש לכם?",
+    englishCourseLevel:
+      "נא ציינו את רמת קורס האנגלית הנוכחית שלך במוסד הלימודים:",
     highestEducation:
       "נא לסמן את רמת ההשכלה הגבוהה ביותר שלכם (או את המקבילה המשוערת בארה\"ב לתואר שהושג במדינה אחרת):",
     otherEducationSpecify: "נא לציין:",
@@ -122,6 +124,10 @@ export const questionnaireText = {
     { value: "masters", label: "תואר שני" },
     { value: "phd_md_jd", label: "Ph.D./M.D./J.D." },
     { value: "other", label: "אחר" }
+  ],
+  englishCourseLevelOptions: [
+    { value: "pre_basic_a", label: "טרום בסיסי א" },
+    { value: "advanced_b", label: "מתקדמים ב" }
   ],
   disabilityOptions: [
     { key: "hasVisionProblem", label: "בעיית ראייה" },
@@ -191,16 +197,16 @@ export const questionnaireText = {
     ]),
     accent: makeScaleOptions([
       ["0", "0 - אין בכלל"],
-      ["1", "1 - כמעט אין"],
-      ["2", "2 - קל מאוד"],
-      ["3", "3 - קל"],
-      ["4", "4 - מסוים"],
+      ["1", "1"],
+      ["2", "2"],
+      ["3", "3"],
+      ["4", "4"],
       ["5", "5 - בינוני"],
-      ["6", "6 - ניכר"],
-      ["7", "7 - כבד"],
-      ["8", "8 - כבד מאוד"],
-      ["9", "9 - כבד ביותר"],
-      ["10", "10 - נוכח מאוד"]
+      ["6", "6"],
+      ["7", "7"],
+      ["8", "8"],
+      ["9", "9"],
+      ["10", "10 - כבד מאוד"]
     ])
   },
   languageSection: {

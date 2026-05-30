@@ -232,6 +232,7 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
     speakingPreference: (input.speakingPreference ?? []).map(normalisePercentageEntry),
     cultures: (input.cultures ?? []).map(normaliseCultureEntry),
     yearsOfEducation: normaliseNumber(input.yearsOfEducation),
+    englishCourseLevel: normaliseText(input.englishCourseLevel),
     educationLevel: normaliseText(input.educationLevel),
     educationLevelOther: normaliseText(input.educationLevelOther),
     usaImmigrationDate: normaliseText(input.usaImmigrationDate),
@@ -259,6 +260,7 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
       questionnaire.speakingPreference.some((entry) => entry.language || entry.percentage) ||
       questionnaire.cultures.some((entry) => entry.culture || entry.identificationLevel !== null) ||
       questionnaire.yearsOfEducation !== null ||
+      questionnaire.englishCourseLevel ||
       questionnaire.educationLevel ||
       questionnaire.educationLevelOther ||
       questionnaire.usaImmigrationDate ||

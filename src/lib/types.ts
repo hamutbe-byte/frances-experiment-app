@@ -149,6 +149,7 @@ export interface ParticipantQuestionnaireInput {
   speakingPreference: QuestionnairePercentageEntryInput[];
   cultures: QuestionnaireCultureEntryInput[];
   yearsOfEducation: number | null;
+  englishCourseLevel: string;
   educationLevel: string;
   educationLevelOther: string;
   usaImmigrationDate: string;

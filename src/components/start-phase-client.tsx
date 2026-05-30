@@ -72,6 +72,7 @@ interface QuestionnaireFormState {
   speakingPreference: PercentageEntryFormState[];
   cultures: CultureEntryFormState[];
   yearsOfEducation: string;
+  englishCourseLevel: string;
   educationLevel: string;
   educationLevelOther: string;
   usaImmigrationDate: string;
@@ -259,6 +260,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
     speakingPreference: makePercentageEntries(),
     cultures: makeCultureEntries(),
     yearsOfEducation: "",
+    englishCourseLevel: "",
     educationLevel: "",
     educationLevelOther: "",
     usaImmigrationDate: "",
@@ -428,6 +430,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         identificationLevel: parseOptionalNumber(entry.identificationLevel)
       })),
       yearsOfEducation: parseOptionalNumber(form.yearsOfEducation),
+      englishCourseLevel: form.englishCourseLevel,
       educationLevel: form.educationLevel,
       educationLevelOther: form.educationLevelOther.trim(),
       usaImmigrationDate: form.usaImmigrationDate.trim(),
@@ -716,6 +719,28 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             onChange={(event) => updateField("yearsOfEducation", event.target.value)}
           />
         </label>
+
+        <div className="form-field">
+          <QuestionnairePromptText contentKey="questionnaireText.prompts.englishCourseLevel">
+            {questionnaireText.prompts.englishCourseLevel}
+          </QuestionnairePromptText>
+          <div className="questionnaire-choice-grid">
+            {questionnaireText.englishCourseLevelOptions.map((option, optionIndex) => (
+              <label key={option.value} className="questionnaire-choice">
+                <input
+                  type="radio"
+                  name="english-course-level"
+                  value={option.value}
+                  checked={form.englishCourseLevel === option.value}
+                  onChange={(event) => updateField("englishCourseLevel", event.target.value)}
+                />
+                <EditableQuestionnaireText contentKey={`questionnaireText.englishCourseLevelOptions.${optionIndex}.label`}>
+                  {option.label}
+                </EditableQuestionnaireText>
+              </label>
+            ))}
+          </div>
+        </div>
 
         <div className="form-field">
           <EditableQuestionnaireText contentKey="questionnaireText.prompts.highestEducation">

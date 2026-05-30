@@ -186,6 +186,10 @@ export default async function AdminSessionDetailPage({ params }: Props) {
                     <td>{bundle.questionnaire.yearsOfEducation ?? "—"}</td>
                   </tr>
                   <tr>
+                    <th>English course level</th>
+                    <td>{bundle.questionnaire.englishCourseLevel || "—"}</td>
+                  </tr>
+                  <tr>
                     <th>Education other</th>
                     <td>{bundle.questionnaire.educationLevelOther || "—"}</td>
                   </tr>
