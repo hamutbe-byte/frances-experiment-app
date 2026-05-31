@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { appendQueryParams, buildStudyPath, buildStudyPathWithSession, getResolvedStudySessionId } from "@/lib/session-client";
 
-const devToolsEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === "true";
+const devToolsEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS?.trim() === "true";
 
 interface DevToolbarProps {
   studySlug: string;

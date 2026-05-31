@@ -16,7 +16,7 @@ export function getStudyOrThrow(slug: string): StudyData {
 }
 
 export function getDefaultStudySlug(): string {
-  return process.env.NEXT_PUBLIC_DEFAULT_STUDY_SLUG ?? study.slug;
+  return process.env.NEXT_PUBLIC_DEFAULT_STUDY_SLUG?.trim() || study.slug;
 }
 
 export function getVersionOrThrow(studySlug: string, versionId: string) {

@@ -6,7 +6,7 @@ import { getDeviceSnapshot } from "@/lib/browser";
 import { sendTelemetryRequest } from "@/lib/session-client";
 import type { ClientEvent, SessionStage } from "@/lib/types";
 
-const telemetryEnabled = process.env.NEXT_PUBLIC_ENABLE_TELEMETRY === "true";
+const telemetryEnabled = process.env.NEXT_PUBLIC_ENABLE_TELEMETRY?.trim() === "true";
 
 export function useStageTelemetry(sessionId: string | null, stage: SessionStage) {
   const latestRef = useRef({

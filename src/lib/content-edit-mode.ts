@@ -1,6 +1,6 @@
 export const contentEditModeKey = "content-editor-enabled";
 
-const envEnabled = process.env.NEXT_PUBLIC_CONTENT_EDITOR_ENABLED === "true";
+const envEnabled = process.env.NEXT_PUBLIC_CONTENT_EDITOR_ENABLED?.trim() === "true";
 
 export function isContentEditModeEnabled(storage?: Pick<Storage, "getItem"> | null) {
   const storedValue = storage?.getItem(contentEditModeKey);

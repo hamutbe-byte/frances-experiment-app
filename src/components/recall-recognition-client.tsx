@@ -19,7 +19,7 @@ interface RecallRecognitionClientProps {
 
 type Step = "recall" | "recognition";
 
-const telemetryEnabled = process.env.NEXT_PUBLIC_ENABLE_TELEMETRY === "true";
+const telemetryEnabled = process.env.NEXT_PUBLIC_ENABLE_TELEMETRY?.trim() === "true";
 
 export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecognitionClientProps) {
   const router = useRouter();
