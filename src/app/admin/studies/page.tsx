@@ -5,9 +5,9 @@ import { getStudyOrThrow } from "@/lib/study";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminStudiesPage() {
+export default async function AdminStudiesPage() {
   const study = getStudyOrThrow("frances-2020");
-  const bundles = listSessionBundles();
+  const bundles = await listSessionBundles();
   const versionCounts = study.versions.map((version) => ({
     version,
     count: bundles.filter((bundle) => bundle.session.versionId === version.id).length
@@ -19,7 +19,7 @@ export default function AdminStudiesPage() {
         <section className="hero">
           <span className="eyebrow">Admin</span>
           <h1>Study Overview</h1>
-          <p>Monitor local sessions, version balance, and available export files.</p>
+          <p>Monitor participant sessions, version balance, and available export files.</p>
         </section>
 
         <section className="panel admin-panel">

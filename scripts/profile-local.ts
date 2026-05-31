@@ -36,6 +36,13 @@ function time<T>(samples: TimedSample[], label: string, fn: () => T) {
   return result;
 }
 
+async function timeAsync<T>(samples: TimedSample[], label: string, fn: () => T | Promise<T>) {
+  const startedAt = performance.now();
+  const result = await fn();
+  samples.push({ label, durationMs: performance.now() - startedAt });
+  return result;
+}
+
 function fakeDevice(index: number): CreateSessionInput["device"] {
   return {
     userAgent: `profile-local/${index}`,
@@ -68,7 +75,7 @@ async function main() {
     __resetStoreForTests();
 
     for (let index = 0; index < sessionCount; index += 1) {
-      const created = time(samples, "createSession", () =>
+      const created = await timeAsync(samples, "createSession", () =>
         createSession({
           studySlug: "frances-2020",
           device: fakeDevice(index)
@@ -78,11 +85,11 @@ async function main() {
     }
 
     for (const sessionId of sessionIds) {
-      time(samples, "getSessionBundle", () => getSessionBundle(sessionId));
+      await timeAsync(samples, "getSessionBundle", () => getSessionBundle(sessionId));
 
       for (let trialIndex = 1; trialIndex <= responsesPerSession; trialIndex += 1) {
         const answer: YesNoAnswer = trialIndex % 2 === 0 ? "yes" : "no";
-        time(samples, "saveComprehensionResponse", () =>
+        await timeAsync(samples, "saveComprehensionResponse", () =>
           saveComprehensionResponse(sessionId, {
             trialIndex,
             answer,

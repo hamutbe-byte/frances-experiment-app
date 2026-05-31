@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getSessionBundle } from "@/lib/store";
+import type { SessionBundle } from "@/lib/types";
 
 interface Props {
   params: Promise<{
@@ -28,7 +29,7 @@ function formatCultures(items: Array<{ culture: string; identificationLevel: num
   return values.length > 0 ? values.join(" | ") : "—";
 }
 
-function formatDisabilities(questionnaire: NonNullable<ReturnType<typeof getSessionBundle>>["questionnaire"]) {
+function formatDisabilities(questionnaire: SessionBundle["questionnaire"]) {
   if (!questionnaire) {
     return "—";
   }
@@ -45,7 +46,7 @@ function formatDisabilities(questionnaire: NonNullable<ReturnType<typeof getSess
 
 export default async function AdminSessionDetailPage({ params }: Props) {
   const { id } = await params;
-  const bundle = getSessionBundle(id);
+  const bundle = await getSessionBundle(id);
   if (!bundle) {
     notFound();
   }

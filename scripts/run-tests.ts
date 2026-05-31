@@ -43,6 +43,8 @@ import { getAllNvltLevels, getConfiguredNvltLevelIds } from "@/lib/nvlt";
 import { getStudyOrThrow } from "@/lib/study";
 import type { ParticipantLanguageProfileInput, ParticipantQuestionnaireInput, ParticipantSession } from "@/lib/types";
 
+process.env.FRANCES_STORAGE_MODE ??= "local";
+
 function log(message: string) {
   process.stdout.write(`${message}\n`);
 }

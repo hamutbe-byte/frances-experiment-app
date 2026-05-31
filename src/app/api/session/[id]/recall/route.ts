@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: Params) {
       pasteCount: number;
     };
 
-    const result = saveRecallResponse(id, body);
+    const result = await saveRecallResponse(id, body);
     return NextResponse.json({
       response: result.response
     });

@@ -17,7 +17,7 @@ export async function POST(request: Request, { params }: Params) {
       responseTimeMs: number;
     };
 
-    const result = saveRecognitionResponse(id, body);
+    const result = await saveRecognitionResponse(id, body);
     return NextResponse.json({
       nextPromptIndex: result.nextPromptIndex,
       completed: result.completed

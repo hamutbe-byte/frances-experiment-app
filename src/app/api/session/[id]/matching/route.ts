@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: Params) {
       responseTimeMs: number;
     };
 
-    const result = saveMatchingResponse(id, body);
+    const result = await saveMatchingResponse(id, body);
     return NextResponse.json({
       nextTrialIndex: result.nextTrialIndex,
       completed: result.completed

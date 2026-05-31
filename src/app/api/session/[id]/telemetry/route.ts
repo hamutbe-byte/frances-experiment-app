@@ -13,7 +13,7 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { id } = await params;
     const body = (await request.json()) as Omit<ClientEvent, "createdAt" | "sessionId">;
-    appendTelemetry(id, body);
+    await appendTelemetry(id, body);
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to save telemetry event.";

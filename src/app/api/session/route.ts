@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return new NextResponse("Invalid session payload.", { status: 400 });
     }
 
-    const result = createSession(body);
+    const result = await createSession(body);
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create session.";

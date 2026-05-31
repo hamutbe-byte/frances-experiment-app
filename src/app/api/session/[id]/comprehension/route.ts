@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: Params) {
       responseTimeMs: number;
     };
 
-    const result = saveComprehensionResponse(id, body);
+    const result = await saveComprehensionResponse(id, body);
 
     return NextResponse.json({
       nextTrialIndex: result.nextTrialIndex,

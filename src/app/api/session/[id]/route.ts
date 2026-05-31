@@ -12,7 +12,7 @@ interface Params {
 export async function GET(_: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const bundle = getSessionBundle(id);
+    const bundle = await getSessionBundle(id);
     if (!bundle) {
       return new NextResponse("Session not found", { status: 404 });
     }
@@ -28,7 +28,7 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { id } = await params;
     const body = (await request.json()) as { status: SessionStage };
-    const bundle = updateSessionStatus(id, body.status);
+    const bundle = await updateSessionStatus(id, body.status);
     return NextResponse.json(bundle);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update session.";

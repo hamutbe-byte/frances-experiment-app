@@ -4,8 +4,8 @@ import { listSessionBundles } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminSessionsPage() {
-  const bundles = listSessionBundles();
+export default async function AdminSessionsPage() {
+  const bundles = await listSessionBundles();
 
   return (
     <main className="page-shell admin-shell">
@@ -13,7 +13,7 @@ export default function AdminSessionsPage() {
         <section className="hero">
           <span className="eyebrow">Admin</span>
           <h1>Sessions</h1>
-          <p>Inspect participant progress and response counts from the local session store.</p>
+          <p>Inspect participant progress and response counts from the persisted session store.</p>
         </section>
 
         <section className="panel admin-panel">

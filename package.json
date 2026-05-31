@@ -10,6 +10,7 @@
     "extract:data": "tsx scripts/extract-frances-data.ts",
     "profile:http": "node scripts/profile-http.mjs",
     "profile:local": "tsx scripts/profile-local.ts",
+    "db:import": "tsx scripts/import-local-sessions.ts",
     "test": "tsx scripts/run-tests.ts",
     "test:watch": "tsx --watch scripts/run-tests.ts"
   },

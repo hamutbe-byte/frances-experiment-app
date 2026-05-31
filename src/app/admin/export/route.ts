@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import { bundlesToCsv, bundlesToResponsesCsv } from "@/lib/csv";
 import { listSessionBundles } from "@/lib/store";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const format = url.searchParams.get("format") ?? "json";
   const type = url.searchParams.get("type") ?? "summary";
-  const bundles = listSessionBundles();
+  const bundles = await listSessionBundles();
 
   if (format === "csv") {
     const body = type === "responses" ? bundlesToResponsesCsv(bundles) : bundlesToCsv(bundles);

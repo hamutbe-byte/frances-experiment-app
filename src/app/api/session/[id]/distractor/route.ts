@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: Params) {
       responseTimeMs: number;
     };
 
-    const result = saveDistractorResponse(id, body);
+    const result = await saveDistractorResponse(id, body);
     return NextResponse.json({
       correct: result.response.correct
     });
