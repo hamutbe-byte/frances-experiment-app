@@ -14,9 +14,10 @@ import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 interface LearningTrialClientProps {
   studySlug: string;
   trialIndex: number;
+  progressLabel: string;
 }
 
-export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClientProps) {
+export function LearningTrialClient({ studySlug, trialIndex, progressLabel }: LearningTrialClientProps) {
   const router = useRouter();
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
@@ -139,6 +140,10 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
           </button>
         </div>
       </section>
+
+      <EditableContentText contentKey="appText.study.learning.progressLabel" tag="p" className="study-progress study-progress-bottom">
+        {progressLabel}
+      </EditableContentText>
     </section>
   );
 }

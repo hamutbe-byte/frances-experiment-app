@@ -198,12 +198,6 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
 
   return (
     <section className="panel matching-panel screen-panel study-stage-panel">
-      <EditableContentText contentKey="appText.study.matching.progressLabel" tag="p" className="study-progress matching-progress">
-        {formatContent(appText.study.matching.progressLabel, {
-          current: currentTrialPosition,
-          total: study.matchingTrials.length
-        })}
-      </EditableContentText>
       <div className="matching-stimulus">
         <img src={trial.imagePath} alt="" className="matching-image" draggable={false} />
         <div className="matching-word" dir="ltr">
@@ -235,6 +229,13 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
           </button>
         </div>
       </section>
+
+      <EditableContentText contentKey="appText.study.matching.progressLabel" tag="p" className="study-progress study-progress-bottom matching-progress">
+        {formatContent(appText.study.matching.progressLabel, {
+          current: currentTrialPosition,
+          total: study.matchingTrials.length
+        })}
+      </EditableContentText>
     </section>
   );
 }

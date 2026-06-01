@@ -24,13 +24,6 @@ export default async function RecallPage({ params }: Props) {
     <StudyFrame
       descriptionNode={
         <div className="study-hero-stack">
-          <EditableContentText contentKey="appText.study.recall.progressLabel" tag="p" className="study-progress">
-            {formatContent(appText.study.recall.progressLabel, {
-              stepLabel: appText.study.pages.recallTitle,
-              current: Number(prompt),
-              total: study.recallPrompts.length
-            })}
-          </EditableContentText>
           <BilingualInstructionText
             labelContentKey="instructionText.study.recall.recallInputLabel"
             englishContentKey="instructionText.study.recall.recallInputLabelEnglish"
@@ -45,7 +38,15 @@ export default async function RecallPage({ params }: Props) {
       screen="recall"
       dir="rtl"
     >
-      <RecallRecognitionClient studySlug={study.slug} promptIndex={Number(prompt)} />
+      <RecallRecognitionClient
+        studySlug={study.slug}
+        promptIndex={Number(prompt)}
+        progressLabel={formatContent(appText.study.recall.progressLabel, {
+          stepLabel: appText.study.pages.recallTitle,
+          current: Number(prompt),
+          total: study.recallPrompts.length
+        })}
+      />
     </StudyFrame>
   );
 }

@@ -399,6 +399,17 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       </button>
 
       {inlineTarget ? (
+        <button
+          type="button"
+          className="content-inline-overlay"
+          aria-label="סגירת חלון העריכה"
+          onClick={() => {
+            void closeInlineTarget();
+          }}
+        />
+      ) : null}
+
+      {inlineTarget ? (
         <div
           ref={inlinePopoverRef}
           className="content-inline-popover"

@@ -23,12 +23,6 @@ export default async function LearningTrialPage({ params }: Props) {
     <StudyFrame
       descriptionNode={
         <div className="study-hero-stack">
-          <EditableContentText contentKey="appText.study.learning.progressLabel" tag="p" className="study-progress">
-            {formatContent(appText.study.learning.progressLabel, {
-              current: Number(trial),
-              total: learningTrialCount
-            })}
-          </EditableContentText>
           <EditableContentText contentKey="appText.study.learning.subtitle" tag="p" className="study-hero-description">
             {appText.study.learning.subtitle}
           </EditableContentText>
@@ -38,7 +32,14 @@ export default async function LearningTrialPage({ params }: Props) {
       screen="learning"
       dir="rtl"
     >
-      <LearningTrialClient studySlug={study.slug} trialIndex={Number(trial)} />
+      <LearningTrialClient
+        studySlug={study.slug}
+        trialIndex={Number(trial)}
+        progressLabel={formatContent(appText.study.learning.progressLabel, {
+          current: Number(trial),
+          total: learningTrialCount
+        })}
+      />
     </StudyFrame>
   );
 }

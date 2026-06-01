@@ -21,13 +21,14 @@ import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 interface RecallRecognitionClientProps {
   studySlug: string;
   promptIndex: number;
+  progressLabel: string;
 }
 
 type Step = "recall" | "recognition";
 
 const telemetryEnabled = process.env.NEXT_PUBLIC_ENABLE_TELEMETRY?.trim() === "true";
 
-export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecognitionClientProps) {
+export function RecallRecognitionClient({ studySlug, promptIndex, progressLabel }: RecallRecognitionClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { snapshot } = useResolvedContent();
@@ -292,6 +293,10 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
           </div>
         </section>
       )}
+
+      <EditableContentText contentKey="appText.study.recall.progressLabel" tag="p" className="study-progress study-progress-bottom">
+        {progressLabel}
+      </EditableContentText>
     </section>
   );
 }
