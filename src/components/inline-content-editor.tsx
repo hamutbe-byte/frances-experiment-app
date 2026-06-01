@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { getDefaultEditableUiValue, getEditableUiValue } from "@/content/ui-config";
@@ -120,6 +120,8 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
   const [isInlineSaving, setIsInlineSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inlineTarget, setInlineTarget] = useState<InlineEditorTarget | null>(null);
+  const inlinePopoverRef = useRef<HTMLDivElement | null>(null);
+  const isClosingInlineTargetRef = useRef(false);
 
   const screenFields = useMemo(() => fields.filter((field) => field.screen === screen), [fields, screen]);
   const screenUiFields = useMemo(
@@ -228,6 +230,29 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
       window.removeEventListener("dblclick", handleDoubleClick);
     };
   }, [isEnabled, screenFields, snapshot, styleOverrides]);
+
+  useEffect(() => {
+    if (!inlineTarget) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      const popover = inlinePopoverRef.current;
+
+      if (!(target instanceof Node) || !popover || popover.contains(target)) {
+        return;
+      }
+
+      void closeInlineTarget();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+    };
+  }, [inlineTarget]);
 
   if (!isEnabled || (screenFields.length === 0 && screenUiFields.length === 0)) {
     return null;
@@ -344,6 +369,20 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
     }
   }
 
+  async function closeInlineTarget() {
+    if (!inlineTarget || isClosingInlineTargetRef.current) {
+      return;
+    }
+
+    isClosingInlineTargetRef.current = true;
+
+    try {
+      await saveInlineTarget();
+    } finally {
+      isClosingInlineTargetRef.current = false;
+    }
+  }
+
   function exitEditMode() {
     disableContentEditMode(window.localStorage);
     window.dispatchEvent(new Event("content-editor-mode-change"));
@@ -352,6 +391,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
   }
 
   const inlineFontSize = inlineTarget ? parseInlineFontSize(inlineTarget.style.fontSize) : 1;
+
   return (
     <>
       <button type="button" className="content-editor-toggle" onClick={() => setIsOpen(true)}>
@@ -360,6 +400,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
 
       {inlineTarget ? (
         <div
+          ref={inlinePopoverRef}
           className="content-inline-popover"
           dir="rtl"
           tabIndex={-1}
@@ -375,7 +416,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
               return;
             }
 
-            void saveInlineTarget();
+            void closeInlineTarget();
           }}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
@@ -385,7 +426,7 @@ export function InlineContentEditor({ screen }: InlineContentEditorProps) {
 
             if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
               event.preventDefault();
-              void saveInlineTarget();
+              void closeInlineTarget();
             }
           }}
         >

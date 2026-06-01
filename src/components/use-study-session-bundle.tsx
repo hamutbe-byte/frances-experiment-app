@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { getResolvedStudySessionId, getSessionBundleRequest, updateSessionStatusRequest } from "@/lib/session-client";
+import {
+  getCachedSessionBundle,
+  getResolvedStudySessionId,
+  getSessionBundleRequest,
+  updateSessionStatusRequest
+} from "@/lib/session-client";
 import type { SessionBundle, SessionStage } from "@/lib/types";
 
 interface UseStudySessionBundleOptions {
@@ -42,30 +47,38 @@ export function useStudySessionBundle({
     }
 
     setSessionId(resolvedSessionId);
-    setIsResolvingSession(true);
+    const cachedBundle = getCachedSessionBundle<SessionBundle>(studySlug, resolvedSessionId);
     setError(null);
-    setBundle(null);
+    if (cachedBundle) {
+      setBundle(cachedBundle);
+      setIsResolvingSession(false);
+    } else {
+      setBundle(null);
+      setIsResolvingSession(true);
+    }
     let cancelled = false;
 
     void getSessionBundleRequest(resolvedSessionId)
       .then((result) => {
         if (!cancelled) {
           setBundle(result);
+          setIsResolvingSession(false);
         }
       })
       .catch((caughtError) => {
-        if (!cancelled) {
+        if (!cancelled && !cachedBundle) {
           setError(caughtError instanceof Error ? caughtError.message : loadErrorMessage);
+          setIsResolvingSession(false);
         }
       })
       .finally(() => {
-        if (!cancelled) {
+        if (!cancelled && cachedBundle) {
           setIsResolvingSession(false);
         }
       });
 
     void updateSessionStatusRequest(resolvedSessionId, stage).catch((caughtError) => {
-      if (!cancelled) {
+      if (!cancelled && !cachedBundle) {
         setError(caughtError instanceof Error ? caughtError.message : stageErrorMessage);
       }
     });

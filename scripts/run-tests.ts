@@ -739,8 +739,8 @@ async function main() {
     assert.match(toolbar, /NVLT/);
     assert.doesNotMatch(toolbar, /Home/);
     assert.doesNotMatch(toolbar, /Complete/);
-    assert.match(learning, /isDevJump/);
-    assert.match(learning, /alreadyAnswered && !isDevJump/);
+    assert.doesNotMatch(learning, /alreadyAnswered && !isDevJump/);
+    assert.doesNotMatch(learning, /router\.replace\(nextPath\)/);
     assert.match(recall, /isDevJump/);
     assert.match(recall, /recallDone && recognitionDone && !isDevJump/);
     assert.match(matching, /isDevJump/);

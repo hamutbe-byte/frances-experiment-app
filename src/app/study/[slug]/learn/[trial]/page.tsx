@@ -1,6 +1,7 @@
 import { LearningTrialClient } from "@/components/learning-trial-client";
 import { EditableContentText } from "@/components/editable-content-text";
 import { StudyFrame } from "@/components/study-frame";
+import { formatContent } from "@/lib/content";
 import { getStudyOrThrow } from "@/lib/study";
 import { getResolvedContentSnapshot } from "@/lib/content-server";
 
@@ -16,13 +17,22 @@ export default async function LearningTrialPage({ params }: Props) {
   const study = getStudyOrThrow(slug);
   const content = getResolvedContentSnapshot();
   const appText = content.appText as typeof import("@/content/app-text").appText;
+  const learningTrialCount = study.versions[0]?.learningTrials.length ?? 0;
 
   return (
     <StudyFrame
       descriptionNode={
-        <EditableContentText contentKey="appText.study.learning.subtitle" tag="p" className="study-hero-description">
-          {appText.study.learning.subtitle}
-        </EditableContentText>
+        <div className="study-hero-stack">
+          <EditableContentText contentKey="appText.study.learning.progressLabel" tag="p" className="study-progress">
+            {formatContent(appText.study.learning.progressLabel, {
+              current: Number(trial),
+              total: learningTrialCount
+            })}
+          </EditableContentText>
+          <EditableContentText contentKey="appText.study.learning.subtitle" tag="p" className="study-hero-description">
+            {appText.study.learning.subtitle}
+          </EditableContentText>
+        </div>
       }
       studySlug={study.slug}
       screen="learning"

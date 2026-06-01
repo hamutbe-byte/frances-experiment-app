@@ -90,6 +90,22 @@ select {
   line-height: 1.7;
 }
 
+.study-hero-stack {
+  display: grid;
+  gap: 8px;
+  width: min(720px, 100%);
+}
+
+.study-progress {
+  display: block;
+  margin: 0;
+  color: var(--accent-deep);
+  font-family: "Segoe UI", sans-serif;
+  font-size: var(--font-size-eyebrow);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .panel {
   position: relative;
   overflow: hidden;
@@ -895,6 +911,11 @@ select {
 
 .matching-panel {
   min-height: max(0px, calc(100dvh - 176px));
+}
+
+.matching-progress {
+  justify-self: start;
+  margin-bottom: 4px;
 }
 
 .matching-stimulus {

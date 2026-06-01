@@ -6,10 +6,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { BilingualInstructionText } from "@/components/bilingual-instruction-text";
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { buildStudyPathWithSession, sendTelemetryRequest, submitRecallRequest, submitRecognitionRequest } from "@/lib/session-client";
+import {
+  buildStudyPathWithSession,
+  sendTelemetryRequest,
+  submitRecallRequest,
+  submitRecognitionRequest,
+  updateCachedSessionBundle
+} from "@/lib/session-client";
 import { getRecallPromptOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
-import type { RecallPrompt } from "@/lib/types";
+import type { RecallPrompt, SessionBundle } from "@/lib/types";
 import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface RecallRecognitionClientProps {
@@ -108,46 +114,104 @@ export function RecallRecognitionClient({ studySlug, promptIndex }: RecallRecogn
       return;
     }
 
-    try {
-      setIsPending(true);
-      setError(null);
-      await submitRecallRequest(sessionId, {
-        promptIndex: actualPromptIndex,
-        text,
-        firstKeystrokeLatencyMs: firstKeyAt === null ? null : Math.max(1, Math.round(firstKeyAt - startedAt)),
-        totalResponseTimeMs: Math.max(1, Math.round(performance.now() - startedAt)),
-        editCount,
-        pasted: pasteCount > 0,
-        pasteCount
-      });
-      setStep("recognition");
-      setRecognitionStartedAt(performance.now());
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.saveRecallError);
-    } finally {
-      setIsPending(false);
-    }
+    setIsPending(true);
+    setError(null);
+    const submittedAt = new Date().toISOString();
+    const totalResponseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
+    updateCachedSessionBundle<SessionBundle>(studySlug, sessionId, (current) => {
+      if (current.recall.some((entry) => entry.promptIndex === actualPromptIndex)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        recall: [
+          ...current.recall,
+          {
+            sessionId,
+            promptIndex: actualPromptIndex,
+            pseudoword: prompt.pseudoword,
+            text: text.trim(),
+            firstKeystrokeLatencyMs: firstKeyAt === null ? null : Math.max(1, Math.round(firstKeyAt - startedAt)),
+            totalResponseTimeMs,
+            editCount,
+            isEmpty: text.trim().length === 0,
+            pasted: pasteCount > 0,
+            pasteCount,
+            submittedAt
+          }
+        ],
+        session: {
+          ...current.session,
+          status: "recall",
+          updatedAt: submittedAt
+        }
+      };
+    });
+
+    void submitRecallRequest(sessionId, {
+      promptIndex: actualPromptIndex,
+      text,
+      firstKeystrokeLatencyMs: firstKeyAt === null ? null : Math.max(1, Math.round(firstKeyAt - startedAt)),
+      totalResponseTimeMs,
+      editCount,
+      pasted: pasteCount > 0,
+      pasteCount
+    }).catch((caughtError) => {
+      console.error(caughtError);
+    });
+
+    setStep("recognition");
+    setRecognitionStartedAt(performance.now());
+    setIsPending(false);
   }
 
   async function submitRecognition(optionIndex: number) {
-    if (!sessionId || actualPromptIndex === null || recognitionStartedAt === null) {
+    if (!sessionId || actualPromptIndex === null || recognitionStartedAt === null || !prompt) {
       return;
     }
 
-    try {
-      setIsPending(true);
-      setError(null);
-      const responseTimeMs = Math.max(1, Math.round(performance.now() - recognitionStartedAt));
-      const result = await submitRecognitionRequest(sessionId, actualPromptIndex, optionIndex, responseTimeMs);
-      if (result.completed || promptIndex >= study.recallPrompts.length) {
-        router.push(buildStudyPathWithSession(studySlug, "matching", sessionId));
-        return;
+    setIsPending(true);
+    setError(null);
+    const responseTimeMs = Math.max(1, Math.round(performance.now() - recognitionStartedAt));
+    const completed = promptIndex >= study.recallPrompts.length;
+    const nextPath = completed
+      ? buildStudyPathWithSession(studySlug, "matching", sessionId)
+      : buildStudyPathWithSession(studySlug, `recall/${promptIndex + 1}`, sessionId);
+
+    updateCachedSessionBundle<SessionBundle>(studySlug, sessionId, (current) => {
+      if (current.recognition.some((entry) => entry.promptIndex === actualPromptIndex)) {
+        return current;
       }
-      router.push(buildStudyPathWithSession(studySlug, `recall/${promptIndex + 1}`, sessionId));
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : appText.study.recall.saveRecognitionError);
-      setIsPending(false);
-    }
+
+      return {
+        ...current,
+        recognition: [
+          ...current.recognition,
+          {
+            sessionId,
+            promptIndex: actualPromptIndex,
+            pseudoword: prompt.pseudoword,
+            selectedOptionIndex: optionIndex,
+            selectedOptionText: prompt.recognitionOptions[optionIndex]?.text ?? "",
+            correct: prompt.correctOptionIndex === optionIndex,
+            responseTimeMs,
+            answeredAt: new Date().toISOString()
+          }
+        ],
+        session: {
+          ...current.session,
+          status: completed ? "matching" : "recall",
+          updatedAt: new Date().toISOString()
+        }
+      };
+    });
+
+    void submitRecognitionRequest(sessionId, actualPromptIndex, optionIndex, responseTimeMs).catch((caughtError) => {
+      console.error(caughtError);
+    });
+
+    router.push(nextPath);
   }
 
   if (sessionError || error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
@@ -18,7 +18,6 @@ interface LearningTrialClientProps {
 
 export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { snapshot } = useResolvedContent();
   const appText = snapshot.appText as typeof import("@/content/app-text").appText;
   const instructionText = snapshot.instructionText as typeof import("@/content/instruction-text").instructionText;
@@ -40,22 +39,8 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
       return;
     }
 
-    const isDevJump = searchParams.get("devJump") === "1";
-    const alreadyAnswered = bundle.comprehension.some((entry) => entry.trialIndex === trialIndex);
-    if (alreadyAnswered && !isDevJump) {
-      const totalTrials = study.versions.find((version) => version.id === bundle.session.versionId)?.learningTrials.length ?? 30;
-      const nextPath =
-        trialIndex >= totalTrials
-          ? buildStudyPathWithSession(studySlug, "distractor", bundle.session.id)
-          : buildStudyPathWithSession(studySlug, `learn/${trialIndex + 1}`, bundle.session.id);
-      startTransition(() => {
-        router.replace(nextPath);
-      });
-      return;
-    }
-
     setStartedAt(performance.now());
-  }, [bundle, router, searchParams, study.versions, studySlug, trialIndex]);
+  }, [bundle]);
 
   useEffect(() => {
     if (!bundle) {
@@ -86,25 +71,22 @@ export function LearningTrialClient({ studySlug, trialIndex }: LearningTrialClie
   }, [bundle, studySlug, trialIndex]);
 
   async function submitAnswer(answer: YesNoAnswer) {
-    if (!sessionId || !trial || startedAt === null) {
+    if (!sessionId || !trial || startedAt === null || !bundle) {
       return;
     }
 
+    setIsPending(true);
+    setError(null);
+    const responseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
     try {
-      setIsPending(true);
-      setError(null);
-      const responseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
       const result = await submitComprehensionRequest(sessionId, trialIndex, answer, responseTimeMs);
 
-      if (result.completed) {
-        startTransition(() => {
-          router.push(buildStudyPathWithSession(studySlug, "distractor", sessionId));
-        });
-        return;
-      }
-
       startTransition(() => {
-        router.push(buildStudyPathWithSession(studySlug, `learn/${result.nextTrialIndex}`, sessionId));
+        router.push(
+          result.completed
+            ? buildStudyPathWithSession(studySlug, "distractor", sessionId)
+            : buildStudyPathWithSession(studySlug, `learn/${result.nextTrialIndex}`, sessionId)
+        );
       });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : appText.study.learning.saveError);

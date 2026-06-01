@@ -24,6 +24,60 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+const sessionBundleCachePrefix = "frances-session-bundle";
+
+function getBundleCacheKey(studySlug: string, sessionId: string) {
+  return `${sessionBundleCachePrefix}:${studySlug}:${sessionId}`;
+}
+
+function readCachedSessionBundle<T>(studySlug: string, sessionId: string) {
+  if (typeof window === "undefined") {
+    return null as T | null;
+  }
+
+  const raw = window.sessionStorage.getItem(getBundleCacheKey(studySlug, sessionId));
+  if (!raw) {
+    return null as T | null;
+  }
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null as T | null;
+  }
+}
+
+function writeCachedSessionBundle<T>(studySlug: string, sessionId: string, bundle: T) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(getBundleCacheKey(studySlug, sessionId), JSON.stringify(bundle));
+  } catch {
+    // Ignore cache write failures. The network path still works.
+  }
+}
+
+export function getCachedSessionBundle<T>(studySlug: string, sessionId: string) {
+  return readCachedSessionBundle<T>(studySlug, sessionId);
+}
+
+export function cacheSessionBundle<T>(studySlug: string, sessionId: string, bundle: T) {
+  writeCachedSessionBundle(studySlug, sessionId, bundle);
+}
+
+export function updateCachedSessionBundle<T>(studySlug: string, sessionId: string, updater: (bundle: T) => T) {
+  const current = readCachedSessionBundle<T>(studySlug, sessionId);
+  if (!current) {
+    return null;
+  }
+
+  const next = updater(current);
+  writeCachedSessionBundle(studySlug, sessionId, next);
+  return next;
+}
+
 export async function createSessionRequest(studySlug: string, device: DeviceSnapshot, questionnaire?: ParticipantQuestionnaireInput | null) {
   return readJson<CreateSessionResult>(
     await fetch("/api/session", {
@@ -37,11 +91,13 @@ export async function createSessionRequest(studySlug: string, device: DeviceSnap
 }
 
 export async function getSessionBundleRequest(sessionId: string) {
-  return readJson<SessionBundle>(await fetch(`/api/session/${sessionId}`, { cache: "no-store" }));
+  const bundle = await readJson<SessionBundle>(await fetch(`/api/session/${sessionId}`, { cache: "no-store" }));
+  cacheSessionBundle(bundle.session.studySlug, sessionId, bundle);
+  return bundle;
 }
 
 export async function updateSessionStatusRequest(sessionId: string, status: SessionStage) {
-  return readJson<SessionBundle>(
+  const bundle = await readJson<SessionBundle>(
     await fetch(`/api/session/${sessionId}`, {
       method: "POST",
       headers: {
@@ -50,6 +106,8 @@ export async function updateSessionStatusRequest(sessionId: string, status: Sess
       body: JSON.stringify({ status })
     })
   );
+  cacheSessionBundle(bundle.session.studySlug, sessionId, bundle);
+  return bundle;
 }
 
 export async function submitComprehensionRequest(

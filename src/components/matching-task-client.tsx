@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { BilingualInstructionText } from "@/components/bilingual-instruction-text";
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { buildStudyPathWithSession, submitMatchingRequest } from "@/lib/session-client";
+import { formatContent } from "@/lib/content";
+import { buildStudyPathWithSession, submitMatchingRequest, updateCachedSessionBundle } from "@/lib/session-client";
 import { getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
-import type { MatchingTrial } from "@/lib/types";
+import type { MatchingTrial, SessionBundle } from "@/lib/types";
 import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface MatchingTaskClientProps {
@@ -95,30 +96,58 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
       return;
     }
 
-    try {
-      setIsPending(true);
-      setError(null);
-      const responseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
-      const result = await submitMatchingRequest(sessionId, trial.trialIndex, answer, responseTimeMs);
-      if (result.completed) {
-        setTrial(null);
-        setStartedAt(null);
-        setIsFinished(true);
-        return;
+    setIsPending(true);
+    setError(null);
+    const responseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
+    const nextAnswered = new Set(answeredTrialIndexes);
+    nextAnswered.add(trial.trialIndex);
+    const nextTrial = firstUnansweredTrial(nextAnswered);
+    const completed = !nextTrial;
+
+    updateCachedSessionBundle<SessionBundle>(studySlug, sessionId, (current) => {
+      if (current.matching.some((entry) => entry.trialIndex === trial.trialIndex)) {
+        return current;
       }
 
-      setAnsweredTrialIndexes((current) => {
-        const next = new Set(current);
-        next.add(trial.trialIndex);
-        const nextTrial = firstUnansweredTrial(next);
-        showTrial(nextTrial);
-        return next;
-      });
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : appText.study.matching.saveError);
-    } finally {
+      return {
+        ...current,
+        matching: [
+          ...current.matching,
+          {
+            sessionId,
+            trialIndex: trial.trialIndex,
+            pictureId: trial.pictureId,
+            condition: trial.condition,
+            answer,
+            correct: trial.correctAnswer === answer,
+            responseTimeMs,
+            answeredAt: new Date().toISOString()
+          }
+        ],
+        session: {
+          ...current.session,
+          status: completed ? "complete" : "matching",
+          completedAt: completed ? new Date().toISOString() : current.session.completedAt,
+          updatedAt: new Date().toISOString()
+        }
+      };
+    });
+
+    void submitMatchingRequest(sessionId, trial.trialIndex, answer, responseTimeMs).catch((caughtError) => {
+      console.error(caughtError);
+    });
+
+    if (completed) {
+      setTrial(null);
+      setStartedAt(null);
+      setIsFinished(true);
       setIsPending(false);
+      return;
     }
+
+    setAnsweredTrialIndexes(nextAnswered);
+    showTrial(nextTrial);
+    setIsPending(false);
   }
 
   useEffect(() => {
@@ -165,8 +194,16 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     );
   }
 
+  const currentTrialPosition = Math.max(1, matchingOrder.indexOf(trial.trialIndex) + 1);
+
   return (
     <section className="panel matching-panel screen-panel study-stage-panel">
+      <EditableContentText contentKey="appText.study.matching.progressLabel" tag="p" className="study-progress matching-progress">
+        {formatContent(appText.study.matching.progressLabel, {
+          current: currentTrialPosition,
+          total: study.matchingTrials.length
+        })}
+      </EditableContentText>
       <div className="matching-stimulus">
         <img src={trial.imagePath} alt="" className="matching-image" draggable={false} />
         <div className="matching-word" dir="ltr">
