@@ -4,7 +4,14 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { getDeviceSnapshot } from "@/lib/browser";
-import { appendSessionToPath, createSessionRequest, getCurrentSessionId, saveCurrentSessionId } from "@/lib/session-client";
+import {
+  appendSessionToPath,
+  clearCurrentSessionId,
+  createSessionRequest,
+  getCurrentSessionId,
+  getSessionBundleRequest,
+  saveCurrentSessionId
+} from "@/lib/session-client";
 
 interface StudySessionBootstrapProps {
   studySlug: string;
@@ -21,6 +28,7 @@ export function StudySessionBootstrap({ studySlug }: StudySessionBootstrapProps)
       return;
     }
 
+    let cancelled = false;
     const currentSessionId = searchParams.get("session");
     const storedSessionId = getCurrentSessionId(studySlug);
     const currentPath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
@@ -35,12 +43,34 @@ export function StudySessionBootstrap({ studySlug }: StudySessionBootstrapProps)
 
     if (storedSessionId) {
       didBootstrapRef.current = true;
-      router.replace(appendSessionToPath(currentPath, storedSessionId));
+      void getSessionBundleRequest(storedSessionId)
+        .then(() => {
+          if (cancelled) {
+            return;
+          }
+
+          saveCurrentSessionId(studySlug, storedSessionId);
+          router.replace(appendSessionToPath(currentPath, storedSessionId));
+        })
+        .catch(() => {
+          clearCurrentSessionId(studySlug);
+          void createSessionRequest(studySlug, getDeviceSnapshot(), null)
+            .then((result) => {
+              if (cancelled) {
+                return;
+              }
+
+              saveCurrentSessionId(studySlug, result.session.id);
+              router.replace(appendSessionToPath(currentPath, result.session.id));
+            })
+            .catch(() => {
+              didBootstrapRef.current = false;
+            });
+        });
       return;
     }
 
     didBootstrapRef.current = true;
-    let cancelled = false;
 
     void createSessionRequest(studySlug, getDeviceSnapshot(), null)
       .then((result) => {

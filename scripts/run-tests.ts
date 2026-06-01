@@ -747,6 +747,17 @@ async function main() {
     assert.match(matching, /trialByIndex\(order\[0\]\)/);
   });
 
+  await run("stale session ids are cleared and recreated instead of surfacing a missing-session error", () => {
+    const bootstrap = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "study-session-bootstrap.tsx"), "utf8");
+    const bundleHook = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "use-study-session-bundle.tsx"), "utf8");
+
+    assert.match(bootstrap, /getSessionBundleRequest\(storedSessionId\)/);
+    assert.match(bootstrap, /clearCurrentSessionId\(studySlug\)/);
+    assert.match(bootstrap, /createSessionRequest\(studySlug, getDeviceSnapshot\(\), null\)/);
+    assert.match(bundleHook, /window\.location\.replace\(window\.location\.pathname\)/);
+    assert.match(bundleHook, /clearCachedSessionBundle\(studySlug, resolvedSessionId\)/);
+  });
+
   await run("post-test clients use stored random order without client-side matching timeout", () => {
     const recall = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "recall-recognition-client.tsx"), "utf8");
     const matching = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "matching-task-client.tsx"), "utf8");

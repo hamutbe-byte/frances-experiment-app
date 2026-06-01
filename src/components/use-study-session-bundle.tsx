@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import {
+  clearCachedSessionBundle,
+  clearCurrentSessionId,
   getCachedSessionBundle,
   getResolvedStudySessionId,
   getSessionBundleRequest,
@@ -66,8 +68,18 @@ export function useStudySessionBundle({
         }
       })
       .catch((caughtError) => {
+        const message = caughtError instanceof Error ? caughtError.message : loadErrorMessage;
+        const isMissingSession = message.toLowerCase().includes("not found");
+
         if (!cancelled && !cachedBundle) {
-          setError(caughtError instanceof Error ? caughtError.message : loadErrorMessage);
+          if (isMissingSession) {
+            clearCurrentSessionId(studySlug);
+            clearCachedSessionBundle(studySlug, resolvedSessionId);
+            window.location.replace(window.location.pathname);
+            return;
+          }
+
+          setError(message);
           setIsResolvingSession(false);
         }
       })

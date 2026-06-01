@@ -67,6 +67,14 @@ export function cacheSessionBundle<T>(studySlug: string, sessionId: string, bund
   writeCachedSessionBundle(studySlug, sessionId, bundle);
 }
 
+export function clearCachedSessionBundle(studySlug: string, sessionId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(getBundleCacheKey(studySlug, sessionId));
+}
+
 export function updateCachedSessionBundle<T>(studySlug: string, sessionId: string, updater: (bundle: T) => T) {
   const current = readCachedSessionBundle<T>(studySlug, sessionId);
   if (!current) {
@@ -247,4 +255,8 @@ export function saveCurrentSessionId(studySlug: string, sessionId: string) {
 
 export function getCurrentSessionId(studySlug: string) {
   return window.localStorage.getItem(`frances-session:${studySlug}`);
+}
+
+export function clearCurrentSessionId(studySlug: string) {
+  window.localStorage.removeItem(`frances-session:${studySlug}`);
 }
