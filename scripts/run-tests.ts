@@ -742,8 +742,7 @@ async function main() {
     assert.doesNotMatch(learning, /alreadyAnswered && !isDevJump/);
     assert.doesNotMatch(learning, /router\.replace\(nextPath\)/);
     assert.match(recall, /isDevJump/);
-    assert.match(recall, /recallDone && recognitionDone && !isDevJump/);
-    assert.match(matching, /isDevJump/);
+    assert.doesNotMatch(recall, /recallDone && recognitionDone && !isDevJump/);
     assert.match(matching, /trialByIndex\(order\[0\]\)/);
   });
 

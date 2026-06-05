@@ -67,7 +67,6 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
   }
 
   useEffect(() => {
-    const isDevJump = searchParams.get("devJump") === "1";
     if (!bundle) {
       return;
     }
@@ -83,7 +82,7 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
     const answered = new Set(bundle.matching.map((entry) => entry.trialIndex));
     setMatchingOrder(order);
     setAnsweredTrialIndexes(answered);
-    const nextTrial = isDevJump ? trialByIndex(order[0]) : firstUnansweredTrial(answered, order);
+    const nextTrial = trialByIndex(order[0]);
     if (!nextTrial) {
       setIsFinished(true);
       return;

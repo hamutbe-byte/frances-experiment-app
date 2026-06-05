@@ -877,9 +877,35 @@ select {
   margin: 0;
 }
 
+.recall-step-instructions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.recall-step-instructions-label {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Segoe UI", sans-serif;
+  font-size: clamp(0.92rem, 1.05vw, 1.05rem);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.recall-step-instructions-english {
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .recall-panel .recall-prompt {
   font-size: clamp(1rem, 1.15vw, 1.18rem);
   line-height: 1.5;
+}
+
+.recall-panel .recall-step-instructions .instruction-english {
+  margin-bottom: 0;
 }
 
 .recall-panel .question-block {
@@ -892,16 +918,6 @@ select {
 }
 
 .recall-panel .instruction-english {
-  font-size: 0.84rem;
-  line-height: 1.4;
-}
-
-.recall-page-subtitle-label {
-  font-size: clamp(0.86rem, 1vw, 0.98rem);
-  line-height: 1.45;
-}
-
-.recall-page-subtitle-english {
   font-size: 0.84rem;
   line-height: 1.4;
 }

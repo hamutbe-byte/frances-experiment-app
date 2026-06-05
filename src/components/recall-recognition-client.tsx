@@ -74,15 +74,6 @@ export function RecallRecognitionClient({ studySlug, promptIndex, progressLabel 
     const recallDone = bundle.recall.some((entry) => entry.promptIndex === orderedPromptIndex);
     const recognitionDone = bundle.recognition.some((entry) => entry.promptIndex === orderedPromptIndex);
 
-    if (recallDone && recognitionDone && !isDevJump) {
-      const nextPath =
-        promptIndex >= study.recallPrompts.length
-          ? buildStudyPathWithSession(studySlug, "matching", bundle.session.id)
-          : buildStudyPathWithSession(studySlug, `recall/${promptIndex + 1}`, bundle.session.id);
-      router.replace(nextPath);
-      return;
-    }
-
     setStep(isDevJump ? "recall" : recallDone ? "recognition" : "recall");
     setStartedAt(performance.now());
     setRecognitionStartedAt(!isDevJump && recallDone ? performance.now() : null);
@@ -232,6 +223,32 @@ export function RecallRecognitionClient({ studySlug, promptIndex, progressLabel 
   }
   return (
     <section className="panel screen-panel study-stage-panel recall-panel">
+      <section className="recall-step-instructions" aria-label={step === "recall" ? instructionText.study.recall.recallInputLabel : instructionText.study.recall.recognitionLabel}>
+        {step === "recall" ? (
+          <BilingualInstructionText
+            labelContentKey="instructionText.study.recall.recallInputLabel"
+            englishContentKey="instructionText.study.recall.recallInputLabelEnglish"
+            label={instructionText.study.recall.recallInputLabel}
+            english={instructionText.study.recall.recallInputLabelEnglish}
+            labelTag="p"
+            englishTag="p"
+            labelClassName="recall-step-instructions-label"
+            englishClassName="instruction-english recall-step-instructions-english"
+          />
+        ) : (
+          <BilingualInstructionText
+            labelContentKey="instructionText.study.recall.recognitionLabel"
+            englishContentKey="instructionText.study.recall.recognitionLabelEnglish"
+            label={instructionText.study.recall.recognitionLabel}
+            english={instructionText.study.recall.recognitionLabelEnglish}
+            labelTag="p"
+            englishTag="p"
+            labelClassName="recall-step-instructions-label"
+            englishClassName="instruction-english recall-step-instructions-english"
+          />
+        )}
+      </section>
+
       <EditableContentText
         contentKey="appText.study.recall.promptTextStyle"
         tag="div"
