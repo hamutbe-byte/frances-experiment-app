@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
-import { buildStudyPathWithSession, submitComprehensionRequest } from "@/lib/session-client";
+import { buildStudyPathWithSession, submitComprehensionRequest, updateCachedSessionBundle } from "@/lib/session-client";
 import { getLearningTrialOrThrow, getStudyOrThrow } from "@/lib/study";
 import { useStageTelemetry } from "@/lib/telemetry";
-import type { YesNoAnswer } from "@/lib/types";
+import type { SessionBundle, YesNoAnswer } from "@/lib/types";
 import { useStudySessionBundle } from "@/components/use-study-session-bundle";
 
 interface LearningTrialClientProps {
@@ -35,6 +35,20 @@ export function LearningTrialClient({ studySlug, trialIndex, progressLabel }: Le
 
   useStageTelemetry(sessionId, "learning");
 
+  const nextLearningPath = useMemo(() => {
+    if (!bundle) {
+      return null;
+    }
+
+    const nextTrial = bundle.session.versionId
+      ? study.versions.find((version) => version.id === bundle.session.versionId)?.learningTrials.find((entry) => entry.trialIndex === trialIndex + 1)
+      : null;
+
+    return nextTrial
+      ? buildStudyPathWithSession(studySlug, `learn/${nextTrial.trialIndex}`, bundle.session.id)
+      : buildStudyPathWithSession(studySlug, "distractor", bundle.session.id);
+  }, [bundle, study.versions, studySlug, trialIndex]);
+
   useEffect(() => {
     if (!bundle) {
       return;
@@ -44,20 +58,12 @@ export function LearningTrialClient({ studySlug, trialIndex, progressLabel }: Le
   }, [bundle]);
 
   useEffect(() => {
-    if (!bundle) {
+    if (!nextLearningPath) {
       return;
     }
 
-    const nextTrial = bundle.session.versionId
-      ? study.versions.find((version) => version.id === bundle.session.versionId)?.learningTrials.find((entry) => entry.trialIndex === trialIndex + 1)
-      : null;
-
-    if (nextTrial) {
-      router.prefetch(buildStudyPathWithSession(studySlug, `learn/${nextTrial.trialIndex}`, bundle.session.id));
-    } else {
-      router.prefetch(buildStudyPathWithSession(studySlug, "distractor", bundle.session.id));
-    }
-  }, [bundle, router, study.versions, studySlug, trialIndex]);
+    router.prefetch(nextLearningPath);
+  }, [nextLearningPath, router]);
 
   const trial = useMemo(() => {
     if (!bundle) {
@@ -72,27 +78,53 @@ export function LearningTrialClient({ studySlug, trialIndex, progressLabel }: Le
   }, [bundle, studySlug, trialIndex]);
 
   async function submitAnswer(answer: YesNoAnswer) {
-    if (!sessionId || !trial || startedAt === null || !bundle) {
+    if (!sessionId || !trial || startedAt === null || !bundle || !nextLearningPath) {
       return;
     }
 
     setIsPending(true);
     setError(null);
     const responseTimeMs = Math.max(1, Math.round(performance.now() - startedAt));
-    try {
-      const result = await submitComprehensionRequest(sessionId, trialIndex, answer, responseTimeMs);
+    const now = new Date().toISOString();
 
-      startTransition(() => {
-        router.push(
-          result.completed
-            ? buildStudyPathWithSession(studySlug, "distractor", sessionId)
-            : buildStudyPathWithSession(studySlug, `learn/${result.nextTrialIndex}`, sessionId)
-        );
-      });
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : appText.study.learning.saveError);
-      setIsPending(false);
-    }
+    updateCachedSessionBundle<SessionBundle>(studySlug, sessionId, (current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        session: {
+          ...current.session,
+          status: nextLearningPath.includes("/distractor") ? "distractor" : "learning",
+          updatedAt: now
+        },
+        comprehension: current.comprehension.some((entry) => entry.trialIndex === trialIndex)
+          ? current.comprehension
+          : [
+              ...current.comprehension,
+              {
+                sessionId,
+                studySlug: current.session.studySlug,
+                versionId: current.session.versionId,
+                trialIndex,
+                answer,
+                correct: trial.correctAnswer === answer,
+                responseTimeMs,
+                answeredAt: now
+              }
+            ]
+      };
+    });
+
+    void submitComprehensionRequest(sessionId, trialIndex, answer, responseTimeMs).catch((caughtError) => {
+      console.error(caughtError);
+    });
+
+    startTransition(() => {
+      router.push(nextLearningPath);
+    });
+    setIsPending(false);
   }
 
   if (sessionError || error) {
