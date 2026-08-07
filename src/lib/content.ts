@@ -1,6 +1,7 @@
 import { appText } from "@/content/app-text";
 import { instructionText } from "@/content/instruction-text";
 import { questionnaireText } from "@/content/questionnaire-text";
+import { researchConsentText } from "@/content/research-consent-text";
 import type {
   EditableContentKey,
   EditableContentOverrides,
@@ -14,6 +15,7 @@ import type {
 } from "@/lib/types";
 
 export const editableScreens = [
+  "consent",
   "questionnaire",
   "nvlt",
   "learning",
@@ -25,7 +27,8 @@ export const editableScreens = [
 export const defaultContentSnapshot = {
   appText,
   instructionText,
-  questionnaireText
+  questionnaireText,
+  researchConsentText
 } as const satisfies ResolvedContentSnapshot;
 
 const editableTextContentKeySet = new Set<string>();
@@ -129,6 +132,10 @@ function setValueAtPath<T>(target: T, dottedPath: string, value: EditableContent
 }
 
 function inferScreenFromKey(key: EditableContentKey): EditableContentScreen {
+  if (key.startsWith("researchConsentText.")) {
+    return "consent";
+  }
+
   if (key.startsWith("questionnaireText.")) {
     return "questionnaire";
   }
@@ -406,6 +413,9 @@ export function getScreenFromPathname(pathname: string): EditableContentScreen |
   }
 
   if (pathname.startsWith("/study/")) {
+    if (pathname.includes("/consent")) {
+      return "consent";
+    }
     if (pathname.includes("/start")) {
       return "questionnaire";
     }

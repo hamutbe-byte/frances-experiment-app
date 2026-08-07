@@ -358,7 +358,12 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
     speakingPreference: (input.speakingPreference ?? []).map(normalisePercentageEntry),
     cultures: (input.cultures ?? []).map(normaliseCultureEntry),
     yearsOfEducation: normaliseNumber(input.yearsOfEducation),
+    academicEnglishPlacement: normaliseText(input.academicEnglishPlacement),
     englishCourseLevel: normaliseText(input.englishCourseLevel),
+    countryOfBirth: normaliseText(input.countryOfBirth),
+    ageAtImmigration: normaliseNumber(input.ageAtImmigration),
+    immigrationCountry: normaliseText(input.immigrationCountry),
+    immigrationYears: normaliseNumber(input.immigrationYears),
     educationLevel: normaliseText(input.educationLevel),
     educationLevelOther: normaliseText(input.educationLevelOther),
     usaImmigrationDate: normaliseText(input.usaImmigrationDate),
@@ -386,7 +391,12 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
       questionnaire.speakingPreference.some((entry) => entry.language || entry.percentage) ||
       questionnaire.cultures.some((entry) => entry.culture || entry.identificationLevel !== null) ||
       questionnaire.yearsOfEducation !== null ||
+      questionnaire.academicEnglishPlacement ||
       questionnaire.englishCourseLevel ||
+      questionnaire.countryOfBirth ||
+      questionnaire.ageAtImmigration !== null ||
+      questionnaire.immigrationCountry ||
+      questionnaire.immigrationYears !== null ||
       questionnaire.educationLevel ||
       questionnaire.educationLevelOther ||
       questionnaire.usaImmigrationDate ||

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useResolvedContent } from "@/components/content-provider";
@@ -9,6 +9,7 @@ import { QuestionnairePromptText } from "@/components/questionnaire-prompt-text"
 import { getDeviceSnapshot } from "@/lib/browser";
 import { createSessionRequest, saveCurrentSessionId } from "@/lib/session-client";
 import type { ParticipantQuestionnaireInput } from "@/lib/types";
+import { countryOptions } from "@/content/country-options";
 
 // EditableContentText is still the primitive behind the questionnaire text wrappers.
 
@@ -72,7 +73,12 @@ interface QuestionnaireFormState {
   speakingPreference: PercentageEntryFormState[];
   cultures: CultureEntryFormState[];
   yearsOfEducation: string;
+  academicEnglishPlacement: string;
   englishCourseLevel: string;
+  countryOfBirth: string;
+  ageAtImmigration: string;
+  immigrationCountry: string;
+  immigrationYears: string;
   educationLevel: string;
   educationLevelOther: string;
   usaImmigrationDate: string;
@@ -89,8 +95,7 @@ type PercentageField = "currentExposure" | "readingPreference" | "speakingPrefer
 
 const rankedSlotCount = 5;
 const initialLanguageProfileCount = 1;
-const maxLanguageProfileCount = 3;
-const languageOptionsListId = "questionnaire-language-options";
+const maxLanguageProfileCount = 4;
 
 function makeRankedLanguageList() {
   return Array.from({ length: rankedSlotCount }, () => "");
@@ -110,9 +115,9 @@ function makeCultureEntries(): CultureEntryFormState[] {
   }));
 }
 
-function makeEmptyLanguageProfile(): LanguageProfileFormState {
+function makeEmptyLanguageProfile(language = ""): LanguageProfileFormState {
   return {
-    language: "",
+    language,
     languageStatus: "",
     ageBeganAcquiring: "",
     ageBecameFluent: "",
@@ -179,24 +184,14 @@ function LanguageSelect(props: {
   const { value, onChange, blankLabel = "בחרו שפה" } = props;
 
   return (
-    <>
-      <input
-        type="text"
-        className="select-input"
-        list={languageOptionsListId}
-        value={value}
-        placeholder={blankLabel}
-        autoComplete="off"
-        onChange={(event) => onChange(event.target.value)}
-      />
-      <datalist id={languageOptionsListId}>
-        {props.options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </datalist>
-    </>
+    <select className="select-input" value={value} onChange={(event) => onChange(event.target.value)}>
+      <option value="">{blankLabel}</option>
+      {props.options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -260,7 +255,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
     speakingPreference: makePercentageEntries(),
     cultures: makeCultureEntries(),
     yearsOfEducation: "",
+    academicEnglishPlacement: "",
     englishCourseLevel: "",
+    countryOfBirth: "",
+    ageAtImmigration: "",
+    immigrationCountry: "not_applicable",
+    immigrationYears: "",
     educationLevel: "",
     educationLevelOther: "",
     usaImmigrationDate: "",
@@ -270,8 +270,41 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
     hasLanguageDisability: false,
     hasLearningDisability: false,
     disabilityExplanation: "",
-    languageProfiles: Array.from({ length: initialLanguageProfileCount }, () => makeEmptyLanguageProfile())
+    languageProfiles: Array.from({ length: initialLanguageProfileCount }, () => makeEmptyLanguageProfile("עברית"))
   });
+
+  const firstLanguage = form.languageProfiles[0]?.language.trim() ?? "";
+  const firstLanguageIsEnglish = firstLanguage === "אנגלית" || firstLanguage.toLowerCase() === "english";
+
+  useEffect(() => {
+    if (!firstLanguage) {
+      return;
+    }
+
+    if (firstLanguageIsEnglish) {
+      setForm((current) => {
+        const languageProfiles = current.languageProfiles.filter(
+          (profile, index) => index === 0 || profile.language !== "אנגלית"
+        );
+
+        return languageProfiles.length === current.languageProfiles.length
+          ? current
+          : { ...current, languageProfiles };
+      });
+      return;
+    }
+
+    setForm((current) => {
+      if (current.languageProfiles.length !== 1) {
+        return current;
+      }
+
+      return {
+        ...current,
+        languageProfiles: [...current.languageProfiles, makeEmptyLanguageProfile("אנגלית")]
+      };
+    });
+  }, [firstLanguage, firstLanguageIsEnglish]);
 
   function updateField<Key extends keyof QuestionnaireFormState>(field: Key, value: QuestionnaireFormState[Key]) {
     setForm((current) => ({
@@ -430,7 +463,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         identificationLevel: parseOptionalNumber(entry.identificationLevel)
       })),
       yearsOfEducation: parseOptionalNumber(form.yearsOfEducation),
+      academicEnglishPlacement: form.academicEnglishPlacement,
       englishCourseLevel: form.englishCourseLevel,
+      countryOfBirth: form.countryOfBirth,
+      ageAtImmigration: parseOptionalNumber(form.ageAtImmigration),
+      immigrationCountry: form.immigrationCountry.trim(),
+      immigrationYears: parseOptionalNumber(form.immigrationYears),
       educationLevel: form.educationLevel,
       educationLevelOther: form.educationLevelOther.trim(),
       usaImmigrationDate: form.usaImmigrationDate.trim(),
@@ -706,6 +744,82 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
 
       <section className="form-section">
         <label className="form-field">
+          <QuestionnairePromptText contentKey="questionnaireText.prompts.countryOfBirth">
+            {questionnaireText.prompts.countryOfBirth}
+          </QuestionnairePromptText>
+          <select
+            className="select-input"
+            value={form.countryOfBirth}
+            onChange={(event) => updateField("countryOfBirth", event.target.value)}
+          >
+            <option value="">בחרו מדינה</option>
+            {countryOptions.map((country) => (
+              <option key={country.value} value={country.value}>
+                {country.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section className="form-section">
+        <label className="form-field">
+          <QuestionnairePromptText contentKey="questionnaireText.prompts.ageAtImmigration">
+            {questionnaireText.prompts.ageAtImmigration}
+          </QuestionnairePromptText>
+          <input
+            className="text-input"
+            type="number"
+            min="0"
+            step="1"
+            inputMode="numeric"
+            value={form.ageAtImmigration}
+            onChange={(event) => updateField("ageAtImmigration", event.target.value)}
+          />
+        </label>
+      </section>
+
+      <section className="form-section">
+        <QuestionnairePromptText contentKey="questionnaireText.prompts.otherImmigrationDetails">
+          {questionnaireText.prompts.otherImmigrationDetails}
+        </QuestionnairePromptText>
+        <div className="form-grid form-grid-two">
+          <label className="form-field">
+            <EditableQuestionnaireText contentKey="questionnaireText.prompts.immigrationCountryLabel">
+              {questionnaireText.prompts.immigrationCountryLabel}
+            </EditableQuestionnaireText>
+            <select
+              className="select-input"
+              value={form.immigrationCountry}
+              onChange={(event) => updateField("immigrationCountry", event.target.value)}
+            >
+              <option value="not_applicable">לא רלוונטי</option>
+              {countryOptions.map((country) => (
+                <option key={country.value} value={country.value}>
+                  {country.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="form-field">
+            <EditableQuestionnaireText contentKey="questionnaireText.prompts.immigrationYearsLabel">
+              {questionnaireText.prompts.immigrationYearsLabel}
+            </EditableQuestionnaireText>
+            <input
+              className="text-input"
+              type="number"
+              min="0"
+              step="1"
+              inputMode="numeric"
+              value={form.immigrationYears}
+              onChange={(event) => updateField("immigrationYears", event.target.value)}
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="form-section">
+        <label className="form-field">
           <QuestionnairePromptText contentKey="questionnaireText.prompts.yearsOfEducation">
             {questionnaireText.prompts.yearsOfEducation}
           </QuestionnairePromptText>
@@ -721,40 +835,26 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
         </label>
 
         <div className="form-field">
-          <EditableQuestionnaireText contentKey="questionnaireText.prompts.highestEducation">
-            {questionnaireText.prompts.highestEducation}
-          </EditableQuestionnaireText>
+          <QuestionnairePromptText contentKey="questionnaireText.prompts.academicEnglishPlacement">
+            {questionnaireText.prompts.academicEnglishPlacement}
+          </QuestionnairePromptText>
           <div className="questionnaire-choice-grid">
-            {questionnaireText.educationOptions.map((option, optionIndex) => (
+            {questionnaireText.academicEnglishPlacementOptions.map((option, optionIndex) => (
               <label key={option.value} className="questionnaire-choice">
                 <input
                   type="radio"
-                  name="education-level"
+                  name="academic-english-placement"
                   value={option.value}
-                  checked={form.educationLevel === option.value}
-                  onChange={(event) => updateField("educationLevel", event.target.value)}
+                  checked={form.academicEnglishPlacement === option.value}
+                  onChange={(event) => updateField("academicEnglishPlacement", event.target.value)}
                 />
-                <EditableQuestionnaireText contentKey={`questionnaireText.educationOptions.${optionIndex}.label`}>
+                <EditableQuestionnaireText contentKey={`questionnaireText.academicEnglishPlacementOptions.${optionIndex}.label`}>
                   {option.label}
                 </EditableQuestionnaireText>
               </label>
             ))}
           </div>
         </div>
-
-        {form.educationLevel === "other" ? (
-          <label className="form-field">
-            <QuestionnairePromptText contentKey="questionnaireText.prompts.otherEducationSpecify">
-              {questionnaireText.prompts.otherEducationSpecify}
-            </QuestionnairePromptText>
-            <input
-              className="text-input"
-              type="text"
-              value={form.educationLevelOther}
-              onChange={(event) => updateField("educationLevelOther", event.target.value)}
-            />
-          </label>
-        ) : null}
 
         <div className="form-field">
           <QuestionnairePromptText contentKey="questionnaireText.prompts.englishCourseLevel">
@@ -777,32 +877,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             ))}
           </div>
         </div>
-      </section>
-
-      <section className="form-section">
-        <label className="form-field">
-          <QuestionnairePromptText contentKey="questionnaireText.prompts.usaImmigrationDate">
-            {questionnaireText.prompts.usaImmigrationDate}
-          </QuestionnairePromptText>
-          <input
-            className="text-input"
-            type="date"
-            value={form.usaImmigrationDate}
-            onChange={(event) => updateField("usaImmigrationDate", event.target.value)}
-          />
-        </label>
-
-        <label className="form-field">
-          <QuestionnairePromptText contentKey="questionnaireText.prompts.otherImmigrationDetails">
-            {questionnaireText.prompts.otherImmigrationDetails}
-          </QuestionnairePromptText>
-          <textarea
-            className="textarea-input"
-            rows={3}
-            value={form.otherImmigrationDetails}
-            onChange={(event) => updateField("otherImmigrationDetails", event.target.value)}
-          />
-        </label>
       </section>
 
       <section className="form-section">
@@ -858,8 +932,15 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                 <EditableQuestionnaireText contentKey="questionnaireText.languageSection.profileHeading" tag="h2">
                   {profileHeading}
                 </EditableQuestionnaireText>
-                <EditableQuestionnaireText contentKey="questionnaireText.languageSection.profileIntro" tag="p">
-                  {questionnaireText.languageSection.profileIntro}
+                <EditableQuestionnaireText
+                  contentKey={index === 1 && profile.language === "אנגלית"
+                    ? "questionnaireText.languageSection.englishInstruction"
+                    : "questionnaireText.languageSection.profileIntro"}
+                  tag="p"
+                >
+                  {index === 1 && profile.language === "אנגלית"
+                    ? questionnaireText.languageSection.englishInstruction
+                    : questionnaireText.languageSection.profileIntro}
                 </EditableQuestionnaireText>
               </div>
               {index > 0 ? (
@@ -875,10 +956,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
               ) : null}
             </div>
 
-            <div className="form-grid form-grid-two">
+            {index === 1 && profile.language === "אנגלית" ? null : (
               <label className="form-field">
-                <EditableQuestionnaireText contentKey="questionnaireText.languageSection.heading">
-                  {questionnaireText.languageSection.heading}
+                <EditableQuestionnaireText
+                  contentKey={index === 0 ? "questionnaireText.languageSection.motherTonguePrompt" : "questionnaireText.languageSection.heading"}
+                >
+                  {index === 0 ? questionnaireText.languageSection.motherTonguePrompt : questionnaireText.languageSection.heading}
                 </EditableQuestionnaireText>
                 <LanguageSelect
                   value={profile.language}
@@ -886,27 +969,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                   onChange={(value) => updateLanguageProfile(index, "language", value)}
                 />
               </label>
-
-              <label className="form-field">
-                <EditableQuestionnaireText contentKey="questionnaireText.languageSection.statusLabel">
-                  {questionnaireText.languageSection.statusLabel}
-                </EditableQuestionnaireText>
-                <ScaleSelect
-                  value={profile.languageStatus}
-                  onChange={(value) => updateLanguageProfile(index, "languageStatus", value)}
-                  options={questionnaireText.scales.languageStatus}
-                />
-              </label>
-            </div>
-
-            <EditableQuestionnaireText
-              contentKey="questionnaireText.languageSection.knowledgePrefix"
-              tag="p"
-              className="questionnaire-note"
-            >
-              {questionnaireText.languageSection.knowledgePrefix}
-              {languageName}.
-            </EditableQuestionnaireText>
+            )}
 
             <div className="form-field">
               <QuestionnairePromptText contentKey="questionnaireText.languageSection.ageWhenYou">
@@ -984,13 +1047,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                 >
                   {questionnaireText.languageSection.environmentColumns.years}
                 </EditableQuestionnaireText>
-                <EditableQuestionnaireText
-                  contentKey="questionnaireText.languageSection.environmentColumns.months"
-                  tag="div"
-                  className="questionnaire-table-cell questionnaire-table-header"
-                >
-                  {questionnaireText.languageSection.environmentColumns.months}
-                </EditableQuestionnaireText>
 
                 <EditableQuestionnaireText
                   contentKey="questionnaireText.languageSection.environmentRows.country"
@@ -1007,16 +1063,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                     inputMode="numeric"
                     value={profile.countryYears}
                     onChange={(event) => updateLanguageProfile(index, "countryYears", event.target.value)}
-                  />
-                </div>
-                <div className="questionnaire-table-cell">
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    value={profile.countryMonths}
-                    onChange={(event) => updateLanguageProfile(index, "countryMonths", event.target.value)}
                   />
                 </div>
 
@@ -1037,16 +1083,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                     onChange={(event) => updateLanguageProfile(index, "familyYears", event.target.value)}
                   />
                 </div>
-                <div className="questionnaire-table-cell">
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    value={profile.familyMonths}
-                    onChange={(event) => updateLanguageProfile(index, "familyMonths", event.target.value)}
-                  />
-                </div>
 
                 <EditableQuestionnaireText
                   contentKey="questionnaireText.languageSection.environmentRows.schoolWork"
@@ -1063,16 +1099,6 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                     inputMode="numeric"
                     value={profile.schoolWorkYears}
                     onChange={(event) => updateLanguageProfile(index, "schoolWorkYears", event.target.value)}
-                  />
-                </div>
-                <div className="questionnaire-table-cell">
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    value={profile.schoolWorkMonths}
-                    onChange={(event) => updateLanguageProfile(index, "schoolWorkMonths", event.target.value)}
                   />
                 </div>
               </div>
@@ -1264,30 +1290,41 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
               </div>
             </div>
 
-            <label className="form-field">
-              <QuestionnairePromptText contentKey="questionnaireText.languageSection.foreignAccent">
-                {foreignAccentPrompt}
-              </QuestionnairePromptText>
-              <ScaleSelect
-                value={profile.foreignAccent}
-                onChange={(value) => updateLanguageProfile(index, "foreignAccent", value)}
-                options={questionnaireText.scales.accent}
-              />
-            </label>
+            {index > 0 ? (
+              <>
+                <label className="form-field">
+                  <QuestionnairePromptText contentKey="questionnaireText.languageSection.foreignAccent">
+                    {foreignAccentPrompt}
+                  </QuestionnairePromptText>
+                  <ScaleSelect
+                    value={profile.foreignAccent}
+                    onChange={(value) => updateLanguageProfile(index, "foreignAccent", value)}
+                    options={questionnaireText.scales.accent}
+                  />
+                </label>
 
-            <label className="form-field">
-              <QuestionnairePromptText contentKey="questionnaireText.languageSection.nonNativeIdentification">
-                {nonNativeIdentificationPrompt}
-              </QuestionnairePromptText>
-              <ScaleSelect
-                value={profile.nonNativeIdentificationByAccent}
-                onChange={(value) => updateLanguageProfile(index, "nonNativeIdentificationByAccent", value)}
-                options={questionnaireText.scales.frequency}
-              />
-            </label>
+                <label className="form-field">
+                  <QuestionnairePromptText contentKey="questionnaireText.languageSection.nonNativeIdentification">
+                    {nonNativeIdentificationPrompt}
+                  </QuestionnairePromptText>
+                  <ScaleSelect
+                    value={profile.nonNativeIdentificationByAccent}
+                    onChange={(value) => updateLanguageProfile(index, "nonNativeIdentificationByAccent", value)}
+                    options={questionnaireText.scales.frequency}
+                  />
+                </label>
+              </>
+            ) : null}
 
             {isLastProfile && form.languageProfiles.length < maxLanguageProfileCount ? (
               <div className="questionnaire-language-actions">
+                <EditableQuestionnaireText
+                  contentKey="questionnaireText.languageSection.additionalLanguagesInstruction"
+                  tag="p"
+                  className="questionnaire-note"
+                >
+                  {questionnaireText.languageSection.additionalLanguagesInstruction}
+                </EditableQuestionnaireText>
                 <button
                   type="button"
                   className="button button-secondary questionnaire-language-action questionnaire-language-add"

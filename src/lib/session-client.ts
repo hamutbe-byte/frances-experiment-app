@@ -25,6 +25,7 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 const sessionBundleCachePrefix = "frances-session-bundle";
+const sessionResumeEnabled = process.env.NEXT_PUBLIC_ENABLE_SESSION_RESUME?.trim() !== "false";
 
 function getBundleCacheKey(studySlug: string, sessionId: string) {
   return `${sessionBundleCachePrefix}:${studySlug}:${sessionId}`;
@@ -246,7 +247,7 @@ export function appendSessionToPath(path: string, sessionId: string) {
 }
 
 export function getResolvedStudySessionId(studySlug: string, searchParams: { get(name: string): string | null }) {
-  return searchParams.get("session") ?? getCurrentSessionId(studySlug);
+  return searchParams.get("session") ?? getResumableSessionId(studySlug);
 }
 
 export function saveCurrentSessionId(studySlug: string, sessionId: string) {
@@ -255,6 +256,14 @@ export function saveCurrentSessionId(studySlug: string, sessionId: string) {
 
 export function getCurrentSessionId(studySlug: string) {
   return window.localStorage.getItem(`frances-session:${studySlug}`);
+}
+
+export function getResumableSessionId(studySlug: string) {
+  return sessionResumeEnabled ? getCurrentSessionId(studySlug) : null;
+}
+
+export function isSessionResumeEnabled() {
+  return sessionResumeEnabled;
 }
 
 export function clearCurrentSessionId(studySlug: string) {

@@ -223,12 +223,15 @@ export function RecallRecognitionClient({ studySlug, promptIndex, progressLabel 
   }
   return (
     <section className="panel screen-panel study-stage-panel recall-panel">
-      <section className="recall-step-instructions" aria-label={step === "recall" ? instructionText.study.recall.recallInputLabel : instructionText.study.recall.recognitionLabel}>
+      <section
+        className="recall-step-instructions"
+        aria-label={step === "recall" ? instructionText.study.recall.recallStepInstruction : instructionText.study.recall.recognitionLabel}
+      >
         {step === "recall" ? (
           <BilingualInstructionText
-            labelContentKey="instructionText.study.recall.recallInputLabel"
+            labelContentKey="instructionText.study.recall.recallStepInstruction"
             englishContentKey="instructionText.study.recall.recallInputLabelEnglish"
-            label={instructionText.study.recall.recallInputLabel}
+            label={instructionText.study.recall.recallStepInstruction}
             english={instructionText.study.recall.recallInputLabelEnglish}
             labelTag="p"
             englishTag="p"
@@ -259,6 +262,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex, progressLabel 
 
       {step === "recall" ? (
         <section className="question-block">
+          <EditableContentText
+            contentKey="instructionText.study.recall.recallInputLabel"
+            tag="p"
+            className="recall-input-instruction"
+          >
+            {instructionText.study.recall.recallInputLabel}
+          </EditableContentText>
           <input
             id="recall-answer"
             className="text-input"
@@ -295,6 +305,13 @@ export function RecallRecognitionClient({ studySlug, promptIndex, progressLabel 
         </section>
       ) : (
         <section className="question-block">
+          <EditableContentText
+            contentKey="instructionText.study.recall.recallInputLabel"
+            tag="p"
+            className="recall-input-instruction"
+          >
+            {instructionText.study.recall.recallInputLabel}
+          </EditableContentText>
           <div className="option-grid">
             {prompt.recognitionOptions.map((option) => (
               <button

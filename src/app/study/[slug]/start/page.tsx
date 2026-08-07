@@ -1,4 +1,4 @@
-import { StartPhaseClient } from "@/components/start-phase-client";
+import { ResearchConsentGate } from "@/components/research-consent-gate";
 import { StudyFrame } from "@/components/study-frame";
 import { getStudyOrThrow } from "@/lib/study";
 
@@ -14,7 +14,7 @@ export default async function StartPage({ params }: Props) {
 
   return (
     <StudyFrame studySlug={study.slug} screen="questionnaire" dir="rtl">
-      <StartPhaseClient studySlug={study.slug} />
+      <ResearchConsentGate studySlug={study.slug} />
     </StudyFrame>
   );
 }

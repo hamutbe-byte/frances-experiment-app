@@ -191,6 +191,22 @@ export default async function AdminSessionDetailPage({ params }: Props) {
                     <td>{bundle.questionnaire.englishCourseLevel || "—"}</td>
                   </tr>
                   <tr>
+                    <th>Country of birth</th>
+                    <td>{bundle.questionnaire.countryOfBirth || "—"}</td>
+                  </tr>
+                  <tr>
+                    <th>Age at immigration</th>
+                    <td>{bundle.questionnaire.ageAtImmigration ?? "—"}</td>
+                  </tr>
+                  <tr>
+                    <th>Other immigration country</th>
+                    <td>{bundle.questionnaire.immigrationCountry || "—"}</td>
+                  </tr>
+                  <tr>
+                    <th>Other immigration years</th>
+                    <td>{bundle.questionnaire.immigrationYears ?? "—"}</td>
+                  </tr>
+                  <tr>
                     <th>Education other</th>
                     <td>{bundle.questionnaire.educationLevelOther || "—"}</td>
                   </tr>

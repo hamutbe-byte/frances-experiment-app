@@ -216,15 +216,9 @@ export function MatchingTaskClient({ studySlug }: MatchingTaskClientProps) {
         <div className="answer-grid">
           <button type="button" className="button answer-button" onClick={() => submitAnswer("no")} disabled={isPending}>
             <strong>No</strong>
-            <EditableContentText contentKey="instructionText.study.matching.noKeyHint" tag="span">
-              {instructionText.study.matching.noKeyHint}
-            </EditableContentText>
           </button>
           <button type="button" className="button answer-button" onClick={() => submitAnswer("yes")} disabled={isPending}>
             <strong>Yes</strong>
-            <EditableContentText contentKey="instructionText.study.matching.yesKeyHint" tag="span">
-              {instructionText.study.matching.yesKeyHint}
-            </EditableContentText>
           </button>
         </div>
       </section>

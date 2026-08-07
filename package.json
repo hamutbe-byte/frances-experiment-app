@@ -12,6 +12,7 @@
     "profile:http": "node scripts/profile-http.mjs",
     "profile:local": "tsx scripts/profile-local.ts",
     "db:import": "tsx scripts/import-local-sessions.ts",
+    "participant:bot": "tsx scripts/participant-bot.ts",
     "test": "tsx scripts/run-tests.ts",
     "test:watch": "tsx --watch scripts/run-tests.ts"
   },
@@ -22,6 +23,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

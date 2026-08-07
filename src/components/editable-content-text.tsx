@@ -3,6 +3,7 @@
 import { useMemo, type CSSProperties, type ElementType, type ReactNode } from "react";
 
 import { useResolvedContent } from "@/components/content-provider";
+import { getEditableContentValue } from "@/lib/content";
 import type { EditableContentKey } from "@/lib/types";
 
 interface EditableContentTextProps {
@@ -24,7 +25,7 @@ export function EditableContentText({
   lang,
   dangerouslySetInnerHTML
 }: EditableContentTextProps) {
-  const { styleOverrides } = useResolvedContent();
+  const { snapshot, styleOverrides } = useResolvedContent();
   const style = styleOverrides[contentKey];
   const resolvedStyle = useMemo<CSSProperties | undefined>(() => {
     if (!style || Object.keys(style).length === 0) {
@@ -39,6 +40,9 @@ export function EditableContentText({
   }, [style]);
 
   const Tag = tag;
+  // Style-only keys have no text value, so keep their runtime children intact.
+  const resolvedText = getEditableContentValue(snapshot, contentKey);
+  const resolvedChildren = resolvedText || children;
 
   return (
     dangerouslySetInnerHTML ? (
@@ -52,7 +56,7 @@ export function EditableContentText({
       />
     ) : (
       <Tag className={className} data-content-key={contentKey} dir={dir} lang={lang} style={resolvedStyle}>
-        {children}
+        {resolvedChildren}
       </Tag>
     )
   );

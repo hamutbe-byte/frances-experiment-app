@@ -149,7 +149,12 @@ export interface ParticipantQuestionnaireInput {
   speakingPreference: QuestionnairePercentageEntryInput[];
   cultures: QuestionnaireCultureEntryInput[];
   yearsOfEducation: number | null;
+  academicEnglishPlacement: string;
   englishCourseLevel: string;
+  countryOfBirth: string;
+  ageAtImmigration: number | null;
+  immigrationCountry: string;
+  immigrationYears: number | null;
   educationLevel: string;
   educationLevelOther: string;
   usaImmigrationDate: string;
@@ -284,6 +289,7 @@ export interface CreateSessionResult {
 export type EditableContentKey = string;
 export type EditableContentValue = string;
 export type EditableContentScreen =
+  | "consent"
   | "questionnaire"
   | "nvlt"
   | "learning"
@@ -321,6 +327,7 @@ export interface ResolvedContentSnapshot {
   appText: Record<string, unknown>;
   instructionText: Record<string, unknown>;
   questionnaireText: Record<string, unknown>;
+  researchConsentText: Record<string, unknown>;
 }
 
 export type EditableUiKey = string;

@@ -29,7 +29,8 @@ export const instructionText = {
       modeReady: ""
     },
     recall: {
-      recallInputLabel: "הקלידו את מילת הפסאודו באנגלית שמשלימה את החסר",
+      recallStepInstruction: "הקלידו את מילת הפסאודו באנגלית שמשלימה את החסר",
+      recallInputLabel: "המילה החסרה בכל המשפטים היא:",
       recallInputLabelEnglish: "Type the word you remember in English.",
       continueButton: "המשיכו",
       continueButtonEnglish: "Continue",

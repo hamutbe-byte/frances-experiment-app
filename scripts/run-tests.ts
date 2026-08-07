@@ -100,7 +100,12 @@ function sampleQuestionnaire(): ParticipantQuestionnaireInput {
       { culture: "", identificationLevel: null }
     ],
     yearsOfEducation: 16,
+    academicEnglishPlacement: "basic_a",
     englishCourseLevel: "טרום בסיסי א",
+    countryOfBirth: "IL",
+    ageAtImmigration: 12,
+    immigrationCountry: "לא רלוונטי",
+    immigrationYears: null,
     educationLevel: "college",
     educationLevelOther: "",
     usaImmigrationDate: "",
@@ -1298,7 +1303,7 @@ async function main() {
   await run("questionnaire headings can opt into direct inline editing by content key", () => {
     const startClient = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "start-phase-client.tsx"), "utf8");
     const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
-    assert.match(startClient, /contentKey="questionnaireText\.prompts\.usaImmigrationDate"/);
+    assert.match(startClient, /contentKey="questionnaireText\.prompts\.ageAtImmigration"/);
     assert.match(startClient, /contentKey="questionnaireText\.prompts\.otherEducationSpecify"/);
     assert.match(startClient, /contentKey="questionnaireText\.prompts\.disabilityExplanationLabel"/);
     assert.match(startClient, /contentKey="questionnaireText\.languageSection\.profileHeading"/);

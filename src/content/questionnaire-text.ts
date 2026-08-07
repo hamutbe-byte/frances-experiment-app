@@ -89,17 +89,23 @@ export const questionnaireText = {
     percentagesHint: "(האחוזים צריכים להסתכם ב־100%):",
     cultures:
       "(6) נא לציין את התרבויות שאיתן אתם מזדהים. בסולם שבין אפס לעשר, נא לדרג עד כמה אתם מזדהים עם כל תרבות. (דוגמאות לתרבויות אפשריות: אמריקאית, סינית, יהודית-אורתודוקסית וכו'):",
-    yearsOfEducation: "(7) כמה שנות השכלה פורמלית יש לכם?",
+    yearsOfEducation: "(10) כמה שנות השכלה פורמלית יש לכם?",
+    academicEnglishPlacement:
+      "(11) מהי רמת האנגלית שאליה שובצת במוסד האקדמי שלך (על סמך ציון בפסיכומטרי, אמיר\"ם או אמירנט)?",
+    ageAtImmigration: "(8) באיזה גיל עלית לישראל?",
     englishCourseLevel:
-      "(8) נא ציינו את רמת קורס האנגלית הנוכחית שלך במוסד הלימודים:",
+      "(12) נא ציינו את רמת קורס האנגלית הנוכחית שלך במוסד הלימודים:",
+    countryOfBirth: "(7) ארץ לידה",
     highestEducation:
       "נא לסמן את רמת ההשכלה הגבוהה ביותר שלכם (או את המקבילה המשוערת בארה\"ב לתואר שהושג במדינה אחרת):",
     otherEducationSpecify: "נא לציין:",
-    usaImmigrationDate: "(9) תאריך העלייה לישראל, אם רלוונטי",
+    usaImmigrationDate: "תאריך העלייה לישראל, אם רלוונטי",
     otherImmigrationDetails:
-      "אם עליתם אי פעם לישראל ממדינה אחרת, נא לציין כאן את שם המדינה ואת תאריך העלייה.",
+      "(9) אם אי פעם גרת בחו\"ל, נא ציין את שם המדינה ואת משך הזמן שגרת שם.",
+    immigrationCountryLabel: "מדינה",
+    immigrationYearsLabel: "מספר שנים",
     difficulties:
-      "(10) האם הייתה לכם אי פעם בעיית ראייה, לקות שמיעה, לקות שפה או לקות למידה? (סמנו את כל האפשרויות הרלוונטיות). אם כן, נא להסביר (כולל כל תיקון או התאמה):",
+      "(13) האם הייתה לכם אי פעם בעיית ראייה, לקות שמיעה, לקות שפה או לקות למידה? (סמנו את כל האפשרויות הרלוונטיות). אם כן, נא להסביר (כולל כל תיקון או התאמה):",
     disabilityExplanationLabel: "פירוט"
   },
   pairedEntryLabels: {
@@ -127,6 +133,13 @@ export const questionnaireText = {
   ],
   englishCourseLevelOptions: [
     { value: "pre_basic_a", label: "טרום בסיסי א" },
+    { value: "advanced_b", label: "מתקדמים ב" }
+  ],
+  academicEnglishPlacementOptions: [
+    { value: "basic_a", label: "בסיסי א" },
+    { value: "pre_basic_a", label: "טרום-בסיסי א" },
+    { value: "pre_basic_b", label: "טרום-בסיסי ב" },
+    { value: "advanced_a", label: "מתקדמים א" },
     { value: "advanced_b", label: "מתקדמים ב" }
   ],
   disabilityOptions: [
@@ -212,11 +225,13 @@ export const questionnaireText = {
   languageSection: {
     profileHeading: "פרטי שפה {number}",
     profileIntro: "בחלק זה יש למלא את כל השאלות עבור שפה אחת.",
+    englishInstruction: "נא ענה על החלק עבור השפה האנגלית",
     addLanguageButton: "הוספת שפה נוספת",
+    additionalLanguagesInstruction: "במידה ואתה יודע שפה נוספת נא ענה על החלק הבא",
     removeLanguageButton: "הסרת שפה",
+    motherTonguePrompt: "מה שפת האם שלך?",
     heading: "השפה שעליה מתייחס חלק זה",
-    statusLabel: "מעמד השפה עבורי",
-    knowledgePrefix: "כל השאלות הבאות מתייחסות לידע ולניסיון שלך ב־",
+    knowledgePrefix: "כל השאלות הבאות מתייחסות לידע ולניסיון שלך בשפה זו:",
     ageWhenYou: "(1) באיזה גיל...",
     ageLabels: {
       beganAcquiring: "התחלת ללמוד או לרכוש את השפה",
@@ -224,7 +239,7 @@ export const questionnaireText = {
       beganReading: "התחלת לקרוא בשפה",
       becameFluentReading: "הגעת לשטף בקריאה"
     },
-    environmentPrompt: "(2) כמה שנים וכמה חודשים היית בכל אחת מהסביבות שבהן השתמשו בשפה הזו?",
+    environmentPrompt: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו בשפה הזו?",
     environmentColumns: {
       years: "שנים",
       months: "חודשים"

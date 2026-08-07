@@ -16,6 +16,7 @@ type ToolbarSection =
   | { label: string; kind: "study"; path: string };
 
 const sections: ToolbarSection[] = [
+  { label: "Consent", kind: "study", path: "consent" },
   { label: "Questionnaire", kind: "study", path: "start" },
   { label: "NVLT", kind: "nvlt" },
   { label: "Learn", kind: "study", path: "learn/1" },

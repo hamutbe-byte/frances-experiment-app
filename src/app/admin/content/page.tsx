@@ -5,6 +5,7 @@ import { getDefaultStudySlug } from "@/lib/study";
 export const dynamic = "force-dynamic";
 
 const screenLabels: Record<(typeof editableScreens)[number], string> = {
+  consent: "טופס הסכמה",
   questionnaire: "שאלון פתיחה",
   nvlt: "NVLT",
   learning: "למידה",
