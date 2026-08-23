@@ -136,9 +136,9 @@ export const questionnaireText = {
     { value: "advanced_b", label: "מתקדמים ב" }
   ],
   academicEnglishPlacementOptions: [
-    { value: "basic_a", label: "בסיסי א" },
     { value: "pre_basic_a", label: "טרום-בסיסי א" },
     { value: "pre_basic_b", label: "טרום-בסיסי ב" },
+    { value: "basic_a", label: "בסיסי" },
     { value: "advanced_a", label: "מתקדמים א" },
     { value: "advanced_b", label: "מתקדמים ב" }
   ],
@@ -239,7 +239,11 @@ export const questionnaireText = {
       beganReading: "התחלת לקרוא בשפה",
       becameFluentReading: "הגעת לשטף בקריאה"
     },
-    environmentPrompt: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו בשפה הזו?",
+    environmentPrompts: {
+      motherTongue: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו בשפת האם שלך?",
+      english: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו באנגלית?",
+      additional: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו בשפה זו?"
+    },
     environmentColumns: {
       years: "שנים",
       months: "חודשים"
@@ -249,15 +253,21 @@ export const questionnaireText = {
       family: "במשפחה שבה דיברו",
       schoolWork: "במסגרת לימודים ו/או עבודה שבה דיברו"
     },
-    proficiencyPrompt:
-      "(3) בסולם של 0 עד 10, מה רמת היכולת שלך בשפה הזו בדיבור, בהבנת שפה מדוברת ובקריאה?",
+    proficiencyPrompts: {
+      motherTongue: "(3) בסולם של 0 עד 10, מה רמת היכולת שלך בשפת האם שלך בדיבור, בהבנת שפה מדוברת ובקריאה?",
+      english: "(3) בסולם של 0 עד 10, מה רמת היכולת שלך באנגלית בדיבור, בהבנת שפה מדוברת ובקריאה?",
+      additional: "(3) בסולם של 0 עד 10, מה רמת היכולת שלך בשפה זו בדיבור, בהבנת שפה מדוברת ובקריאה?"
+    },
     proficiencyLabels: {
       speaking: "דיבור",
       understandingSpokenLanguage: "הבנת שפה מדוברת",
       reading: "קריאה"
     },
-    learningPrompt:
-      "(4) בסולם של 0 עד 10, עד כמה כל אחד מהגורמים הבאים תרם ללמידת השפה הזו?",
+    learningPrompts: {
+      motherTongue: "(4) בסולם של 0 עד 10, עד כמה כל אחד מהגורמים הבאים תרם ללמידת שפת האם שלך?",
+      english: "(4) בסולם של 0 עד 10, עד כמה כל אחד מהגורמים הבאים תרם ללמידת האנגלית?",
+      additional: "(4) בסולם של 0 עד 10, עד כמה כל אחד מהגורמים הבאים תרם ללמידת שפה זו?"
+    },
     learningFactors: {
       friends: "אינטראקציה עם חברים",
       family: "אינטראקציה עם משפחה",
@@ -266,8 +276,11 @@ export const questionnaireText = {
       watchingTv: "צפייה בטלוויזיה",
       listeningToRadio: "האזנה לרדיו"
     },
-    exposurePrompt:
-      "(5) בסולם של 0 עד 10, עד כמה את/ה חשוף/ה כיום ל־{language} בכל אחד מההקשרים הבאים?",
+    exposurePrompts: {
+      motherTongue: "(5) בסולם של 0 עד 10, עד כמה את/ה חשוף/ה כיום לשפת האם שלך בכל אחד מההקשרים הבאים?",
+      english: "(5) בסולם של 0 עד 10, עד כמה את/ה חשוף/ה כיום לאנגלית בכל אחד מההקשרים הבאים?",
+      additional: "(5) בסולם של 0 עד 10, עד כמה את/ה חשוף/ה כיום לשפה זו בכל אחד מההקשרים הבאים?"
+    },
     exposureFactors: {
       friends: "אינטראקציה עם חברים",
       family: "אינטראקציה עם משפחה",
@@ -276,9 +289,14 @@ export const questionnaireText = {
       reading: "קריאה",
       languageLabSelfInstruction: "מעבדת שפה / לימוד עצמי"
     },
-    foreignAccent: "(6) לפי תפיסתך, עד כמה יש לך מבטא זר כשאת/ה מדבר/ת ב־{language}?",
-    nonNativeIdentification:
-      "(7) באיזו תדירות אנשים אחרים מזהים אותך כדובר/ת לא ילידי/ת של {language} על סמך המבטא שלך?"
+    foreignAccentPrompts: {
+      english: "(6) לפי תפיסתך, עד כמה יש לך מבטא זר כשאת/ה מדבר/ת באנגלית?",
+      additional: "(6) לפי תפיסתך, עד כמה יש לך מבטא זר כשאת/ה מדבר/ת בשפה זו?"
+    },
+    nonNativeIdentificationPrompts: {
+      english: "(7) באיזו תדירות אנשים אחרים מזהים אותך כדובר/ת לא ילידי/ת של אנגלית על סמך המבטא שלך?",
+      additional: "(7) באיזו תדירות אנשים אחרים מזהים אותך כדובר/ת לא ילידי/ת של שפה זו על סמך המבטא שלך?"
+    }
   },
   steps: [
     {

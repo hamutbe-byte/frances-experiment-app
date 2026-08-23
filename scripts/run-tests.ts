@@ -1276,10 +1276,10 @@ async function main() {
     assert.match(uiConfig, /NVLT Typography/);
   });
 
-  await run("questionnaire language fields support type-ahead suggestions", () => {
+  await run("questionnaire language fields use a native dropdown", () => {
     const startClient = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "start-phase-client.tsx"), "utf8");
-    assert.match(startClient, /datalist id=\{languageOptionsListId\}/);
-    assert.match(startClient, /list=\{languageOptionsListId\}/);
+    assert.match(startClient, /<select className="select-input" value=\{value\}/);
+    assert.match(startClient, /props\.options\.map\(\(option\) => \(/);
   });
 
   await run("questionnaire education options keep the original logical order", () => {
@@ -1302,19 +1302,22 @@ async function main() {
 
   await run("questionnaire headings can opt into direct inline editing by content key", () => {
     const startClient = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "start-phase-client.tsx"), "utf8");
+    const questionnaireText = fs.readFileSync(path.resolve(process.cwd(), "src", "content", "questionnaire-text.ts"), "utf8");
     const editorComponent = fs.readFileSync(path.resolve(process.cwd(), "src", "components", "inline-content-editor.tsx"), "utf8");
     assert.match(startClient, /contentKey="questionnaireText\.prompts\.ageAtImmigration"/);
-    assert.match(startClient, /contentKey="questionnaireText\.prompts\.otherEducationSpecify"/);
     assert.match(startClient, /contentKey="questionnaireText\.prompts\.disabilityExplanationLabel"/);
     assert.match(startClient, /contentKey="questionnaireText\.languageSection\.profileHeading"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.profileIntro"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.knowledgePrefix"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.statusLabel"/);
     assert.match(startClient, /contentKey="questionnaireText\.languageSection\.ageWhenYou"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.environmentPrompt"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.proficiencyPrompt"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.learningPrompt"/);
-    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.exposurePrompt"/);
+    assert.match(startClient, /languagePromptVariant/);
+    assert.match(startClient, /questionnaireText\.languageSection\.environmentPrompts\.\$\{languagePromptVariant\}/);
+    assert.match(startClient, /questionnaireText\.languageSection\.proficiencyPrompts\.\$\{languagePromptVariant\}/);
+    assert.match(startClient, /questionnaireText\.languageSection\.learningPrompts\.\$\{languagePromptVariant\}/);
+    assert.match(questionnaireText, /exposurePrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
+    assert.match(questionnaireText, /environmentPrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
+    assert.match(questionnaireText, /proficiencyPrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
+    assert.match(questionnaireText, /learningPrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
+    assert.match(startClient, /questionnaireText\.languageSection\.foreignAccentPrompts\.\$\{secondaryLanguagePromptVariant\}/);
+    assert.match(startClient, /questionnaireText\.languageSection\.nonNativeIdentificationPrompts\.\$\{secondaryLanguagePromptVariant\}/);
     assert.match(startClient, /EditableContentText/);
     assert.match(editorComponent, /querySelectorAll\?\.\("\[data-content-key\]"\)/);
     assert.match(editorComponent, /inlineTarget\.field\.kind === "textarea" \|\| inlineTarget\.field\.kind === "template"/);

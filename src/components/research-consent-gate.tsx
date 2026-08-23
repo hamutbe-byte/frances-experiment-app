@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useResolvedContent } from "@/components/content-provider";
 import { EditableContentText } from "@/components/editable-content-text";
 import { StartPhaseClient } from "@/components/start-phase-client";
 import { researchConsentText } from "@/content/research-consent-text";
@@ -15,6 +16,8 @@ interface ResearchConsentGateProps {
 
 export function ResearchConsentGate({ studySlug, alwaysShow = false }: ResearchConsentGateProps) {
   const router = useRouter();
+  const { snapshot } = useResolvedContent();
+  const consentText = snapshot.researchConsentText as typeof researchConsentText;
   const storageKey = `research-consent-v1:${studySlug}`;
   const [hasConsented, setHasConsented] = useState(() => {
     if (typeof window === "undefined") {
@@ -31,15 +34,15 @@ export function ResearchConsentGate({ studySlug, alwaysShow = false }: ResearchC
   return (
     <section className="consent-card panel">
       <EditableContentText contentKey="researchConsentText.title" tag="h1">
-        {researchConsentText.title}
+        {consentText.title}
       </EditableContentText>
       <article className="consent-document" dir="rtl">
-        <EditableContentText contentKey="researchConsentText.greeting" tag="p">{researchConsentText.greeting}</EditableContentText>
-        <EditableContentText contentKey="researchConsentText.studyDescription" tag="p">{researchConsentText.studyDescription}</EditableContentText>
-        <EditableContentText contentKey="researchConsentText.voluntaryParticipation" tag="p">{researchConsentText.voluntaryParticipation}</EditableContentText>
-        <EditableContentText contentKey="researchConsentText.privacy" tag="p">{researchConsentText.privacy}</EditableContentText>
-        <EditableContentText contentKey="researchConsentText.confirmation" tag="p">{researchConsentText.confirmation}</EditableContentText>
-        <EditableContentText contentKey="researchConsentText.thanks" tag="p" className="consent-thanks">{researchConsentText.thanks}</EditableContentText>
+        <EditableContentText contentKey="researchConsentText.greeting" tag="p">{consentText.greeting}</EditableContentText>
+        <EditableContentText contentKey="researchConsentText.studyDescription" tag="p">{consentText.studyDescription}</EditableContentText>
+        <EditableContentText contentKey="researchConsentText.voluntaryParticipation" tag="p">{consentText.voluntaryParticipation}</EditableContentText>
+        <EditableContentText contentKey="researchConsentText.privacy" tag="p">{consentText.privacy}</EditableContentText>
+        <EditableContentText contentKey="researchConsentText.confirmation" tag="p">{consentText.confirmation}</EditableContentText>
+        <EditableContentText contentKey="researchConsentText.thanks" tag="p" className="consent-thanks">{consentText.thanks}</EditableContentText>
       </article>
       <div className="actions consent-actions">
         <button
@@ -54,7 +57,7 @@ export function ResearchConsentGate({ studySlug, alwaysShow = false }: ResearchC
           }}
         >
           <EditableContentText contentKey="researchConsentText.acceptButton" tag="span">
-            {researchConsentText.acceptButton}
+            {consentText.acceptButton}
           </EditableContentText>
         </button>
       </div>

@@ -918,11 +918,16 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
       </section>
 
       {form.languageProfiles.map((profile, index) => {
-        const languageName = profile.language || "שפה זו";
         const profileHeading = questionnaireText.languageSection.profileHeading.replace("{number}", String(index + 1));
-        const exposurePrompt = questionnaireText.languageSection.exposurePrompt.replace("{language}", languageName);
-        const foreignAccentPrompt = questionnaireText.languageSection.foreignAccent.replace("{language}", languageName);
-        const nonNativeIdentificationPrompt = questionnaireText.languageSection.nonNativeIdentification.replace("{language}", languageName);
+        const isEnglishProfile = index > 0 && profile.language === "אנגלית";
+        const languagePromptVariant = index === 0 ? "motherTongue" : isEnglishProfile ? "english" : "additional";
+        const secondaryLanguagePromptVariant = isEnglishProfile ? "english" : "additional";
+        const environmentPrompt = questionnaireText.languageSection.environmentPrompts[languagePromptVariant];
+        const proficiencyPrompt = questionnaireText.languageSection.proficiencyPrompts[languagePromptVariant];
+        const learningPrompt = questionnaireText.languageSection.learningPrompts[languagePromptVariant];
+        const exposurePrompt = questionnaireText.languageSection.exposurePrompts[languagePromptVariant];
+        const foreignAccentPrompt = questionnaireText.languageSection.foreignAccentPrompts[secondaryLanguagePromptVariant];
+        const nonNativeIdentificationPrompt = questionnaireText.languageSection.nonNativeIdentificationPrompts[secondaryLanguagePromptVariant];
         const isLastProfile = index === form.languageProfiles.length - 1;
 
         return (
@@ -1035,8 +1040,8 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             </div>
 
             <div className="form-field">
-              <QuestionnairePromptText contentKey="questionnaireText.languageSection.environmentPrompt">
-                {questionnaireText.languageSection.environmentPrompt}
+              <QuestionnairePromptText contentKey={`questionnaireText.languageSection.environmentPrompts.${languagePromptVariant}`}>
+                {environmentPrompt}
               </QuestionnairePromptText>
               <div className="questionnaire-table-grid questionnaire-environment-grid">
                 <div className="questionnaire-table-cell questionnaire-table-header" />
@@ -1053,7 +1058,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                   tag="div"
                   className="questionnaire-table-cell"
                 >
-                  {`${questionnaireText.languageSection.environmentRows.country} ${languageName}`}
+                  {questionnaireText.languageSection.environmentRows.country}
                 </EditableQuestionnaireText>
                 <div className="questionnaire-table-cell">
                   <input
@@ -1071,7 +1076,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                   tag="div"
                   className="questionnaire-table-cell"
                 >
-                  {`${questionnaireText.languageSection.environmentRows.family} ${languageName}`}
+                  {questionnaireText.languageSection.environmentRows.family}
                 </EditableQuestionnaireText>
                 <div className="questionnaire-table-cell">
                   <input
@@ -1089,7 +1094,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                   tag="div"
                   className="questionnaire-table-cell"
                 >
-                  {`${questionnaireText.languageSection.environmentRows.schoolWork} ${languageName}`}
+                  {questionnaireText.languageSection.environmentRows.schoolWork}
                 </EditableQuestionnaireText>
                 <div className="questionnaire-table-cell">
                   <input
@@ -1105,8 +1110,8 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             </div>
 
             <div className="form-field">
-              <QuestionnairePromptText contentKey="questionnaireText.languageSection.proficiencyPrompt">
-                {questionnaireText.languageSection.proficiencyPrompt}
+              <QuestionnairePromptText contentKey={`questionnaireText.languageSection.proficiencyPrompts.${languagePromptVariant}`}>
+                {proficiencyPrompt}
               </QuestionnairePromptText>
               <div className="form-grid form-grid-three">
                 <label className="form-field">
@@ -1145,17 +1150,17 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             </div>
 
             <div className="form-field">
-              <QuestionnairePromptText contentKey="questionnaireText.languageSection.learningPrompt">
-                {questionnaireText.languageSection.learningPrompt}
+              <QuestionnairePromptText contentKey={`questionnaireText.languageSection.learningPrompts.${languagePromptVariant}`}>
+                {learningPrompt}
               </QuestionnairePromptText>
               <div className="form-grid form-grid-three">
                 <label className="form-field">
-                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.learningFactors.friends">
-                    {questionnaireText.languageSection.learningFactors.friends}
+                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.learningFactors.family">
+                    {questionnaireText.languageSection.learningFactors.family}
                   </EditableQuestionnaireText>
                   <ScaleSelect
-                    value={profile.learningByFriends}
-                    onChange={(value) => updateLanguageProfile(index, "learningByFriends", value)}
+                    value={profile.learningByFamily}
+                    onChange={(value) => updateLanguageProfile(index, "learningByFamily", value)}
                     options={questionnaireText.scales.contributor}
                   />
                 </label>
@@ -1172,12 +1177,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                 </label>
 
                 <label className="form-field">
-                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.learningFactors.family">
-                    {questionnaireText.languageSection.learningFactors.family}
+                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.learningFactors.friends">
+                    {questionnaireText.languageSection.learningFactors.friends}
                   </EditableQuestionnaireText>
                   <ScaleSelect
-                    value={profile.learningByFamily}
-                    onChange={(value) => updateLanguageProfile(index, "learningByFamily", value)}
+                    value={profile.learningByFriends}
+                    onChange={(value) => updateLanguageProfile(index, "learningByFriends", value)}
                     options={questionnaireText.scales.contributor}
                   />
                 </label>
@@ -1218,17 +1223,17 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             </div>
 
             <div className="form-field">
-              <QuestionnairePromptText contentKey="questionnaireText.languageSection.exposurePrompt">
+              <QuestionnairePromptText contentKey={`questionnaireText.languageSection.exposurePrompts.${languagePromptVariant}`}>
                 {exposurePrompt}
               </QuestionnairePromptText>
               <div className="form-grid form-grid-three">
                 <label className="form-field">
-                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.exposureFactors.friends">
-                    {questionnaireText.languageSection.exposureFactors.friends}
+                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.exposureFactors.family">
+                    {questionnaireText.languageSection.exposureFactors.family}
                   </EditableQuestionnaireText>
                   <ScaleSelect
-                    value={profile.exposureToFriends}
-                    onChange={(value) => updateLanguageProfile(index, "exposureToFriends", value)}
+                    value={profile.exposureToFamily}
+                    onChange={(value) => updateLanguageProfile(index, "exposureToFamily", value)}
                     options={questionnaireText.scales.frequency}
                   />
                 </label>
@@ -1245,12 +1250,12 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                 </label>
 
                 <label className="form-field">
-                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.exposureFactors.family">
-                    {questionnaireText.languageSection.exposureFactors.family}
+                  <EditableQuestionnaireText contentKey="questionnaireText.languageSection.exposureFactors.friends">
+                    {questionnaireText.languageSection.exposureFactors.friends}
                   </EditableQuestionnaireText>
                   <ScaleSelect
-                    value={profile.exposureToFamily}
-                    onChange={(value) => updateLanguageProfile(index, "exposureToFamily", value)}
+                    value={profile.exposureToFriends}
+                    onChange={(value) => updateLanguageProfile(index, "exposureToFriends", value)}
                     options={questionnaireText.scales.frequency}
                   />
                 </label>
@@ -1293,7 +1298,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
             {index > 0 ? (
               <>
                 <label className="form-field">
-                  <QuestionnairePromptText contentKey="questionnaireText.languageSection.foreignAccent">
+                  <QuestionnairePromptText contentKey={`questionnaireText.languageSection.foreignAccentPrompts.${secondaryLanguagePromptVariant}`}>
                     {foreignAccentPrompt}
                   </QuestionnairePromptText>
                   <ScaleSelect
@@ -1304,7 +1309,7 @@ export function StartPhaseClient({ studySlug }: StartPhaseClientProps) {
                 </label>
 
                 <label className="form-field">
-                  <QuestionnairePromptText contentKey="questionnaireText.languageSection.nonNativeIdentification">
+                  <QuestionnairePromptText contentKey={`questionnaireText.languageSection.nonNativeIdentificationPrompts.${secondaryLanguagePromptVariant}`}>
                     {nonNativeIdentificationPrompt}
                   </QuestionnairePromptText>
                   <ScaleSelect
