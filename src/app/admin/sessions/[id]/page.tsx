@@ -38,7 +38,8 @@ function formatDisabilities(questionnaire: SessionBundle["questionnaire"]) {
     questionnaire.hasVisionProblem ? "Vision problem" : null,
     questionnaire.hasHearingImpairment ? "Hearing impairment" : null,
     questionnaire.hasLanguageDisability ? "Language disability" : null,
-    questionnaire.hasLearningDisability ? "Learning disability" : null
+    questionnaire.hasLearningDisability ? "Learning disability" : null,
+    questionnaire.hasAttentionDisorder ? "Attention disorder" : null
   ].filter(Boolean);
 
   return labels.length > 0 ? labels.join(", ") : "—";
@@ -179,6 +180,14 @@ export default async function AdminSessionDetailPage({ params }: Props) {
                     <td>{formatLanguagePercentages(bundle.questionnaire.speakingPreference)}</td>
                   </tr>
                   <tr>
+                    <th>Writing preference</th>
+                    <td>{formatLanguagePercentages(bundle.questionnaire.writingPreference ?? [])}</td>
+                  </tr>
+                  <tr>
+                    <th>Listening preference</th>
+                    <td>{formatLanguagePercentages(bundle.questionnaire.listeningPreference ?? [])}</td>
+                  </tr>
+                  <tr>
                     <th>Cultures</th>
                     <td>{formatCultures(bundle.questionnaire.cultures)}</td>
                   </tr>
@@ -276,6 +285,12 @@ export default async function AdminSessionDetailPage({ params }: Props) {
                             {profile.schoolWorkYears ?? "—"} years, {profile.schoolWorkMonths ?? "—"} months
                           </td>
                         </tr>
+                        {profile.motherTongueExposureAge != null ? (
+                          <tr>
+                            <th>Age until exposed to mother tongue</th>
+                            <td>{profile.motherTongueExposureAge}</td>
+                          </tr>
+                        ) : null}
                         <tr>
                           <th>Proficiency</th>
                           <td>

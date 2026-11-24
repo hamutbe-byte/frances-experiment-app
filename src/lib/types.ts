@@ -104,6 +104,7 @@ export interface QuestionnaireCultureEntryInput {
 }
 
 export interface ParticipantLanguageProfileInput {
+  motherTongueExposureAge?: number | null;
   language: string;
   languageStatus: string;
   ageBeganAcquiring: number | null;
@@ -147,6 +148,8 @@ export interface ParticipantQuestionnaireInput {
   currentExposure: QuestionnairePercentageEntryInput[];
   readingPreference: QuestionnairePercentageEntryInput[];
   speakingPreference: QuestionnairePercentageEntryInput[];
+  writingPreference?: QuestionnairePercentageEntryInput[];
+  listeningPreference?: QuestionnairePercentageEntryInput[];
   cultures: QuestionnaireCultureEntryInput[];
   yearsOfEducation: number | null;
   academicEnglishPlacement: string;
@@ -163,6 +166,7 @@ export interface ParticipantQuestionnaireInput {
   hasHearingImpairment: boolean;
   hasLanguageDisability: boolean;
   hasLearningDisability: boolean;
+  hasAttentionDisorder?: boolean;
   disabilityExplanation: string;
   languageProfiles: ParticipantLanguageProfileInput[];
 }

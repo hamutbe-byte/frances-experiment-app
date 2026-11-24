@@ -163,7 +163,7 @@ async function fillMatrixSection(section: Locator, rows: Array<{ value: string; 
   const selectionRow = section.locator("table tbody tr").nth(1);
 
   for (let index = 0; index < rows.length; index += 1) {
-    await languageRow.locator("td").nth(index).locator('input[type="text"]').fill(rows[index].value);
+    await languageRow.locator("td").nth(index).locator("select").selectOption(rows[index].value);
     await selectionRow.locator("td").nth(index).locator("select").selectOption(rows[index].select);
   }
 }
@@ -172,18 +172,17 @@ async function fillQuestionnaire(page: Page) {
   await fillLabeledInput(page, questionnaireText.participant.lastName, "כהן");
   await fillLabeledInput(page, questionnaireText.participant.firstName, "נועה");
   await fillLabeledInput(page, questionnaireText.participant.age, "29");
-  await fillLabeledInput(page, questionnaireText.participant.dateOfBirth, "1997-08-21");
   await checkLabeledOption(page, questionnaireText.participant.genderOptions[1].label);
 
   const sections = page.locator("section.form-section");
 
   const dominanceSection = sections.nth(1);
-  await dominanceSection.locator("label.form-field").nth(0).locator('input[type="text"]').fill("עברית");
-  await dominanceSection.locator("label.form-field").nth(1).locator('input[type="text"]').fill("אנגלית");
+  await dominanceSection.locator("select").nth(0).selectOption("עברית");
+  await dominanceSection.locator("select").nth(1).selectOption("אנגלית");
 
   const acquisitionSection = sections.nth(2);
-  await acquisitionSection.locator("label.form-field").nth(0).locator('input[type="text"]').fill("עברית");
-  await acquisitionSection.locator("label.form-field").nth(1).locator('input[type="text"]').fill("אנגלית");
+  await acquisitionSection.locator("select").nth(0).selectOption("עברית");
+  await acquisitionSection.locator("select").nth(1).selectOption("אנגלית");
 
   const exposureSection = sections.nth(3);
   await fillMatrixSection(exposureSection, [
@@ -203,25 +202,25 @@ async function fillQuestionnaire(page: Page) {
     { value: "אנגלית", select: "20" }
   ]);
 
-  const culturesSection = sections.nth(6);
-  await fillMatrixSection(culturesSection, [
-    { value: "ישראלית", select: "10" },
-    { value: "יהודית", select: "9" }
+  await fillMatrixSection(sections.nth(6), [
+    { value: "עברית", select: "60" },
+    { value: "אנגלית", select: "40" }
+  ]);
+  await fillMatrixSection(sections.nth(7), [
+    { value: "עברית", select: "50" },
+    { value: "אנגלית", select: "50" }
   ]);
 
   await fillLabeledInput(page, questionnaireText.prompts.yearsOfEducation, "16");
-  await checkLabeledOption(page, questionnaireText.academicEnglishPlacementOptions[0].label);
-  await checkLabeledOption(page, questionnaireText.englishCourseLevelOptions[0].label);
-  await fillLabeledInput(page, questionnaireText.prompts.ageAtImmigration, "12");
+  await page.locator('input[name="english-course-level"][value="advanced_b"]').check();
+  await page.locator('input[name="academic-english-placement"][value="pre_basic_a"]').check();
+  await page.locator('label:has([data-content-key="questionnaireText.prompts.countryOfBirth"]) select').selectOption("US");
+  await page.locator('label:has([data-content-key="questionnaireText.prompts.ageAtImmigration"]) input').fill("12");
   await page.locator("select").filter({ has: page.locator("option[value='not_applicable']") }).selectOption("not_applicable");
-  await page.locator("select").filter({ has: page.locator("option[value='IL']") }).selectOption("IL");
 
-  const languageProfileSection = sections.nth(10);
-
-  await languageProfileSection.locator("input").nth(0).fill("עברית");
-  await languageProfileSection.locator("select").nth(0).selectOption("native");
-  await languageProfileSection.locator("input").nth(1).fill("0");
-  await languageProfileSection.locator("input").nth(2).fill("3");
+  await checkLabeledOption(page, questionnaireText.disabilityOptions.at(-1)!.label);
+  await page.getByLabel(questionnaireText.languageSection.motherTonguePrompt, { exact: true }).selectOption("ערבית");
+  await fillLabeledInput(page, questionnaireText.languageSection.motherTongueExposureAge, "12");
 
   await page.locator(".actions button").last().click();
 }
@@ -404,8 +403,11 @@ async function main() {
     log(`Opening participant flow at ${startUrl}`);
     await page.goto(startUrl, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await page.getByRole("button", { name: questionnaireText.languageSection.addLanguageButton, exact: true }).click();
-    await expect(page.locator("section.form-section")).toHaveCount(12, { timeout: timeoutMs });
+    const consentButton = page.locator(".consent-actions button");
+    if (await consentButton.isVisible()) {
+      await consentButton.click();
+    }
+    await expect(page.getByLabel(questionnaireText.languageSection.motherTonguePrompt, { exact: true })).toBeVisible();
 
     await fillQuestionnaire(page);
     if (debug) {

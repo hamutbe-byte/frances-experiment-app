@@ -301,6 +301,7 @@ function normaliseLanguageProfile(input: ParticipantLanguageProfileInput): Parti
     exposureToReading: normaliseNumber(input.exposureToReading),
     exposureToLanguageLabSelfInstruction: normaliseNumber(input.exposureToLanguageLabSelfInstruction),
     foreignAccent: normaliseNumber(input.foreignAccent),
+    motherTongueExposureAge: normaliseNumber(input.motherTongueExposureAge),
     nonNativeIdentificationByAccent: normaliseNumber(input.nonNativeIdentificationByAccent)
   };
 }
@@ -335,6 +336,7 @@ function hasLanguageProfileContent(profile: ParticipantLanguageProfileInput) {
       profile.exposureToReading !== null ||
       profile.exposureToLanguageLabSelfInstruction !== null ||
       profile.foreignAccent !== null ||
+      profile.motherTongueExposureAge != null ||
       profile.nonNativeIdentificationByAccent !== null
   );
 }
@@ -356,6 +358,8 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
     currentExposure: (input.currentExposure ?? []).map(normalisePercentageEntry),
     readingPreference: (input.readingPreference ?? []).map(normalisePercentageEntry),
     speakingPreference: (input.speakingPreference ?? []).map(normalisePercentageEntry),
+    writingPreference: (input.writingPreference ?? []).map(normalisePercentageEntry),
+    listeningPreference: (input.listeningPreference ?? []).map(normalisePercentageEntry),
     cultures: (input.cultures ?? []).map(normaliseCultureEntry),
     yearsOfEducation: normaliseNumber(input.yearsOfEducation),
     academicEnglishPlacement: normaliseText(input.academicEnglishPlacement),
@@ -372,6 +376,7 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
     hasHearingImpairment: normaliseBoolean(input.hasHearingImpairment),
     hasLanguageDisability: normaliseBoolean(input.hasLanguageDisability),
     hasLearningDisability: normaliseBoolean(input.hasLearningDisability),
+    hasAttentionDisorder: normaliseBoolean(input.hasAttentionDisorder),
     disabilityExplanation: normaliseText(input.disabilityExplanation),
     languageProfiles: (input.languageProfiles ?? []).map(normaliseLanguageProfile).filter(hasLanguageProfileContent),
     submittedAt: nowIso()
@@ -389,6 +394,8 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
       questionnaire.currentExposure.some((entry) => entry.language || entry.percentage) ||
       questionnaire.readingPreference.some((entry) => entry.language || entry.percentage) ||
       questionnaire.speakingPreference.some((entry) => entry.language || entry.percentage) ||
+      questionnaire.writingPreference?.some((entry) => entry.language || entry.percentage) ||
+      questionnaire.listeningPreference?.some((entry) => entry.language || entry.percentage) ||
       questionnaire.cultures.some((entry) => entry.culture || entry.identificationLevel !== null) ||
       questionnaire.yearsOfEducation !== null ||
       questionnaire.academicEnglishPlacement ||
@@ -405,6 +412,7 @@ function normaliseQuestionnaire(input?: ParticipantQuestionnaireInput | null): P
       questionnaire.hasHearingImpairment ||
       questionnaire.hasLanguageDisability ||
       questionnaire.hasLearningDisability ||
+      questionnaire.hasAttentionDisorder ||
       questionnaire.disabilityExplanation ||
       questionnaire.languageProfiles.some(hasLanguageProfileContent)
   );

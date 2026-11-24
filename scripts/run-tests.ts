@@ -389,7 +389,13 @@ async function main() {
     const created = createSession({
       studySlug: "frances-2020",
       device: sampleDevice(),
-      questionnaire: sampleQuestionnaire()
+      questionnaire: {
+        ...sampleQuestionnaire(),
+        writingPreference: [{ language: "עברית", percentage: "100%" }],
+        listeningPreference: [{ language: "אנגלית", percentage: "100%" }],
+        hasAttentionDisorder: true,
+        languageProfiles: [{ ...sampleQuestionnaire().languageProfiles[0], language: "ערבית", motherTongueExposureAge: 12 }]
+      }
     });
     const bundle = getSessionBundle(created.session.id);
     assert.ok(bundle?.questionnaire);
@@ -398,7 +404,11 @@ async function main() {
     assert.equal(bundle?.questionnaire?.gender, "female");
     assert.deepEqual(bundle?.questionnaire?.languagesByDominance.slice(0, 2), ["עברית", "אנגלית"]);
     assert.equal(bundle?.questionnaire?.currentExposure[0]?.percentage, "70%");
-    assert.equal(bundle?.questionnaire?.languageProfiles[0]?.language, "עברית");
+    assert.equal(bundle?.questionnaire?.languageProfiles[0]?.language, "ערבית");
+    assert.equal(bundle?.questionnaire?.languageProfiles[0]?.motherTongueExposureAge, 12);
+    assert.equal(bundle?.questionnaire?.writingPreference?.[0]?.language, "עברית");
+    assert.equal(bundle?.questionnaire?.listeningPreference?.[0]?.language, "אנגלית");
+    assert.equal(bundle?.questionnaire?.hasAttentionDisorder, true);
   });
 
   await run("session creation skips blank extra language profiles", () => {
@@ -1316,8 +1326,7 @@ async function main() {
     assert.match(questionnaireText, /environmentPrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
     assert.match(questionnaireText, /proficiencyPrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
     assert.match(questionnaireText, /learningPrompts:[\s\S]*motherTongue:[\s\S]*english:[\s\S]*additional:/);
-    assert.match(startClient, /questionnaireText\.languageSection\.foreignAccentPrompts\.\$\{secondaryLanguagePromptVariant\}/);
-    assert.match(startClient, /questionnaireText\.languageSection\.nonNativeIdentificationPrompts\.\$\{secondaryLanguagePromptVariant\}/);
+    assert.match(startClient, /contentKey="questionnaireText\.languageSection\.motherTongueExposureAge"/);
     assert.match(startClient, /EditableContentText/);
     assert.match(editorComponent, /querySelectorAll\?\.\("\[data-content-key\]"\)/);
     assert.match(editorComponent, /inlineTarget\.field\.kind === "textarea" \|\| inlineTarget\.field\.kind === "template"/);

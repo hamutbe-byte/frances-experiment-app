@@ -60,7 +60,6 @@ export const questionnaireText = {
     firstName: "שם פרטי",
     todayDate: "התאריך של היום",
     age: "גיל",
-    dateOfBirth: "תאריך לידה",
     gender: "מגדר",
     genderOptions: [
       { value: "male", label: "זכר" },
@@ -86,16 +85,18 @@ export const questionnaireText = {
       "(4) כאשר אתם בוחרים לקרוא טקסט הזמין בכל השפות שלכם, באיזה אחוז מהמקרים תבחרו לקרוא אותו בכל אחת מהשפות שלכם? הניחו שהמקור נכתב בשפה אחרת שאינכם יודעים.",
     speakingPreference:
       "(5) כאשר אתם בוחרים באיזו שפה לדבר עם אדם השולט בכל השפות שלכם במידה שווה, באיזה אחוז מהזמן תבחרו לדבר בכל שפה? נא לדווח באחוזים מתוך כלל הזמן.",
+    writingPreference:
+      "(6) כאשר אתם יכולים לבחור באיזו שפה לכתוב, באיזה אחוז מהמקרים תבחרו לכתוב בכל אחת מהשפות שלכם? נא לדווח באחוזים מתוך כלל המקרים.",
+    listeningPreference:
+      "(7) כאשר אתם יכולים לבחור באיזו שפה להאזין לתוכן הזמין בכל השפות שלכם, באיזה אחוז מהמקרים תבחרו להאזין בכל שפה? נא לדווח באחוזים מתוך כלל המקרים.",
     percentagesHint: "(האחוזים צריכים להסתכם ב־100%):",
-    cultures:
-      "(6) נא לציין את התרבויות שאיתן אתם מזדהים. בסולם שבין אפס לעשר, נא לדרג עד כמה אתם מזדהים עם כל תרבות. (דוגמאות לתרבויות אפשריות: אמריקאית, סינית, יהודית-אורתודוקסית וכו'):",
     yearsOfEducation: "(10) כמה שנות השכלה פורמלית יש לכם?",
     academicEnglishPlacement:
-      "(11) מהי רמת האנגלית שאליה שובצת במוסד האקדמי שלך (על סמך ציון בפסיכומטרי, אמיר\"ם או אמירנט)?",
-    ageAtImmigration: "(8) באיזה גיל עלית לישראל?",
+      "(11.1) מהי רמת האנגלית שאליה שובצת במוסד האקדמי שלך (על סמך ציון בפסיכומטרי, אמיר\"ם או אמירנט)?",
+    ageAtImmigration: "(8.1) באיזה גיל עלית לישראל?",
     englishCourseLevel:
-      "(12) נא ציינו את רמת קורס האנגלית הנוכחית שלך במוסד הלימודים:",
-    countryOfBirth: "(7) ארץ לידה",
+      "(11) נא ציינו את רמת קורס האנגלית הנוכחית שלך במוסד הלימודים:",
+    countryOfBirth: "(8) ארץ לידה",
     highestEducation:
       "נא לסמן את רמת ההשכלה הגבוהה ביותר שלכם (או את המקבילה המשוערת בארה\"ב לתואר שהושג במדינה אחרת):",
     otherEducationSpecify: "נא לציין:",
@@ -105,7 +106,7 @@ export const questionnaireText = {
     immigrationCountryLabel: "מדינה",
     immigrationYearsLabel: "מספר שנים",
     difficulties:
-      "(13) האם הייתה לכם אי פעם בעיית ראייה, לקות שמיעה, לקות שפה או לקות למידה? (סמנו את כל האפשרויות הרלוונטיות). אם כן, נא להסביר (כולל כל תיקון או התאמה):",
+      "(12) האם הייתה לכם אי פעם בעיית ראייה, לקות שמיעה, לקות שפה, לקות למידה או הפרעת קשב? (סמנו את כל האפשרויות הרלוונטיות). אם כן, נא להסביר (כולל כל תיקון או התאמה):",
     disabilityExplanationLabel: "פירוט"
   },
   pairedEntryLabels: {
@@ -146,7 +147,8 @@ export const questionnaireText = {
     { key: "hasVisionProblem", label: "בעיית ראייה" },
     { key: "hasHearingImpairment", label: "לקות שמיעה" },
     { key: "hasLanguageDisability", label: "לקות שפה" },
-    { key: "hasLearningDisability", label: "לקות למידה" }
+    { key: "hasLearningDisability", label: "לקות למידה" },
+    { key: "hasAttentionDisorder", label: "הפרעת קשב" }
   ],
   scales: {
     identification: makeScaleOptions([
@@ -239,6 +241,7 @@ export const questionnaireText = {
       beganReading: "התחלת לקרוא בשפה",
       becameFluentReading: "הגעת לשטף בקריאה"
     },
+    motherTongueExposureAge: "עד איזה גיל היית חשוף/ה לשפת האם שלך?",
     environmentPrompts: {
       motherTongue: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו בשפת האם שלך?",
       english: "(2) כמה שנים היית בכל אחת מהסביבות שבהן השתמשו באנגלית?",
@@ -288,14 +291,6 @@ export const questionnaireText = {
       radioMusic: "האזנה לרדיו / מוזיקה",
       reading: "קריאה",
       languageLabSelfInstruction: "מעבדת שפה / לימוד עצמי"
-    },
-    foreignAccentPrompts: {
-      english: "(6) לפי תפיסתך, עד כמה יש לך מבטא זר כשאת/ה מדבר/ת באנגלית?",
-      additional: "(6) לפי תפיסתך, עד כמה יש לך מבטא זר כשאת/ה מדבר/ת בשפה זו?"
-    },
-    nonNativeIdentificationPrompts: {
-      english: "(7) באיזו תדירות אנשים אחרים מזהים אותך כדובר/ת לא ילידי/ת של אנגלית על סמך המבטא שלך?",
-      additional: "(7) באיזו תדירות אנשים אחרים מזהים אותך כדובר/ת לא ילידי/ת של שפה זו על סמך המבטא שלך?"
     }
   },
   steps: [

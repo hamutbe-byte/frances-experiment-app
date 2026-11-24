@@ -34,7 +34,11 @@ export function bundlesToCsv(bundles: SessionBundle[]) {
       "recall_count",
       "recognition_count",
       "matching_count",
-      "telemetry_count"
+      "telemetry_count",
+      "participant_writing_preference",
+      "participant_listening_preference",
+      "participant_has_attention_disorder",
+      "participant_mother_tongue_exposure_age"
     ].join(",")
   ];
 
@@ -63,7 +67,13 @@ export function bundlesToCsv(bundles: SessionBundle[]) {
         bundle.recall.length,
         bundle.recognition.length,
         bundle.matching.length,
-        bundle.telemetry.length
+        bundle.telemetry.length,
+        bundle.questionnaire?.writingPreference?.filter((entry) => entry.language || entry.percentage)
+          .map((entry) => `${entry.language}: ${entry.percentage}`).join(" | "),
+        bundle.questionnaire?.listeningPreference?.filter((entry) => entry.language || entry.percentage)
+          .map((entry) => `${entry.language}: ${entry.percentage}`).join(" | "),
+        bundle.questionnaire?.hasAttentionDisorder,
+        bundle.questionnaire?.languageProfiles[0]?.motherTongueExposureAge
       ]
         .map(escapeCsv)
         .join(",")
