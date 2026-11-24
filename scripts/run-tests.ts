@@ -1065,10 +1065,13 @@ async function main() {
     assert.match(instructionContent, /exampleTitle/);
   });
 
-  await run("resolved content defaults to the bundled wording without overrides", () => {
+  await run("resolved content and UI defaults load without creating a runtime directory", async () => {
     setIsolatedStoreDir("content-defaults");
     const snapshot = getResolvedContentSnapshot();
     assert.deepEqual(snapshot, defaultContentSnapshot);
+    const response = await adminContentGet();
+    assert.equal(response.status, 200);
+    assert.equal(fs.existsSync(process.env.FRANCES_STORE_DIR!), false);
   });
 
   await run("content override validation rejects missing template placeholders", () => {

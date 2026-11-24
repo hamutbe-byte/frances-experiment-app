@@ -26,7 +26,10 @@ function ensureUiStoreFile() {
 }
 
 function readUiStoreFile(): UiStoreFile {
-  ensureUiStoreFile();
+  if (!fs.existsSync(getUiStorePath())) {
+    return { overrides: {} };
+  }
+
   const raw = fs.readFileSync(getUiStorePath(), "utf8");
   const parsed = JSON.parse(raw) as UiStoreFile;
 

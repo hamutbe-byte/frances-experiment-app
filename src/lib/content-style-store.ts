@@ -26,7 +26,10 @@ function ensureContentStyleStoreFile() {
 }
 
 function readContentStyleStoreFile(): ContentStyleStoreFile {
-  ensureContentStyleStoreFile();
+  if (!fs.existsSync(getContentStyleStorePath())) {
+    return { overrides: {} };
+  }
+
   const raw = fs.readFileSync(getContentStyleStorePath(), "utf8");
   const parsed = JSON.parse(raw) as ContentStyleStoreFile;
   return {

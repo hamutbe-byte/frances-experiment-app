@@ -26,7 +26,10 @@ function ensureContentStoreFile() {
 }
 
 function readContentStoreFile(): ContentStoreFile {
-  ensureContentStoreFile();
+  if (!fs.existsSync(getContentStorePath())) {
+    return { overrides: {} };
+  }
+
   // Some editors save JSON with a UTF-8 BOM, which JSON.parse does not accept.
   const raw = fs.readFileSync(getContentStorePath(), "utf8").replace(/^\uFEFF/, "");
   const parsed = JSON.parse(raw) as ContentStoreFile;
